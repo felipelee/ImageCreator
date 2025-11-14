@@ -134,7 +134,8 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                minHeight: '44px'
               }}
             >
               <p
@@ -149,7 +150,8 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
                   textAlign: spec.elements.milestoneStyle.badge.textAlign,
                   margin: 0,
                   padding: 0,
-                  whiteSpace: 'pre'
+                  whiteSpace: 'pre',
+                  display: 'block'
                 }}
               >
                 {milestone.time}

@@ -53,7 +53,8 @@ export function MultiStatsLayout({ brand, sku }: MultiStatsLayoutProps) {
             width: spec.elements.background.width,
             height: spec.elements.background.height,
             objectFit: spec.elements.background.objectFit,
-            zIndex: spec.elements.background.zIndex
+            zIndex: spec.elements.background.zIndex,
+            display: 'block'
           }}
         />
       )}

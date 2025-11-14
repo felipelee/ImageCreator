@@ -380,6 +380,122 @@ function buildPrompt(
     "headline": "single stat headline (max 10 words)",
     "subhead": "single stat subhead (max 12 words)",
     "disclaimer": "disclaimer (max 15 words)"
+  },
+  "statement": {
+    "_context": "Bold statement ad with punchy message, product, and benefits. Eye-catching layout designed to stop scrollers.",
+    "_examples": {
+      "statement": "What if getting healthier was this easy?",
+      "benefit1": "Science-backed",
+      "benefit2": "No artificial ingredients",
+      "benefit3": "Results you can feel",
+      "cta": "TRY IT NOW • SAVE 25%"
+    },
+    "statement": "bold question or statement (6-12 words, thought-provoking, e.g., 'What if...?', 'Ready to...?', 'The secret to...')",
+    "benefit1": "first benefit or feature (2-4 words, short and punchy)",
+    "benefit2": "second benefit or feature (2-4 words, short and punchy)",
+    "benefit3": "third benefit or feature (2-4 words, short and punchy)",
+    "cta": "call to action text (4-8 words, uppercase style, promotional, e.g., 'SHOP NOW • SAVE 25%')"
+  },
+  "beforeAfter": {
+    "_context": "Before/After transformation split screen showing problem vs solution with product.",
+    "_examples": {
+      "headline": "The Transformation",
+      "beforeLabel": "BEFORE",
+      "beforeText": "Feeling tired and sluggish throughout the day",
+      "afterLabel": "AFTER",
+      "afterText": "Sustained energy and mental clarity all day long"
+    },
+    "headline": "headline (2-5 words, e.g., 'The Transformation', 'See The Difference')",
+    "beforeLabel": "before label (1-2 words, uppercase, e.g., 'BEFORE', 'THE PROBLEM')",
+    "beforeText": "before description (6-12 words, describe the problem or starting point)",
+    "afterLabel": "after label (1-2 words, uppercase, e.g., 'AFTER', 'THE RESULT')",
+    "afterText": "after description (6-12 words, describe the positive outcome)"
+  },
+  "problemSolution": {
+    "_context": "Problem → Product → Solution flow layout showing problem, your product, and the solution it provides.",
+    "_examples": {
+      "problemLabel": "THE PROBLEM",
+      "problemText": "You're tired of products that don't deliver",
+      "solutionLabel": "THE SOLUTION",
+      "solutionText": "Real results from science-backed ingredients"
+    },
+    "problemLabel": "problem label (1-3 words, uppercase, e.g., 'THE PROBLEM', 'THE ISSUE')",
+    "problemText": "problem description (6-10 words, describe the pain point)",
+    "solutionLabel": "solution label (1-3 words, uppercase, e.g., 'THE SOLUTION', 'THE ANSWER')",
+    "solutionText": "solution description (6-10 words, how your product solves it)"
+  },
+  "featureGrid": {
+    "_context": "4-feature grid showcasing key product features with icons, titles, and descriptions.",
+    "_examples": {
+      "headline": "Why You'll Love It",
+      "feature1_icon": "⚡",
+      "feature1_title": "Fast Acting",
+      "feature1_desc": "Feel the difference in minutes",
+      "feature2_icon": "🔬",
+      "feature2_title": "Science-Backed",
+      "feature2_desc": "Clinically proven ingredients",
+      "feature3_icon": "🌱",
+      "feature3_title": "All Natural",
+      "feature3_desc": "No artificial ingredients",
+      "feature4_icon": "✓",
+      "feature4_title": "Easy to Use",
+      "feature4_desc": "Simple daily routine"
+    },
+    "headline": "headline (3-6 words, e.g., 'Why You'll Love It', 'What Makes Us Different')",
+    "feature1_icon": "emoji icon for feature 1 (single emoji)",
+    "feature1_title": "feature 1 title (2-4 words)",
+    "feature1_desc": "feature 1 description (4-6 words)",
+    "feature2_icon": "emoji icon for feature 2 (single emoji)",
+    "feature2_title": "feature 2 title (2-4 words)",
+    "feature2_desc": "feature 2 description (4-6 words)",
+    "feature3_icon": "emoji icon for feature 3 (single emoji)",
+    "feature3_title": "feature 3 title (2-4 words)",
+    "feature3_desc": "feature 3 description (4-6 words)",
+    "feature4_icon": "emoji icon for feature 4 (single emoji)",
+    "feature4_title": "feature 4 title (2-4 words)",
+    "feature4_desc": "feature 4 description (4-6 words)"
+  },
+  "socialProof": {
+    "_context": "Multiple customer reviews with ratings showcasing social proof and testimonials.",
+    "_examples": {
+      "headline": "Real People. Real Results.",
+      "review1_rating": "★★★★★",
+      "review1_quote": "Game changer! I feel amazing.",
+      "review1_name": "- Jessica M.",
+      "review2_rating": "★★★★★",
+      "review2_quote": "Best purchase I've made all year.",
+      "review2_name": "- David L.",
+      "review3_rating": "★★★★★",
+      "review3_quote": "Actually works. No gimmicks.",
+      "review3_name": "- Sarah K."
+    },
+    "headline": "headline (3-6 words, e.g., 'Real People. Real Results.', 'What Customers Say')",
+    "review1_rating": "rating (e.g., '★★★★★', '5/5')",
+    "review1_quote": "review 1 quote (5-10 words, authentic customer voice)",
+    "review1_name": "review 1 name (e.g., '- Jessica M.', '- David L.')",
+    "review2_rating": "rating (e.g., '★★★★★', '5/5')",
+    "review2_quote": "review 2 quote (5-10 words, authentic customer voice)",
+    "review2_name": "review 2 name (e.g., '- Jessica M.', '- David L.')",
+    "review3_rating": "rating (e.g., '★★★★★', '5/5')",
+    "review3_quote": "review 3 quote (5-10 words, authentic customer voice)",
+    "review3_name": "review 3 name (e.g., '- Jessica M.', '- David L.')"
+  },
+  "ingredientHero": {
+    "_context": "Spotlight on one key ingredient with large name, tagline, and benefits. Deep dive into hero ingredient.",
+    "_examples": {
+      "ingredientName": "L-THEANINE",
+      "tagline": "The focus and calm amino acid",
+      "benefit1": "Boosts energy",
+      "benefit2": "Supports recovery",
+      "benefit3": "Enhances focus",
+      "productBadge": "INSIDE"
+    },
+    "ingredientName": "ingredient name (1-3 words, uppercase, actual ingredient name)",
+    "tagline": "ingredient tagline (4-8 words, what it does in simple terms)",
+    "benefit1": "benefit 1 (2-3 words, short benefit)",
+    "benefit2": "benefit 2 (2-3 words, short benefit)",
+    "benefit3": "benefit 3 (2-3 words, short benefit)",
+    "productBadge": "product badge text (1-2 words, e.g., 'INSIDE', 'FEATURED')"
   }
 }
 

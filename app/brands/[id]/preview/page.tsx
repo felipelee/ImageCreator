@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Package, Eye } from 'lucide-react'
-import { db } from '@/lib/db'
+import { brandService, skuService } from '@/lib/supabase'
 import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -28,8 +28,8 @@ export default function BrandPreviewPage() {
   async function loadData() {
     try {
       const [brandData, skuData] = await Promise.all([
-        db.brands.get(brandId),
-        db.skus.where('brandId').equals(brandId).toArray()
+        brandService.getById(brandId),
+        skuService.getByBrandId(brandId)
       ])
       
       if (brandData) setBrand(brandData)

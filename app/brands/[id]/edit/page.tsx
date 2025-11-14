@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Save, Sparkles, X, Upload, Palette } from 'lucide-react'
-import { db } from '@/lib/db'
+import { brandService } from '@/lib/supabase'
+import { uploadImage, STORAGE_BUCKETS } from '@/lib/supabase-storage'
 import { Brand } from '@/types/brand'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
@@ -35,7 +36,7 @@ export default function BrandEditPage() {
 
   async function loadBrand() {
     try {
-      const brandData = await db.brands.get(brandId)
+      const brandData = await brandService.getById(brandId)
       if (brandData) setBrand(brandData)
     } catch (error) {
       console.error('Failed to load brand:', error)
@@ -49,10 +50,7 @@ export default function BrandEditPage() {
     
     setSaving(true)
     try {
-      await db.brands.update(brand.id!, {
-        ...brand,
-        updatedAt: new Date()
-      })
+      await brandService.update(brand.id!, brand)
       alert('Brand saved successfully!')
       router.push(`/brands/${brandId}`)
     } catch (error) {
@@ -114,18 +112,42 @@ export default function BrandEditPage() {
   }
 
   async function handleImageUpload(imageKey: keyof Brand['images'], file: File) {
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      if (!brand) return
+    if (!brand) return
+    
+    try {
+      // Show loading state (use base64 preview while uploading)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        if (!brand) return
+        setBrand({
+          ...brand,
+          images: {
+            ...brand.images,
+            [imageKey]: reader.result as string
+          }
+        })
+      }
+      reader.readAsDataURL(file)
+
+      // Upload to Supabase Storage
+      const path = `brand-${brand.id}/${imageKey}-${Date.now()}`
+      const publicUrl = await uploadImage(STORAGE_BUCKETS.BRAND_IMAGES, file, path)
+      
+      // Update with final cloud URL
       setBrand({
         ...brand,
         images: {
           ...brand.images,
-          [imageKey]: reader.result as string
+          [imageKey]: publicUrl
         }
       })
+      
+      console.log('Image uploaded to cloud:', publicUrl)
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      alert('Failed to upload image. Using local preview.')
+      // Fallback to base64 if upload fails
     }
-    reader.readAsDataURL(file)
   }
 
   async function generateColorSchemes() {

@@ -102,7 +102,8 @@ export function PriceComparisonLayout({ brand, sku }: PriceComparisonLayoutProps
             style={{
               width: '100%',
               height: '100%',
-              objectFit: spec.elements.supplementsPile.objectFit
+              objectFit: spec.elements.supplementsPile.objectFit,
+              display: 'block'
             }}
           />
         </div>
@@ -130,7 +131,8 @@ export function PriceComparisonLayout({ brand, sku }: PriceComparisonLayoutProps
             style={{
               width: '100%',
               height: '100%',
-              objectFit: spec.elements.productImage.objectFit
+              objectFit: spec.elements.productImage.objectFit,
+              display: 'block'
             }}
           />
         </div>

@@ -183,6 +183,61 @@ export interface SKU {
       benefit6: string
       disclaimer: string
     }
+    statement?: {
+      statement: string
+      benefit1: string
+      benefit2: string
+      benefit3: string
+      cta: string
+    }
+    beforeAfter?: {
+      headline: string
+      beforeLabel: string
+      beforeText: string
+      afterLabel: string
+      afterText: string
+    }
+    problemSolution?: {
+      problemLabel: string
+      problemText: string
+      solutionLabel: string
+      solutionText: string
+    }
+    featureGrid?: {
+      headline: string
+      feature1_icon: string
+      feature1_title: string
+      feature1_desc: string
+      feature2_icon: string
+      feature2_title: string
+      feature2_desc: string
+      feature3_icon: string
+      feature3_title: string
+      feature3_desc: string
+      feature4_icon: string
+      feature4_title: string
+      feature4_desc: string
+    }
+    socialProof?: {
+      headline: string
+      review1_rating: string
+      review1_quote: string
+      review1_name: string
+      review2_rating: string
+      review2_quote: string
+      review2_name: string
+      review3_rating: string
+      review3_quote: string
+      review3_name: string
+    }
+    ingredientHero?: {
+      ingredientName: string
+      tagline: string
+      benefit1: string
+      benefit2: string
+      benefit3: string
+      productBadge: string
+    }
   }
   images: {
     productPrimary?: string

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Download, Loader2 } from 'lucide-react'
-import { db } from '@/lib/db'
+import { brandService, skuService } from '@/lib/supabase'
 import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -24,7 +24,9 @@ import { PromoProductLayout } from '@/components/layouts/PromoProductLayout'
 import { BottleListLayout } from '@/components/layouts/BottleListLayout'
 import { TimelineLayout } from '@/components/layouts/TimelineLayout'
 import { PriceComparisonLayout } from '@/components/layouts/PriceComparisonLayout'
+import { StatementLayout } from '@/components/layouts/StatementLayout'
 import { renderLayout } from '@/lib/render-engine'
+import JSZip from 'jszip'
 
 export default function PreviewPage() {
   const params = useParams()
@@ -46,6 +48,7 @@ export default function PreviewPage() {
   const bottleListRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
   const priceComparisonRef = useRef<HTMLDivElement>(null)
+  const statementRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadData()
@@ -54,8 +57,8 @@ export default function PreviewPage() {
   async function loadData() {
     try {
       const [brandData, skuData] = await Promise.all([
-        db.brands.get(brandId),
-        db.skus.get(skuId)
+        brandService.getById(brandId),
+        skuService.getById(skuId)
       ])
       
       if (brandData) setBrand(brandData)
@@ -67,12 +70,12 @@ export default function PreviewPage() {
     }
   }
 
-  async function downloadLayout(layoutName: string, ref: React.RefObject<HTMLDivElement | null>, format: 'png' | 'jpg' | 'webp') {
-    if (!ref.current) return
+  async function downloadLayout(layoutName: string, layoutType: string, format: 'png' | 'jpg' | 'webp') {
+    if (!brand || !sku) return
     
     setRendering(true)
     try {
-      const blob = await renderLayout(ref.current, { 
+      const blob = await renderLayout(layoutType, brand, sku, { 
         scale: 2, 
         format: format,
         quality: format === 'jpg' ? 0.95 : undefined
@@ -92,43 +95,63 @@ export default function PreviewPage() {
   }
 
   async function downloadAll() {
+    if (!brand || !sku) return
+
     const layouts = [
-      { name: 'Testimonial', ref: testimonialRef },
-      { name: 'Comparison', ref: comparisonRef },
-      { name: 'Benefits', ref: benefitsRef },
-      { name: 'BigStat', ref: bigStatRef },
-      { name: 'MultiStats', ref: multiStatsRef },
-      { name: 'PromoProduct', ref: promoProductRef },
-      { name: 'BottleList', ref: bottleListRef },
-      { name: 'Timeline', ref: timelineRef },
-      { name: 'PriceComparison', ref: priceComparisonRef }
+      { name: 'Testimonial', type: 'testimonial' },
+      { name: 'Comparison', type: 'comparison' },
+      { name: 'Benefits', type: 'benefits' },
+      { name: 'BigStat', type: 'bigStat' },
+      { name: 'MultiStats', type: 'multiStats' },
+      { name: 'PromoProduct', type: 'promoProduct' },
+      { name: 'BottleList', type: 'bottleList' },
+      { name: 'Timeline', type: 'timeline' },
+      { name: 'PriceComparison', type: 'priceComparison' },
+      { name: 'Statement', type: 'statement' }
     ]
 
     setRendering(true)
     try {
+      // Create a new ZIP file
+      const zip = new JSZip()
+      
+      // Render and add each layout to the ZIP using the new API
       for (const layout of layouts) {
-        if (!layout.ref.current) continue
-        
-        const blob = await renderLayout(layout.ref.current, {
-          scale: 2,
-          format: downloadFormat,
-          quality: downloadFormat === 'jpg' ? 0.95 : undefined
-        })
-        
-        const url = URL.createObjectURL(blob)
+        try {
+          const blob = await renderLayout(layout.type, brand, sku, {
+            scale: 2,
+            format: downloadFormat,
+            quality: downloadFormat === 'jpg' ? 0.95 : undefined
+          })
+          
+          // Add the blob to the ZIP with a filename
+          const filename = `${brand.name}_${sku.name}_${layout.name}.${downloadFormat}`
+          zip.file(filename, blob)
+        } catch (error) {
+          console.error(`Failed to render ${layout.name}:`, error)
+          // Continue with other layouts even if one fails
+        }
+      }
+      
+      // Generate the ZIP file
+      const zipBlob = await zip.generateAsync({ 
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      })
+      
+      // Download the ZIP file
+      const url = URL.createObjectURL(zipBlob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${brand?.name}_${sku?.name}_${layout.name}.${downloadFormat}`
+      a.download = `${brand.name}_${sku.name}_All_Layouts.zip`
         a.click()
         URL.revokeObjectURL(url)
         
-        // Small delay between downloads
-        await new Promise(resolve => setTimeout(resolve, 500))
-      }
-      alert(`All 9 layouts downloaded as ${downloadFormat.toUpperCase()}!`)
+      alert(`All 10 layouts downloaded as a ZIP file!`)
     } catch (error) {
       console.error('Failed to download all:', error)
-      alert('Failed to download some layouts')
+      alert('Failed to download layouts. Please try again.')
     } finally {
       setRendering(false)
     }
@@ -471,11 +494,26 @@ export default function PreviewPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Statement Layout */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Statement</CardTitle>
+              <CardDescription>Bold question with product and benefits</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-center rounded-lg overflow-hidden border bg-muted/30">
+                <div ref={statementRef}>
+                  <StatementLayout brand={brand} sku={sku} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="mt-6 flex justify-center">
           <Badge variant="secondary">
-            9 of 19 layouts implemented • 10 more coming soon
+            10 of 19 layouts implemented • 9 more coming soon
           </Badge>
         </div>
         </div>

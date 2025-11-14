@@ -72,7 +72,9 @@ export function BottleListLayout({ brand, sku }: BottleListLayoutProps) {
 
       {/* Product Image (Hand holding product) */}
       {sku.images.lifestyleA && (
-        <div
+        <img
+          src={sku.images.lifestyleA}
+          alt="Product"
           style={{
             position: 'absolute',
             top: spec.elements.productImage.top,
@@ -80,22 +82,12 @@ export function BottleListLayout({ brand, sku }: BottleListLayoutProps) {
             width: spec.elements.productImage.width,
             height: spec.elements.productImage.height,
             transform: `rotate(${spec.elements.productImage.rotation}deg)`,
-            transformOrigin: 'center',
-            zIndex: spec.elements.productImage.zIndex,
-            overflow: 'hidden'
-          }}
-        >
-          <img
-            src={sku.images.lifestyleA}
-            alt="Product"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              objectPosition: '76% 50%'
+            transformOrigin: 'top left',
+            objectFit: 'cover',
+            objectPosition: '76% 50%',
+            zIndex: spec.elements.productImage.zIndex
             }}
           />
-        </div>
       )}
 
       {/* Headline */}

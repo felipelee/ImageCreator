@@ -137,7 +137,11 @@ export function BenefitsLayout({ brand, sku }: BenefitsLayoutProps) {
                 textAlign: spec.elements.calloutStyle.textAlign,
                 maxWidth: spec.elements.calloutStyle.maxWidth,
                 minWidth: spec.elements.calloutStyle.minWidth,
-                fontFamily: fonts.family
+                fontFamily: fonts.family,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '50px'
               }}
             >
               {benefits[index]}

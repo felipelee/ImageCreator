@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Package } from 'lucide-react'
-import { db } from '@/lib/db'
+import { brandService } from '@/lib/supabase'
 import { Brand } from '@/types/brand'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
@@ -21,7 +21,7 @@ export default function Home() {
 
   async function loadBrands() {
     try {
-      const allBrands = await db.brands.toArray()
+      const allBrands = await brandService.getAll()
       setBrands(allBrands)
     } catch (error) {
       console.error('Failed to load brands:', error)

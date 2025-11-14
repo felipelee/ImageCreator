@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Edit, Plus, Copy, Package } from 'lucide-react'
-import { db } from '@/lib/db'
+import { brandService, skuService } from '@/lib/supabase'
 import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -29,10 +29,10 @@ export default function BrandDetailPage() {
 
   async function loadBrandData() {
     try {
-      const brandData = await db.brands.get(brandId)
+      const brandData = await brandService.getById(brandId)
       if (brandData) {
         setBrand(brandData)
-        const skuData = await db.skus.where('brandId').equals(brandId).toArray()
+        const skuData = await skuService.getByBrandId(brandId)
         setSkus(skuData)
       }
     } catch (error) {
@@ -46,21 +46,19 @@ export default function BrandDetailPage() {
     if (!brand) return
 
     try {
-      const now = new Date()
-      const newSKU: Omit<SKU, 'id'> = {
+      const newSKU: Omit<SKU, 'id' | 'createdAt' | 'updatedAt'> = {
         brandId: brand.id!,
         name: `SKU ${skus.length + 1}`,
         copy: {},
-        images: {},
-        createdAt: now,
-        updatedAt: now
+        images: {}
       }
       
-      const id = await db.skus.add(newSKU)
-      console.log('Created SKU with ID:', id)
-      router.push(`/brands/${brandId}/skus/${id}`)
+      const created = await skuService.create(newSKU)
+      console.log('Created SKU with ID:', created.id)
+      router.push(`/brands/${brandId}/skus/${created.id}`)
     } catch (error) {
       console.error('Failed to create SKU:', error)
+      alert('Failed to create SKU. Please try again.')
     }
   }
 
@@ -71,28 +69,24 @@ export default function BrandDetailPage() {
     if (!brand) return
 
     try {
-      const now = new Date()
-      
       // Create a deep copy of the SKU data
-      const duplicatedSKU: Omit<SKU, 'id'> = {
+      const duplicatedSKU: Omit<SKU, 'id' | 'createdAt' | 'updatedAt'> = {
         brandId: brand.id!,
         name: `${skuToDuplicate.name} (Copy)`,
         copy: JSON.parse(JSON.stringify(skuToDuplicate.copy || {})), // Deep clone copy
         images: JSON.parse(JSON.stringify(skuToDuplicate.images || {})), // Deep clone images
         productInformation: skuToDuplicate.productInformation,
-        colorOverrides: skuToDuplicate.colorOverrides ? JSON.parse(JSON.stringify(skuToDuplicate.colorOverrides)) : undefined,
-        createdAt: now,
-        updatedAt: now
+        colorOverrides: skuToDuplicate.colorOverrides ? JSON.parse(JSON.stringify(skuToDuplicate.colorOverrides)) : undefined
       }
       
-      const id = await db.skus.add(duplicatedSKU)
-      console.log('Duplicated SKU with ID:', id)
+      const created = await skuService.create(duplicatedSKU)
+      console.log('Duplicated SKU with ID:', created.id)
       
       // Reload SKUs to show the new one
       await loadBrandData()
       
       // Navigate to the new SKU
-      router.push(`/brands/${brandId}/skus/${id}`)
+      router.push(`/brands/${brandId}/skus/${created.id}`)
     } catch (error) {
       console.error('Failed to duplicate SKU:', error)
       alert('Failed to duplicate SKU')

@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Save, Eye, Sparkles, Package, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, X, Download, Loader2 } from 'lucide-react'
-import { db } from '@/lib/db'
+import { brandService, skuService } from '@/lib/supabase'
+import { uploadImage, STORAGE_BUCKETS } from '@/lib/supabase-storage'
 import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -27,8 +28,16 @@ import { MultiStatsLayout} from '@/components/layouts/MultiStatsLayout'
 import { PromoProductLayout } from '@/components/layouts/PromoProductLayout'
 import { BottleListLayout } from '@/components/layouts/BottleListLayout'
 import { TimelineLayout } from '@/components/layouts/TimelineLayout'
+import { StatementLayout } from '@/components/layouts/StatementLayout'
+import { BeforeAfterLayout } from '@/components/layouts/BeforeAfterLayout'
+import { ProblemSolutionLayout } from '@/components/layouts/ProblemSolutionLayout'
+import { FeatureGridLayout } from '@/components/layouts/FeatureGridLayout'
+import { SocialProofLayout } from '@/components/layouts/SocialProofLayout'
+import { IngredientHeroLayout } from '@/components/layouts/IngredientHeroLayout'
 import { generateColorVariations, applyColorVariation, ColorVariation } from '@/lib/color-variations'
 import { renderLayout } from '@/lib/render-engine'
+import { FluidDAMBrowser } from '@/components/FluidDAMBrowser'
+import JSZip from 'jszip'
 
 export default function SKUEditorPage() {
   const params = useParams()
@@ -41,13 +50,15 @@ export default function SKUEditorPage() {
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState<'copy' | 'images'>('copy')
-  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'benefits' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | null>(null)
+  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'benefits' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'statement' | 'beforeAfter' | 'problemSolution' | 'featureGrid' | 'socialProof' | 'ingredientHero' | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [colorVariations, setColorVariations] = useState<ColorVariation[]>([])
   const [currentVariationIndex, setCurrentVariationIndex] = useState<number>(0)
   const [previewBrand, setPreviewBrand] = useState<Brand | null>(null)
   const [rendering, setRendering] = useState(false)
   const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpg' | 'webp'>('png')
+  const [damBrowserOpen, setDamBrowserOpen] = useState(false)
+  const [damImageField, setDamImageField] = useState<string | null>(null)
 
   // Refs for downloading
   const compareRef = useRef<HTMLDivElement>(null)
@@ -58,6 +69,12 @@ export default function SKUEditorPage() {
   const promoProductRef = useRef<HTMLDivElement>(null)
   const bottleListRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
+  const statementRef = useRef<HTMLDivElement>(null)
+  const beforeAfterRef = useRef<HTMLDivElement>(null)
+  const problemSolutionRef = useRef<HTMLDivElement>(null)
+  const featureGridRef = useRef<HTMLDivElement>(null)
+  const socialProofRef = useRef<HTMLDivElement>(null)
+  const ingredientHeroRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadData()
@@ -81,8 +98,8 @@ export default function SKUEditorPage() {
   async function loadData() {
     try {
       const [brandData, skuData] = await Promise.all([
-        db.brands.get(brandId),
-        db.skus.get(skuId)
+        brandService.getById(brandId),
+        skuService.getById(skuId)
       ])
       
       if (brandData) {
@@ -134,14 +151,8 @@ export default function SKUEditorPage() {
     try {
       // Save both SKU and Brand (in case colors were changed)
       await Promise.all([
-        db.skus.update(sku.id!, {
-          ...sku,
-          updatedAt: new Date()
-        }),
-        db.brands.update(brand.id!, {
-          ...brand,
-          updatedAt: new Date()
-        })
+        skuService.update(sku.id!, sku),
+        brandService.update(brand.id!, brand)
       ])
       alert('Saved successfully!')
     } catch (error) {
@@ -273,59 +284,145 @@ export default function SKUEditorPage() {
   }
 
   async function handleImageUpload(imageKey: keyof SKU['images'], file: File) {
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      if (!sku) return
+    if (!sku) return
+    
+    try {
+      // Show loading state (use base64 preview while uploading)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        if (!sku) return
+        setSKU({
+          ...sku,
+          images: {
+            ...sku.images,
+            [imageKey]: reader.result as string
+          }
+        })
+      }
+      reader.readAsDataURL(file)
+
+      // Upload to Supabase Storage
+      const path = `sku-${sku.id}/${imageKey}-${Date.now()}`
+      const publicUrl = await uploadImage(STORAGE_BUCKETS.SKU_IMAGES, file, path)
+      
+      // Update with final cloud URL
       setSKU({
         ...sku,
         images: {
           ...sku.images,
-          [imageKey]: reader.result as string
+          [imageKey]: publicUrl
         }
       })
+      
+      console.log('Image uploaded to cloud:', publicUrl)
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      alert('Failed to upload image. Using local preview.')
+      // Fallback to base64 if upload fails
     }
-    reader.readAsDataURL(file)
+  }
+
+  function openFluidDAM(imageKey: keyof SKU['images']) {
+    setDamImageField(imageKey)
+    setDamBrowserOpen(true)
+  }
+
+  function handleFluidDAMSelect(assetUrl: string) {
+    if (!sku || !damImageField) return
+    
+    setSKU({
+      ...sku,
+      images: {
+        ...sku.images,
+        [damImageField]: assetUrl
+      }
+    })
+    
+    setDamBrowserOpen(false)
+    setDamImageField(null)
   }
 
   async function downloadAll() {
     if (!brand || !sku) return
 
     const layouts = [
-      { name: 'Comparison', ref: compareRef },
-      { name: 'Testimonial', ref: testimonialRef },
-      { name: 'Benefits', ref: benefitsRef },
-      { name: 'BigStat', ref: bigStatRef },
-      { name: 'MultiStats', ref: multiStatsRef },
-      { name: 'PromoProduct', ref: promoProductRef },
-      { name: 'BottleList', ref: bottleListRef },
-      { name: 'Timeline', ref: timelineRef }
+      { name: 'Comparison', type: 'comparison', ref: compareRef },
+      { name: 'Testimonial', type: 'testimonial', ref: testimonialRef },
+      { name: 'Benefits', type: 'benefits', ref: benefitsRef },
+      { name: 'BigStat', type: 'bigStat', ref: bigStatRef },
+      { name: 'MultiStats', type: 'multiStats', ref: multiStatsRef },
+      { name: 'PromoProduct', type: 'promoProduct', ref: promoProductRef },
+      { name: 'BottleList', type: 'bottleList', ref: bottleListRef },
+      { name: 'Timeline', type: 'timeline', ref: timelineRef },
+      { name: 'Statement', type: 'statement', ref: statementRef },
+      { name: 'BeforeAfter', type: 'beforeAfter', ref: beforeAfterRef },
+      { name: 'ProblemSolution', type: 'problemSolution', ref: problemSolutionRef },
+      { name: 'FeatureGrid', type: 'featureGrid', ref: featureGridRef },
+      { name: 'SocialProof', type: 'socialProof', ref: socialProofRef },
+      { name: 'IngredientHero', type: 'ingredientHero', ref: ingredientHeroRef }
     ]
 
     setRendering(true)
     try {
+      // Create a new ZIP file
+      const zip = new JSZip()
+      
+      // Render and add each layout to the ZIP
+      // Note: Using refs for html2canvas rendering for now
+      // Satori will be used in production with proper image hosting
+      let successCount = 0
+      let failCount = 0
+      
       for (const layout of layouts) {
-        if (!layout.ref.current) continue
-        
-        const blob = await renderLayout(layout.ref.current, {
-          scale: 2,
-          format: downloadFormat,
-          quality: downloadFormat === 'jpg' ? 0.95 : undefined
-        })
-        
-        const url = URL.createObjectURL(blob)
+        try {
+          if (!layout.ref.current) {
+            console.warn(`${layout.name} ref not available, skipping`)
+            failCount++
+            continue
+          }
+          
+          console.log(`Rendering ${layout.name}...`)
+          const { renderLayoutFromElement } = await import('@/lib/render-engine')
+          const blob = await renderLayoutFromElement(layout.ref.current, {
+            scale: 2,
+            format: downloadFormat,
+            quality: downloadFormat === 'jpg' ? 0.95 : undefined
+          })
+          
+          console.log(`${layout.name} rendered successfully, blob size: ${blob.size}`)
+          
+          // Add the blob to the ZIP with a filename
+          const filename = `${brand.name}_${sku.name}_${layout.name}.${downloadFormat}`
+          zip.file(filename, blob)
+          successCount++
+        } catch (error) {
+          console.error(`Failed to render ${layout.name}:`, error)
+          failCount++
+          // Continue with other layouts even if one fails
+        }
+      }
+      
+      console.log(`Rendering complete: ${successCount} succeeded, ${failCount} failed`)
+      
+      // Generate the ZIP file
+      const zipBlob = await zip.generateAsync({ 
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      })
+      
+      // Download the ZIP file
+      const url = URL.createObjectURL(zipBlob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${brand.name}_${sku.name}_${layout.name}.${downloadFormat}`
+      a.download = `${brand.name}_${sku.name}_All_Layouts.zip`
         a.click()
         URL.revokeObjectURL(url)
         
-        // Small delay between downloads
-        await new Promise(resolve => setTimeout(resolve, 500))
-      }
-      alert(`All 8 layouts downloaded as ${downloadFormat.toUpperCase()}!`)
+      alert(`Downloaded ${successCount} of ${layouts.length} layouts as ZIP file!`)
     } catch (error) {
       console.error('Failed to download all:', error)
-      alert('Failed to download some layouts')
+      alert(`Failed to download layouts: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setRendering(false)
     }
@@ -480,6 +577,12 @@ export default function SKUEditorPage() {
               {expandedLayout === 'promoProduct' && <PromoProductLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'bottleList' && <BottleListLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'timeline' && <TimelineLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'statement' && <StatementLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'beforeAfter' && <BeforeAfterLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'problemSolution' && <ProblemSolutionLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'featureGrid' && <FeatureGridLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'socialProof' && <SocialProofLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'ingredientHero' && <IngredientHeroLayout brand={displayBrand} sku={displaySKU} />}
             </div>
           </div>
         </div>
@@ -487,7 +590,7 @@ export default function SKUEditorPage() {
     )
   }
 
-  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'benefits' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline') {
+  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'benefits' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'statement' | 'beforeAfter' | 'problemSolution' | 'featureGrid' | 'socialProof' | 'ingredientHero') {
     setExpandedLayout(layoutKey)
     initializeColorVariations(layoutKey)
     setDrawerOpen(true)
@@ -676,6 +779,109 @@ export default function SKUEditorPage() {
         { section: 'timeline', field: 'milestone3_time', label: 'Milestone 3 Time', placeholder: '7 Days', colors: [] },
         { section: 'timeline', field: 'milestone3_title', label: 'Milestone 3 Title', placeholder: 'Smoother, more stable energy during the day', colors: [] },
         { type: 'image', imageKey: 'productAngle', label: 'Product Image (Angle)', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Statement: Bold Question',
+      layoutSize: '1080×1080',
+      layoutKey: 'statement' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { section: 'statement', field: 'statement', label: 'Bold Statement/Question', placeholder: 'Ready to feel the difference?', type: 'textarea', colors: ['accent'] },
+        { section: 'statement', field: 'benefit1', label: 'Benefit Pill 1', placeholder: 'Science-backed', colors: ['primarySoft', 'primary'] },
+        { section: 'statement', field: 'benefit2', label: 'Benefit Pill 2', placeholder: 'No artificial ingredients', colors: ['primarySoft', 'primary'] },
+        { section: 'statement', field: 'benefit3', label: 'Benefit Pill 3', placeholder: 'Results you can feel', colors: ['primarySoft', 'primary'] },
+        { section: 'statement', field: 'cta', label: 'CTA Text', placeholder: 'SHOP NOW • SAVE 25%', colors: ['accent'] },
+        { type: 'image', imageKey: 'productPrimary', label: 'Product Image (Primary)', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Before/After: Transformation',
+      layoutSize: '1080×1080',
+      layoutKey: 'beforeAfter' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { section: 'beforeAfter', field: 'headline', label: 'Headline', placeholder: 'The Transformation', colors: ['accent'] },
+        { section: 'beforeAfter', field: 'beforeLabel', label: 'Before Label', placeholder: 'BEFORE', colors: ['textSecondary'] },
+        { section: 'beforeAfter', field: 'beforeText', label: 'Before Description', placeholder: 'Feeling tired and sluggish throughout the day', type: 'textarea', colors: ['text'] },
+        { section: 'beforeAfter', field: 'afterLabel', label: 'After Label', placeholder: 'AFTER', colors: ['accent'] },
+        { section: 'beforeAfter', field: 'afterText', label: 'After Description', placeholder: 'Sustained energy and mental clarity all day long', type: 'textarea', colors: ['text'] },
+        { type: 'background', colorKey: 'primarySoft', label: 'Divider Color' },
+        { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Problem/Solution Flow',
+      layoutSize: '1080×1080',
+      layoutKey: 'problemSolution' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { type: 'background', colorKey: 'bgAlt', label: 'Problem Panel Color' },
+        { section: 'problemSolution', field: 'problemLabel', label: 'Problem Label', placeholder: 'THE PROBLEM', colors: ['textSecondary'] },
+        { section: 'problemSolution', field: 'problemText', label: 'Problem Description', placeholder: 'You\'re tired of products that don\'t deliver', type: 'textarea', colors: ['text'] },
+        { type: 'background', colorKey: 'accent', label: 'Solution Panel Color' },
+        { section: 'problemSolution', field: 'solutionLabel', label: 'Solution Label', placeholder: 'THE SOLUTION', colors: [] },
+        { section: 'problemSolution', field: 'solutionText', label: 'Solution Description', placeholder: 'Real results from science-backed ingredients', type: 'textarea', colors: [] },
+        { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Feature Grid: 4 Features',
+      layoutSize: '1080×1080',
+      layoutKey: 'featureGrid' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { section: 'featureGrid', field: 'headline', label: 'Headline', placeholder: 'Why You\'ll Love It', colors: ['accent'] },
+        { type: 'background', colorKey: 'bgAlt', label: 'Card Background' },
+        { section: 'featureGrid', field: 'feature1_icon', label: 'Feature 1 Icon', placeholder: '⚡', colors: [] },
+        { section: 'featureGrid', field: 'feature1_title', label: 'Feature 1 Title', placeholder: 'Fast Acting', colors: ['accent'] },
+        { section: 'featureGrid', field: 'feature1_desc', label: 'Feature 1 Description', placeholder: 'Feel the difference in minutes', colors: ['text'] },
+        { section: 'featureGrid', field: 'feature2_icon', label: 'Feature 2 Icon', placeholder: '🔬', colors: [] },
+        { section: 'featureGrid', field: 'feature2_title', label: 'Feature 2 Title', placeholder: 'Science-Backed', colors: ['accent'] },
+        { section: 'featureGrid', field: 'feature2_desc', label: 'Feature 2 Description', placeholder: 'Clinically proven ingredients', colors: ['text'] },
+        { section: 'featureGrid', field: 'feature3_icon', label: 'Feature 3 Icon', placeholder: '🌱', colors: [] },
+        { section: 'featureGrid', field: 'feature3_title', label: 'Feature 3 Title', placeholder: 'All Natural', colors: ['accent'] },
+        { section: 'featureGrid', field: 'feature3_desc', label: 'Feature 3 Description', placeholder: 'No artificial ingredients', colors: ['text'] },
+        { section: 'featureGrid', field: 'feature4_icon', label: 'Feature 4 Icon', placeholder: '✓', colors: [] },
+        { section: 'featureGrid', field: 'feature4_title', label: 'Feature 4 Title', placeholder: 'Easy to Use', colors: ['accent'] },
+        { section: 'featureGrid', field: 'feature4_desc', label: 'Feature 4 Description', placeholder: 'Simple daily routine', colors: ['text'] },
+        { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Social Proof: Reviews',
+      layoutSize: '1080×1080',
+      layoutKey: 'socialProof' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { section: 'socialProof', field: 'headline', label: 'Headline', placeholder: 'Real People. Real Results.', colors: ['accent'] },
+        { type: 'background', colorKey: 'bgAlt', label: 'Review Card Background' },
+        { section: 'socialProof', field: 'review1_rating', label: 'Review 1 Rating', placeholder: '★★★★★', colors: ['accent'] },
+        { section: 'socialProof', field: 'review1_quote', label: 'Review 1 Quote', placeholder: 'Game changer! I feel amazing.', colors: ['text'] },
+        { section: 'socialProof', field: 'review1_name', label: 'Review 1 Name', placeholder: '- Jessica M.', colors: ['textSecondary'] },
+        { section: 'socialProof', field: 'review2_rating', label: 'Review 2 Rating', placeholder: '★★★★★', colors: ['accent'] },
+        { section: 'socialProof', field: 'review2_quote', label: 'Review 2 Quote', placeholder: 'Best purchase I\'ve made all year.', colors: ['text'] },
+        { section: 'socialProof', field: 'review2_name', label: 'Review 2 Name', placeholder: '- David L.', colors: ['textSecondary'] },
+        { section: 'socialProof', field: 'review3_rating', label: 'Review 3 Rating', placeholder: '★★★★★', colors: ['accent'] },
+        { section: 'socialProof', field: 'review3_quote', label: 'Review 3 Quote', placeholder: 'Actually works. No gimmicks.', colors: ['text'] },
+        { section: 'socialProof', field: 'review3_name', label: 'Review 3 Name', placeholder: '- Sarah K.', colors: ['textSecondary'] },
+        { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Ingredient Hero: Spotlight',
+      layoutSize: '1080×1080',
+      layoutKey: 'ingredientHero' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { section: 'ingredientHero', field: 'ingredientName', label: 'Ingredient Name', placeholder: 'L-THEANINE', colors: ['accent'] },
+        { section: 'ingredientHero', field: 'tagline', label: 'Tagline', placeholder: 'The focus and calm amino acid', colors: ['textSecondary'] },
+        { type: 'image', imageKey: 'ingredientA', label: 'Ingredient Image', imageType: 'sku', variants: ['ingredientA', 'ingredientB', 'ingredientC', 'ingredientD'] },
+        { section: 'ingredientHero', field: 'benefit1', label: 'Benefit 1', placeholder: 'Boosts energy', colors: ['accent'] },
+        { section: 'ingredientHero', field: 'benefit2', label: 'Benefit 2', placeholder: 'Supports recovery', colors: ['accent'] },
+        { section: 'ingredientHero', field: 'benefit3', label: 'Benefit 3', placeholder: 'Enhances focus', colors: ['accent'] },
+        { type: 'background', colorKey: 'primarySoft', label: 'Product Badge Background' },
+        { section: 'ingredientHero', field: 'productBadge', label: 'Product Badge Text', placeholder: 'INSIDE', colors: ['primary'] },
       ]
     },
   ]
@@ -909,18 +1115,29 @@ export default function SKUEditorPage() {
                         </button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer flex flex-col items-center justify-center h-32 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary">
-                        <span className="text-sm text-muted-foreground">Upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) handleImageUpload(key, file)
-                          }}
-                        />
-                      </label>
+                      <div className="space-y-2">
+                        <label className="cursor-pointer flex flex-col items-center justify-center h-24 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary">
+                          <span className="text-sm text-muted-foreground">Upload File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(key, file)
+                            }}
+                          />
+                        </label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => openFluidDAM(key)}
+                        >
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                          Browse DAM
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -960,18 +1177,29 @@ export default function SKUEditorPage() {
                         </button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer flex flex-col items-center justify-center h-32 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary">
-                        <span className="text-sm text-muted-foreground">Upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) handleImageUpload(key, file)
-                          }}
-                        />
-                      </label>
+                      <div className="space-y-2">
+                        <label className="cursor-pointer flex flex-col items-center justify-center h-24 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary">
+                          <span className="text-sm text-muted-foreground">Upload File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(key, file)
+                            }}
+                          />
+                        </label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => openFluidDAM(key)}
+                        >
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                          Browse DAM
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1012,18 +1240,29 @@ export default function SKUEditorPage() {
                         </button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer flex flex-col items-center justify-center h-24 border-2 border-dashed border-muted-foreground/25 rounded-full hover:border-primary transition-colors">
-                        <span className="text-xs text-muted-foreground">Upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) handleImageUpload(key, file)
-                          }}
-                        />
-                      </label>
+                      <div className="space-y-2">
+                        <label className="cursor-pointer flex flex-col items-center justify-center h-20 border-2 border-dashed border-muted-foreground/25 rounded-full hover:border-primary transition-colors">
+                          <span className="text-xs text-muted-foreground">Upload File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(key, file)
+                            }}
+                          />
+                        </label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          onClick={() => openFluidDAM(key)}
+                        >
+                          <ImageIcon className="mr-1 h-3 w-3" />
+                          Browse DAM
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1061,22 +1300,33 @@ export default function SKUEditorPage() {
                     </button>
                   </div>
                 ) : (
-                  <label className="cursor-pointer flex flex-col items-center justify-center h-64 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary transition-colors">
-                    <svg className="w-12 h-12 text-muted-foreground/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-sm text-muted-foreground font-medium">Upload Client Photo</span>
-                    <span className="text-xs text-muted-foreground/60 mt-1">Lifestyle photo with customer</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleImageUpload('testimonialPhoto', file)
-                      }}
-                    />
-                  </label>
+                  <div className="space-y-3">
+                    <label className="cursor-pointer flex flex-col items-center justify-center h-48 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary transition-colors">
+                      <svg className="w-12 h-12 text-muted-foreground/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm text-muted-foreground font-medium">Upload File</span>
+                      <span className="text-xs text-muted-foreground/60 mt-1">Lifestyle photo with customer</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleImageUpload('testimonialPhoto', file)
+                        }}
+                      />
+                    </label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => openFluidDAM('testimonialPhoto')}
+                    >
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      Browse DAM
+                    </Button>
+                  </div>
                 )}
               </div>
               </CardContent>
@@ -1115,21 +1365,32 @@ export default function SKUEditorPage() {
                         </button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer flex flex-col items-center justify-center h-48 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary transition-colors">
-                        <svg className="w-12 h-12 text-muted-foreground/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span className="text-sm text-muted-foreground font-medium">Upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) handleImageUpload(key, file)
-                          }}
-                        />
-                      </label>
+                      <div className="space-y-2">
+                        <label className="cursor-pointer flex flex-col items-center justify-center h-36 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary transition-colors">
+                          <svg className="w-12 h-12 text-muted-foreground/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm text-muted-foreground font-medium">Upload File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(key, file)
+                            }}
+                          />
+                        </label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => openFluidDAM(key)}
+                        >
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                          Browse DAM
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1495,9 +1756,34 @@ export default function SKUEditorPage() {
             <div ref={timelineRef}>
               <TimelineLayout brand={brand} sku={sku} />
             </div>
+            <div ref={statementRef}>
+              <StatementLayout brand={brand} sku={sku} />
+          </div>
+            <div ref={beforeAfterRef}>
+              <BeforeAfterLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={problemSolutionRef}>
+              <ProblemSolutionLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={featureGridRef}>
+              <FeatureGridLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={socialProofRef}>
+              <SocialProofLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={ingredientHeroRef}>
+              <IngredientHeroLayout brand={brand} sku={sku} />
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Fluid DAM Browser */}
+      <FluidDAMBrowser
+        open={damBrowserOpen}
+        onClose={() => setDamBrowserOpen(false)}
+        onSelect={handleFluidDAMSelect}
+      />
     </AdminLayout>
   )
 }

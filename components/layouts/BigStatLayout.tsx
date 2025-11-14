@@ -161,7 +161,8 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              zIndex: 5
+              zIndex: 5,
+              padding: '0 10px'
             }}
           >
             <span
@@ -169,10 +170,13 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
                 fontFamily: fonts.family,
                 fontSize: spec.elements.ingredientLabelStyle.fontSize,
                 fontWeight: spec.elements.ingredientLabelStyle.fontWeight,
+                lineHeight: spec.elements.ingredientLabelStyle.height,
                 color: spec.elements.ingredientLabelStyle.color,
                 textAlign: spec.elements.ingredientLabelStyle.textAlign,
                 margin: 0,
-                padding: 0
+                padding: 0,
+                width: '100%',
+                display: 'block'
               }}
             >
               {ingredientLabels[index]}

@@ -1,0 +1,190 @@
+import { Brand } from '@/types/brand'
+import { SKU } from '@/types/sku'
+import { SOCIAL_PROOF_SPEC } from '@/lib/layouts/specs/social-proof-spec'
+import { getFieldColorValue } from '@/lib/color-utils'
+
+interface SocialProofLayoutProps {
+  brand: Brand
+  sku: SKU
+}
+
+export function SocialProofLayout({ brand, sku }: SocialProofLayoutProps) {
+  if (!brand || !sku) return null
+  
+  const spec = SOCIAL_PROOF_SPEC
+  const colors = brand.colors
+  const fonts = brand.fonts
+  
+  const headlineColor = getFieldColorValue(brand, sku, 'socialProof', 'Headline', 'accent')
+  const cardBgColor = getFieldColorValue(brand, sku, 'socialProof', 'Review Cards', 'bgAlt')
+  const starsColor = getFieldColorValue(brand, sku, 'socialProof', 'Stars', 'accent')
+  const quoteColor = getFieldColorValue(brand, sku, 'socialProof', 'Quote Text', 'text')
+  const nameColor = getFieldColorValue(brand, sku, 'socialProof', 'Name', 'textSecondary')
+
+  const reviews = [
+    {
+      stars: sku.copy.socialProof?.review1_rating || '★★★★★',
+      quote: sku.copy.socialProof?.review1_quote || 'Game changer! I feel amazing.',
+      name: sku.copy.socialProof?.review1_name || '- Jessica M.'
+    },
+    {
+      stars: sku.copy.socialProof?.review2_rating || '★★★★★',
+      quote: sku.copy.socialProof?.review2_quote || 'Best purchase I\'ve made all year.',
+      name: sku.copy.socialProof?.review2_name || '- David L.'
+    },
+    {
+      stars: sku.copy.socialProof?.review3_rating || '★★★★★',
+      quote: sku.copy.socialProof?.review3_quote || 'Actually works. No gimmicks.',
+      name: sku.copy.socialProof?.review3_name || '- Sarah K.'
+    }
+  ]
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: `${spec.canvas.width}px`,
+        height: `${spec.canvas.height}px`,
+        backgroundColor: colors.bg,
+        overflow: 'hidden',
+        fontFamily: fonts.family
+      }}
+    >
+      {/* Background */}
+      <div
+        style={{
+          position: 'absolute',
+          top: spec.elements.background.top,
+          left: spec.elements.background.left,
+          width: spec.elements.background.width,
+          height: spec.elements.background.height,
+          backgroundColor: colors.bg,
+          zIndex: spec.elements.background.zIndex
+        }}
+      />
+
+      {/* Headline */}
+      <h1
+        style={{
+          position: 'absolute',
+          top: spec.elements.headline.top,
+          left: spec.elements.headline.left,
+          width: spec.elements.headline.width,
+          fontFamily: fonts.family,
+          fontSize: spec.elements.headline.fontSize,
+          fontWeight: spec.elements.headline.fontWeight,
+          lineHeight: spec.elements.headline.lineHeight,
+          letterSpacing: `${spec.elements.headline.letterSpacing}px`,
+          color: headlineColor,
+          textAlign: spec.elements.headline.textAlign,
+          zIndex: spec.elements.headline.zIndex,
+          margin: 0,
+          padding: 0
+        }}
+      >
+        {sku.copy.socialProof?.headline || 'Real People. Real Results.'}
+      </h1>
+
+      {/* Reviews */}
+      <div
+        style={{
+          position: 'absolute',
+          top: spec.elements.reviewsContainer.top,
+          left: spec.elements.reviewsContainer.left,
+          width: spec.elements.reviewsContainer.width,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: `${spec.elements.reviewsContainer.gap}px`,
+          zIndex: spec.elements.reviewsContainer.zIndex
+        }}
+      >
+        {reviews.map((review, index) => (
+          <div
+            key={index}
+            style={{
+              backgroundColor: cardBgColor,
+              borderRadius: spec.elements.reviewCard.borderRadius,
+              padding: `${spec.elements.reviewCard.padding}px`,
+              marginBottom: `${spec.elements.reviewCard.marginBottom}px`
+            }}
+          >
+            {/* Stars */}
+            <p
+              style={{
+                fontFamily: fonts.family,
+                fontSize: spec.elements.reviewCard.stars.fontSize,
+                color: starsColor,
+                margin: 0,
+                padding: 0,
+                marginBottom: `${spec.elements.reviewCard.stars.marginBottom}px`
+              }}
+            >
+              {review.stars}
+            </p>
+            {/* Quote */}
+            <p
+              style={{
+                fontFamily: fonts.family,
+                fontSize: spec.elements.reviewCard.quote.fontSize,
+                fontWeight: spec.elements.reviewCard.quote.fontWeight,
+                lineHeight: spec.elements.reviewCard.quote.lineHeight,
+                letterSpacing: `${spec.elements.reviewCard.quote.letterSpacing}px`,
+                color: quoteColor,
+                margin: 0,
+                padding: 0,
+                marginBottom: `${spec.elements.reviewCard.quote.marginBottom}px`
+              }}
+            >
+              "{review.quote}"
+            </p>
+            {/* Name */}
+            <p
+              style={{
+                fontFamily: fonts.family,
+                fontSize: spec.elements.reviewCard.name.fontSize,
+                fontWeight: spec.elements.reviewCard.name.fontWeight,
+                lineHeight: spec.elements.reviewCard.name.lineHeight,
+                letterSpacing: `${spec.elements.reviewCard.name.letterSpacing}px`,
+                color: nameColor,
+                margin: 0,
+                padding: 0
+              }}
+            >
+              {review.name}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Product Image */}
+      {sku.images.productPrimary && (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.productImage.top,
+            left: spec.elements.productImage.left,
+            width: spec.elements.productImage.width,
+            height: spec.elements.productImage.height,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: spec.elements.productImage.zIndex
+          }}
+        >
+          <img
+            src={sku.images.productPrimary}
+            alt="Product"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
