@@ -504,7 +504,7 @@ export default function SKUEditorPage() {
     const displayBrand = previewBrand || brand
     const displaySKU = getDisplaySKU(expandedLayout)
     
-    const scale = 0.28
+    const scale = 0.72
     const layoutName = copyFieldsByLayout.find(l => l.layoutKey === expandedLayout)?.layoutName || 'Layout'
     const currentVariation = colorVariations[currentVariationIndex]
     

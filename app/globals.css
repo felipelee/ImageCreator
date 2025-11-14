@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Export mode: Strip all debug borders/outlines/shadows */
+body.exporting *,
+body.exporting *::before,
+body.exporting *::after {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Hide any editor grids during export */
+body.exporting .editor-grid {
+  display: none !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

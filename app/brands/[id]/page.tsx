@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Edit, Plus, Copy, Package } from 'lucide-react'
+import { Edit, Plus, Copy, Package, Download } from 'lucide-react'
 import { brandService, skuService } from '@/lib/supabase'
 import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { FluidProductBrowser } from '@/components/FluidProductBrowser'
 
 export default function BrandDetailPage() {
   const params = useParams()
@@ -22,6 +23,7 @@ export default function BrandDetailPage() {
   const [brand, setBrand] = useState<Brand | null>(null)
   const [skus, setSkus] = useState<SKU[]>([])
   const [loading, setLoading] = useState(true)
+  const [productBrowserOpen, setProductBrowserOpen] = useState(false)
 
   useEffect(() => {
     loadBrandData()
@@ -93,6 +95,38 @@ export default function BrandDetailPage() {
     }
   }
 
+  async function handleProductImport(product: any) {
+    if (!brand) return
+
+    try {
+      // Create SKU from Fluid product
+      const newSKU: Omit<SKU, 'id' | 'createdAt' | 'updatedAt'> = {
+        brandId: brand.id!,
+        name: product.title,
+        productInformation: product.description || `SKU: ${product.sku}\nPrice: ${product.currency || '$'}${product.price}`,
+        copy: {},
+        images: {
+          productPrimary: product.mainImage,
+          // Map additional images if available
+          ...(product.images?.[1]?.url && { productAngle: product.images[1].url }),
+          ...(product.images?.[2]?.url && { productDetail: product.images[2].url }),
+        }
+      }
+      
+      const created = await skuService.create(newSKU)
+      console.log('Created SKU from Fluid product:', created.id)
+      
+      // Reload SKUs to show the new one
+      await loadBrandData()
+      
+      // Navigate to the new SKU
+      router.push(`/brands/${brandId}/skus/${created.id}`)
+    } catch (error) {
+      console.error('Failed to import product:', error)
+      alert('Failed to import product from Fluid')
+    }
+  }
+
   if (loading) {
     return (
       <AdminLayout>
@@ -147,7 +181,7 @@ export default function BrandDetailPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
             <p className="text-muted-foreground">
-              {skus.length} SKU{skus.length !== 1 ? 's' : ''} • {skus.length * 8} layouts available
+              {skus.length} SKU{skus.length !== 1 ? 's' : ''} • {skus.length * 14} layouts available
             </p>
           </div>
           <div className="flex gap-2">
@@ -157,6 +191,10 @@ export default function BrandDetailPage() {
                 Edit DNA
               </Button>
             </Link>
+            <Button onClick={() => setProductBrowserOpen(true)} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Import from Fluid
+            </Button>
             <Button onClick={createNewSKU}>
               <Plus className="mr-2 h-4 w-4" />
               Add SKU
@@ -228,10 +266,16 @@ export default function BrandDetailPage() {
                   Product variations with unique copy and images
                 </CardDescription>
               </div>
-              <Button onClick={createNewSKU} variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Add SKU
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setProductBrowserOpen(true)} variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Import from Fluid
+                </Button>
+                <Button onClick={createNewSKU} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add SKU
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -276,7 +320,7 @@ export default function BrandDetailPage() {
                           <span className="text-muted-foreground">
                             {new Date(sku.createdAt).toLocaleDateString()}
                           </span>
-                          <Badge variant="secondary">8 layouts</Badge>
+                          <Badge variant="secondary">14 layouts</Badge>
                         </div>
                       </CardContent>
                     </Link>
@@ -296,6 +340,14 @@ export default function BrandDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Fluid Product Browser */}
+      <FluidProductBrowser
+        open={productBrowserOpen}
+        onClose={() => setProductBrowserOpen(false)}
+        onSelect={handleProductImport}
+        brandFluidDam={brand?.fluidDam}
+      />
     </AdminLayout>
   )
 }
