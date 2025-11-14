@@ -26,19 +26,24 @@ export async function POST(request: NextRequest) {
     // Build the prompt for AI generation
     const prompt = buildPrompt(brandKnowledge, productInformation, skuName)
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using gpt-4o-mini for cost efficiency, can be changed to gpt-4o
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert copywriter specializing in social media ad content. Your writing style is:
+    // Call OpenAI API with timeout handling
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 50000) // 50 second timeout
+    
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', // Using gpt-4o-mini for cost efficiency, can be changed to gpt-4o
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert copywriter specializing in social media ad content. Your writing style is:
 
 - CONVERSATIONAL & FRIENDLY: Write like you're talking to a close friend, not a corporate robot. Use natural, everyday language.
 - HUMAN & RELATABLE: Avoid corporate jargon, buzzwords, and marketing speak. Be genuine and authentic.
@@ -50,16 +55,19 @@ export async function POST(request: NextRequest) {
 Think: "How would I explain this to my best friend over coffee?" That's your tone.
 
 Always return valid JSON only, no markdown formatting.`
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.9, // Higher temperature for more natural, conversational tone
-        response_format: { type: 'json_object' }
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.9, // Higher temperature for more natural, conversational tone
+          response_format: { type: 'json_object' },
+          max_tokens: 4000 // Limit response size to prevent timeouts
+        })
       })
-    })
+      
+      clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorData = await response.text()
@@ -93,10 +101,21 @@ Always return valid JSON only, no markdown formatting.`
     }
 
     return NextResponse.json({ content: generatedContent })
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId)
+      
+      if (fetchError.name === 'AbortError') {
+        return NextResponse.json(
+          { error: 'Request timed out. The AI is taking too long to respond. Try again or reduce the amount of information in Brand DNA/Product Information.' },
+          { status: 504 }
+        )
+      }
+      throw fetchError // Re-throw to be caught by outer catch
+    }
   } catch (error) {
     console.error('Error generating content:', error)
     return NextResponse.json(
-      { error: `Failed to generate content: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: `Failed to generate content: ${error instanceof Error ? error.message : 'Unknown error'}. If this keeps happening, try simplifying your Brand DNA or Product Information.` },
       { status: 500 }
     )
   }
