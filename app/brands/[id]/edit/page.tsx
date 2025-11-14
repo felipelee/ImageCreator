@@ -116,18 +116,18 @@ export default function BrandEditPage() {
     
     try {
       // Show loading state (use base64 preview while uploading)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        if (!brand) return
-        setBrand({
-          ...brand,
-          images: {
-            ...brand.images,
-            [imageKey]: reader.result as string
-          }
-        })
-      }
-      reader.readAsDataURL(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      if (!brand) return
+      setBrand({
+        ...brand,
+        images: {
+          ...brand.images,
+          [imageKey]: reader.result as string
+        }
+      })
+    }
+    reader.readAsDataURL(file)
 
       // Upload to Supabase Storage
       const path = `brand-${brand.id}/${imageKey}-${Date.now()}`

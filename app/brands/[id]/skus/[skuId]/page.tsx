@@ -288,18 +288,18 @@ export default function SKUEditorPage() {
     
     try {
       // Show loading state (use base64 preview while uploading)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        if (!sku) return
-        setSKU({
-          ...sku,
-          images: {
-            ...sku.images,
-            [imageKey]: reader.result as string
-          }
-        })
-      }
-      reader.readAsDataURL(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      if (!sku) return
+      setSKU({
+        ...sku,
+        images: {
+          ...sku.images,
+          [imageKey]: reader.result as string
+        }
+      })
+    }
+    reader.readAsDataURL(file)
 
       // Upload to Supabase Storage
       const path = `sku-${sku.id}/${imageKey}-${Date.now()}`
