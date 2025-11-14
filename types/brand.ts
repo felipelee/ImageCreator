@@ -66,6 +66,11 @@ export interface Brand {
     brandVoice?: string // Brand's way of talking, tone, style
     information?: string // General brand information, context, background
   }
+  fluidDam?: {
+    apiToken?: string // Brand-specific Fluid DAM API token
+    baseUrl?: string // e.g., https://brandname.fluid.app
+    subdomain?: string // e.g., brandname
+  }
   createdAt: Date
   updatedAt: Date
 }

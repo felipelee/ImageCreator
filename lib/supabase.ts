@@ -19,6 +19,7 @@ export interface DatabaseBrand {
   fonts: Brand['fonts']
   images: Brand['images']
   knowledge?: Brand['knowledge']
+  fluid_dam?: Brand['fluidDam']
   created_at: string
   updated_at: string
 }
@@ -44,6 +45,7 @@ export const dbBrandToBrand = (dbBrand: DatabaseBrand): Brand => ({
   fonts: dbBrand.fonts,
   images: dbBrand.images,
   knowledge: dbBrand.knowledge,
+  fluidDam: dbBrand.fluid_dam,
   createdAt: new Date(dbBrand.created_at),
   updatedAt: new Date(dbBrand.updated_at)
 })
@@ -53,7 +55,8 @@ export const brandToDbBrand = (brand: Brand): Partial<DatabaseBrand> => ({
   colors: brand.colors,
   fonts: brand.fonts,
   images: brand.images,
-  knowledge: brand.knowledge
+  knowledge: brand.knowledge,
+  fluid_dam: brand.fluidDam
 })
 
 export const dbSKUToSKU = (dbSKU: DatabaseSKU): SKU => ({

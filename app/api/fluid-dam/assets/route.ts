@@ -2,26 +2,35 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'edge'
 
-const FLUID_API_TOKEN = process.env.FLUID_API_TOKEN
-const FLUID_API_BASE_URL = process.env.FLUID_API_BASE_URL || 'https://myco.fluid.app'
+// Fallback to global credentials if brand-specific ones aren't provided
+const GLOBAL_FLUID_API_TOKEN = process.env.FLUID_API_TOKEN
+const GLOBAL_FLUID_API_BASE_URL = process.env.FLUID_API_BASE_URL || 'https://myco.fluid.app'
 
 export async function GET(request: NextRequest) {
   try {
-    if (!FLUID_API_TOKEN) {
-      return NextResponse.json(
-        { error: 'Fluid API token not configured' },
-        { status: 500 }
-      )
-    }
-
     const { searchParams } = new URL(request.url)
     const page = searchParams.get('page') || '1'
     const perPage = searchParams.get('per_page') || '50'
     const search = searchParams.get('search') || ''
+    
+    // Get brand-specific credentials from query params (passed from frontend)
+    const brandApiToken = searchParams.get('apiToken')
+    const brandBaseUrl = searchParams.get('baseUrl')
+
+    // Use brand-specific credentials if provided, otherwise fall back to global
+    const apiToken = brandApiToken || GLOBAL_FLUID_API_TOKEN
+    const baseUrl = brandBaseUrl || GLOBAL_FLUID_API_BASE_URL
+
+    if (!apiToken) {
+      return NextResponse.json(
+        { error: 'Fluid API token not configured for this brand' },
+        { status: 500 }
+      )
+    }
 
     // Construct Fluid DAM API URL
     // Based on Fluid docs: GET /api/media for listing assets
-    let apiUrl = `${FLUID_API_BASE_URL}/api/media?page=${page}&per_page=${perPage}`
+    let apiUrl = `${baseUrl}/api/media?page=${page}&per_page=${perPage}`
     if (search) {
       apiUrl += `&q=${encodeURIComponent(search)}`
     }
@@ -29,7 +38,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${FLUID_API_TOKEN}`,
+        'Authorization': `Bearer ${apiToken}`,
         'Content-Type': 'application/json',
       },
     })

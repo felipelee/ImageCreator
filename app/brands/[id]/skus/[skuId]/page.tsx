@@ -1783,6 +1783,7 @@ export default function SKUEditorPage() {
         open={damBrowserOpen}
         onClose={() => setDamBrowserOpen(false)}
         onSelect={handleFluidDAMSelect}
+        brandFluidDam={brand?.fluidDam}
       />
     </AdminLayout>
   )

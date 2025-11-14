@@ -26,9 +26,15 @@ interface FluidDAMBrowserProps {
   onSelect: (assetUrl: string) => void
   title?: string
   enableBackgroundRemoval?: boolean
+  // Brand-specific Fluid DAM credentials
+  brandFluidDam?: {
+    apiToken?: string
+    baseUrl?: string
+    subdomain?: string
+  }
 }
 
-export function FluidDAMBrowser({ open, onClose, onSelect, title = 'Select Image from Fluid DAM', enableBackgroundRemoval = true }: FluidDAMBrowserProps) {
+export function FluidDAMBrowser({ open, onClose, onSelect, title = 'Select Image from Fluid DAM', enableBackgroundRemoval = true, brandFluidDam }: FluidDAMBrowserProps) {
   const [assets, setAssets] = useState<FluidAsset[]>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
@@ -53,6 +59,14 @@ export function FluidDAMBrowser({ open, onClose, onSelect, title = 'Select Image
       
       if (search) {
         params.append('search', search)
+      }
+
+      // Add brand-specific credentials if available
+      if (brandFluidDam?.apiToken) {
+        params.append('apiToken', brandFluidDam.apiToken)
+      }
+      if (brandFluidDam?.baseUrl) {
+        params.append('baseUrl', brandFluidDam.baseUrl)
       }
 
       const response = await fetch(`/api/fluid-dam/assets?${params}`)
