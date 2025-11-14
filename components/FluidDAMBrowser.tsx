@@ -52,6 +52,9 @@ export function FluidDAMBrowser({ open, onClose, onSelect, title = 'Select Image
   async function fetchAssets() {
     setLoading(true)
     try {
+      // Debug: Check if credentials are available
+      console.log('FluidDAM credentials:', brandFluidDam)
+      
       const params = new URLSearchParams({
         page: page.toString(),
         per_page: '24',
@@ -64,11 +67,19 @@ export function FluidDAMBrowser({ open, onClose, onSelect, title = 'Select Image
       // Add brand-specific credentials if available
       if (brandFluidDam?.apiToken) {
         params.append('apiToken', brandFluidDam.apiToken)
+        console.log('✅ Adding brand apiToken to request')
+      } else {
+        console.warn('⚠️ No brand apiToken found - using global fallback')
       }
+      
       if (brandFluidDam?.baseUrl) {
         params.append('baseUrl', brandFluidDam.baseUrl)
+        console.log('✅ Adding brand baseUrl to request')
+      } else {
+        console.warn('⚠️ No brand baseUrl found - using global fallback')
       }
 
+      console.log('Fetching from:', `/api/fluid-dam/assets?${params}`)
       const response = await fetch(`/api/fluid-dam/assets?${params}`)
       
       if (!response.ok) {
