@@ -1,36 +1,154 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 Social Post Generator
 
-## Getting Started
+A powerful tool for creating beautiful, on-brand social media posts with AI-powered content generation. Built with Next.js, Supabase, and Tailwind CSS.
 
-First, run the development server:
+## ✨ Features
 
+- 🎨 **Brand DNA System** - Define colors, fonts, and visual identity
+- 🤖 **AI Content Generation** - Generate compelling copy with OpenAI
+- 📱 **Multiple Layout Templates** - Hero, comparison, testimonials, and more
+- 🖼️ **Export to Images** - Download posts as high-quality images
+- 💾 **Cloud Database** - Store brands and products in Supabase
+- 🌓 **Dark Mode** - Beautiful dark theme support
+- 📊 **Dashboard** - Track your brands and SKUs
+
+## 🚀 Quick Deploy
+
+Want to deploy this in 5 minutes? See **[DEPLOY_WITH_BOLT.md](./DEPLOY_WITH_BOLT.md)** for a complete guide to deploy with Bolt.new + Supabase.
+
+## 🏗️ Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Database**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS + shadcn/ui
+- **AI**: OpenAI API
+- **Export**: html2canvas
+- **State**: Zustand
+- **Type Safety**: TypeScript
+
+## 📋 Prerequisites
+
+- Node.js 18+ 
+- A Supabase account (free tier works great!)
+- OpenAI API key (for content generation)
+
+## 🛠️ Local Development
+
+1. **Clone the repository**:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/YOUR_USERNAME/social-post-generator.git
+cd social-post-generator
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Set up Supabase**:
+   - Create a new project at https://supabase.com
+   - Run the SQL in `supabase-schema.sql` in your SQL Editor
+   - Copy your project URL and anon key
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Configure environment variables**:
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+Edit `.env.local`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. **Run the development server**:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000) in your browser!
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Project Structure
 
-## Deploy on Vercel
+```
+social-post-generator/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes (content generation, etc.)
+│   ├── brands/            # Brand management pages
+│   ├── dashboard/         # Main dashboard
+│   └── layout.tsx         # Root layout
+├── components/            # React components
+│   ├── admin/            # Admin layout components
+│   ├── brands/           # Brand-specific components
+│   ├── layouts/          # Post layout components
+│   ├── skus/             # SKU management components
+│   └── ui/               # shadcn/ui components
+├── lib/                   # Utilities and services
+│   ├── supabase.ts       # Supabase client & services
+│   ├── db.ts             # Dexie (legacy/fallback)
+│   ├── render-engine.ts  # Post rendering engine
+│   └── layouts/          # Layout specifications
+├── types/                 # TypeScript types
+│   ├── brand.ts          # Brand types
+│   └── sku.ts            # SKU types
+└── public/               # Static assets
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎯 How It Works
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Create a Brand** - Define your brand's visual DNA (colors, fonts, images)
+2. **Add SKUs** - Create products/variations under your brand
+3. **Generate Content** - Use AI to create compelling copy or write your own
+4. **Choose Layouts** - Select from 15+ professionally designed layouts
+5. **Export** - Download as images for social media
+
+## 🔒 Database Schema
+
+The app uses two main tables:
+
+### Brands
+- Stores brand identity (colors, fonts, images)
+- Contains brand knowledge for AI generation
+- Parent to SKUs
+
+### SKUs
+- Product variations under a brand
+- Stores copy for all layouts
+- Custom images and overrides
+
+See `supabase-schema.sql` for the complete schema.
+
+## 🎨 Available Layouts
+
+- Hero (Multiple variations)
+- Product Comparison
+- Testimonials
+- Benefits Grid
+- Stats & Big Numbers
+- Timeline/Journey
+- Price Comparison
+- Bottle/Product List
+- Pack Hero
+- Promo Product
+- And more!
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest features
+- Submit pull requests
+
+## 📄 License
+
+MIT License - feel free to use this for your own projects!
+
+## 🙏 Acknowledgments
+
+- Built with [shadcn/ui](https://ui.shadcn.com/)
+- Powered by [Supabase](https://supabase.com)
+- Deployed with [Bolt.new](https://bolt.new)
+
+---
+
+Made with ❤️ for marketers and content creators
