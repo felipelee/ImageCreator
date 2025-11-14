@@ -65,19 +65,38 @@ Always return valid JSON only, no markdown formatting.`
       const errorData = await response.text()
       console.error('OpenAI API error:', errorData)
       return NextResponse.json(
-        { error: `OpenAI API error: ${response.statusText}` },
+        { error: `OpenAI API error: ${response.statusText}. ${errorData}` },
         { status: response.status }
       )
     }
 
     const data = await response.json()
-    const generatedContent = JSON.parse(data.choices[0].message.content)
+    
+    // Check if we got a valid response
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid OpenAI response:', data)
+      return NextResponse.json(
+        { error: 'Invalid response from OpenAI. Please try again.' },
+        { status: 500 }
+      )
+    }
+    
+    let generatedContent
+    try {
+      generatedContent = JSON.parse(data.choices[0].message.content)
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', data.choices[0].message.content)
+      return NextResponse.json(
+        { error: 'Failed to parse AI response. The AI may have returned invalid format. Please try again.' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ content: generatedContent })
   } catch (error) {
     console.error('Error generating content:', error)
     return NextResponse.json(
-      { error: 'Failed to generate content. Please try again.' },
+      { error: `Failed to generate content: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     )
   }
