@@ -2,23 +2,11 @@
   command = "npm run build"
   publish = ".next"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--legacy-peer-deps"
-
-# Redirect rules
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = false
-
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+  
 # Environment variables (set these in Netlify UI)
 # NEXT_PUBLIC_SUPABASE_URL
 # NEXT_PUBLIC_SUPABASE_ANON_KEY
-# OPENAI_API_KEY (if using OpenAI)
-# ANTHROPIC_API_KEY (if using Claude)
 
