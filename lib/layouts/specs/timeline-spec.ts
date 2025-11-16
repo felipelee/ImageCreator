@@ -59,10 +59,10 @@ export const TIMELINE_SPEC = {
     timelineLine: {
       type: 'line' as const,
       position: 'absolute' as const,
-      top: 351,
+      top: 322,
       left: 573.67,
       width: 2,
-      height: 439,
+      height: 296,
       backgroundColor: 'rgb(255, 255, 255)',
       transform: 'translateX(-50%)',
       zIndex: 1

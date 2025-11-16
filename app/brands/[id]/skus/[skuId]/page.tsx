@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Save, Eye, Sparkles, Package, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, X, Download, Loader2 } from 'lucide-react'
+import { Save, Eye, Sparkles, Package, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, X, Download, Loader2, Edit3, Move, Upload, Layers } from 'lucide-react'
+import { toast } from 'sonner'
 import { brandService, skuService } from '@/lib/supabase'
 import { uploadImage, STORAGE_BUCKETS } from '@/lib/supabase-storage'
 import { Brand } from '@/types/brand'
@@ -20,23 +21,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerClose } from '@/components/ui/drawer'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { ComparisonLayout } from '@/components/layouts/ComparisonLayout'
 import { TestimonialLayout } from '@/components/layouts/TestimonialLayout'
-import { BenefitsLayout } from '@/components/layouts/BenefitsLayout'
 import { BigStatLayout } from '@/components/layouts/BigStatLayout'
 import { MultiStatsLayout} from '@/components/layouts/MultiStatsLayout'
 import { PromoProductLayout } from '@/components/layouts/PromoProductLayout'
 import { BottleListLayout } from '@/components/layouts/BottleListLayout'
 import { TimelineLayout } from '@/components/layouts/TimelineLayout'
-import { StatementLayout } from '@/components/layouts/StatementLayout'
 import { BeforeAfterLayout } from '@/components/layouts/BeforeAfterLayout'
-import { ProblemSolutionLayout } from '@/components/layouts/ProblemSolutionLayout'
 import { FeatureGridLayout } from '@/components/layouts/FeatureGridLayout'
 import { SocialProofLayout } from '@/components/layouts/SocialProofLayout'
-import { IngredientHeroLayout } from '@/components/layouts/IngredientHeroLayout'
 import { generateColorVariations, applyColorVariation, ColorVariation } from '@/lib/color-variations'
 import { renderLayout } from '@/lib/render-engine'
 import { FluidDAMBrowser } from '@/components/FluidDAMBrowser'
+import { ComparisonLayoutEditable } from '@/components/layouts/ComparisonLayoutEditable'
+import { TestimonialLayoutEditable } from '@/components/layouts/TestimonialLayoutEditable'
+import { BigStatLayoutEditable } from '@/components/layouts/BigStatLayoutEditable'
+import { MultiStatsLayoutEditable } from '@/components/layouts/MultiStatsLayoutEditable'
+import { PromoProductLayoutEditable } from '@/components/layouts/PromoProductLayoutEditable'
+import { BottleListLayoutEditable } from '@/components/layouts/BottleListLayoutEditable'
+import { TimelineLayoutEditable } from '@/components/layouts/TimelineLayoutEditable'
+import { BeforeAfterLayoutEditable } from '@/components/layouts/BeforeAfterLayoutEditable'
+import { FeatureGridLayoutEditable } from '@/components/layouts/FeatureGridLayoutEditable'
+import { SocialProofLayoutEditable } from '@/components/layouts/SocialProofLayoutEditable'
+import { VisualEditorModal } from '@/components/layout-editor/VisualEditorModal'
+import { BenefitIconPicker } from '@/components/layout-editor/BenefitIconPicker'
+import { PushToFluidModal, LayoutOption, FluidDestination } from '@/components/PushToFluidModal'
+import { CustomElement as CustomElementType, CustomElementType as ElementType } from '@/types/custom-element'
+import { getLayoutElements } from '@/lib/layout-element-definitions'
 import JSZip from 'jszip'
 
 export default function SKUEditorPage() {
@@ -50,35 +63,56 @@ export default function SKUEditorPage() {
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState<'copy' | 'images'>('copy')
-  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'benefits' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'statement' | 'beforeAfter' | 'problemSolution' | 'featureGrid' | 'socialProof' | 'ingredientHero' | null>(null)
+  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof' | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [colorVariations, setColorVariations] = useState<ColorVariation[]>([])
   const [currentVariationIndex, setCurrentVariationIndex] = useState<number>(0)
   const [previewBrand, setPreviewBrand] = useState<Brand | null>(null)
   const [rendering, setRendering] = useState(false)
   const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpg' | 'webp'>('png')
+  const [uploadFormat, setUploadFormat] = useState<'png' | 'jpg' | 'webp'>('webp')
   const [damBrowserOpen, setDamBrowserOpen] = useState(false)
   const [damImageField, setDamImageField] = useState<string | null>(null)
+  const [uploadingToFluid, setUploadingToFluid] = useState(false)
+  const [pushToFluidModalOpen, setPushToFluidModalOpen] = useState(false)
+  const [layoutPreviews, setLayoutPreviews] = useState<Record<string, string>>({})
+  const [generatingPreviews, setGeneratingPreviews] = useState(false)
+  const [fluidDestination, setFluidDestination] = useState<FluidDestination>('product_images')
+  
+  // Visual editor state
+  const [visualEditorOpen, setVisualEditorOpen] = useState(false)
+  const [selectedElement, setSelectedElement] = useState<string | null>(null)
+  const [visualEditorChanges, setVisualEditorChanges] = useState(false)
 
   // Refs for downloading
   const compareRef = useRef<HTMLDivElement>(null)
   const testimonialRef = useRef<HTMLDivElement>(null)
-  const benefitsRef = useRef<HTMLDivElement>(null)
   const bigStatRef = useRef<HTMLDivElement>(null)
   const multiStatsRef = useRef<HTMLDivElement>(null)
   const promoProductRef = useRef<HTMLDivElement>(null)
   const bottleListRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const statementRef = useRef<HTMLDivElement>(null)
   const beforeAfterRef = useRef<HTMLDivElement>(null)
-  const problemSolutionRef = useRef<HTMLDivElement>(null)
   const featureGridRef = useRef<HTMLDivElement>(null)
   const socialProofRef = useRef<HTMLDivElement>(null)
-  const ingredientHeroRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadData()
   }, [brandId, skuId])
+
+  // Debug: Log button visibility conditions
+  useEffect(() => {
+    if (brand && sku) {
+      console.log('[Push to Fluid Debug]', {
+        hasFluidMetadata: !!sku.fluidMetadata,
+        productId: sku.fluidMetadata?.productId,
+        hasBrandToken: !!brand.fluidDam?.apiToken,
+        brandToken: brand.fluidDam?.apiToken ? '***exists***' : 'missing',
+        baseUrl: brand.fluidDam?.baseUrl,
+        buttonShouldShow: !!(sku.fluidMetadata?.productId && brand.fluidDam?.apiToken)
+      })
+    }
+  }, [brand, sku])
 
   // Update preview brand when brand changes (but keep variations if active)
   useEffect(() => {
@@ -154,10 +188,10 @@ export default function SKUEditorPage() {
         skuService.update(sku.id!, sku),
         brandService.update(brand.id!, brand)
       ])
-      alert('Saved successfully!')
+      toast.success('Saved successfully!')
     } catch (error) {
       console.error('Failed to save:', error)
-      alert('Failed to save')
+      toast.error('Failed to save. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -217,13 +251,13 @@ export default function SKUEditorPage() {
 
   async function generateWithAI() {
     if (!sku || !brand) {
-      alert('Please ensure both brand and SKU data are loaded.')
+      toast.error('Please ensure both brand and SKU data are loaded.')
       return
     }
 
     // Check if we have the necessary information
     if (!brand.knowledge?.brandVoice && !brand.knowledge?.information && !sku.productInformation) {
-      alert('Please fill in at least one of the following:\n- Brand Voice (in Brand DNA)\n- Brand Information (in Brand DNA)\n- Product Information (above)')
+      toast.error('Please fill in Brand Knowledge or Product Information to enable AI generation.')
       return
     }
 
@@ -260,10 +294,10 @@ export default function SKUEditorPage() {
         }
       })
 
-      alert('Content generated successfully! Review and adjust as needed.')
+      toast.success('Content generated successfully! Review and adjust as needed.')
     } catch (error: any) {
       console.error('Error generating content:', error)
-      alert(`Failed to generate content: ${error.message || 'Unknown error'}\n\nMake sure OPENAI_API_KEY is set in your environment variables.`)
+      toast.error(`Failed to generate content. Make sure OPENAI_API_KEY is set in your environment variables.`)
     } finally {
       setGenerating(false)
     }
@@ -317,7 +351,7 @@ export default function SKUEditorPage() {
       console.log('Image uploaded to cloud:', publicUrl)
     } catch (error) {
       console.error('Failed to upload image:', error)
-      alert('Failed to upload image. Using local preview.')
+      toast.error('Failed to upload image. Using local preview.')
       // Fallback to base64 if upload fails
     }
   }
@@ -342,24 +376,355 @@ export default function SKUEditorPage() {
     setDamImageField(null)
   }
 
+  // Visual editor handlers
+  function handleVisualPositionChange(elementKey: string, position: { x: number; y: number }) {
+    if (!expandedLayout || !sku) return
+    
+    setVisualEditorChanges(true)
+    
+    // Check if it's a custom element
+    if (elementKey.startsWith('custom-')) {
+      const customElements = sku.customElements || {}
+      const layoutElements = customElements[expandedLayout] || []
+      const updatedElements = layoutElements.map(el =>
+        el.id === elementKey ? { ...el, x: position.x, y: position.y } : el
+      )
+      
+      setSKU({
+        ...sku,
+        customElements: {
+          ...customElements,
+          [expandedLayout]: updatedElements
+        }
+      })
+    } else {
+      // Regular element
+      const currentOverrides = sku.positionOverrides || {}
+      const layoutOverrides = currentOverrides[expandedLayout] || {}
+      const elementOverride = layoutOverrides[elementKey] || {}
+      
+      setSKU({
+        ...sku,
+        positionOverrides: {
+          ...currentOverrides,
+          [expandedLayout]: {
+            ...layoutOverrides,
+            [elementKey]: {
+              ...elementOverride,
+              x: position.x,
+              y: position.y
+            }
+          }
+        }
+      })
+    }
+  }
+
+  function handleVisualSizeChange(elementKey: string, size: { width: number; height: number }) {
+    if (!expandedLayout || !sku || !size) {
+      console.log('[handleVisualSizeChange] Missing params:', { expandedLayout, sku: !!sku, size })
+      return
+    }
+    
+    setVisualEditorChanges(true)
+    
+    // Check if it's a custom element
+    if (elementKey.startsWith('custom-')) {
+      const customElements = sku.customElements || {}
+      const layoutElements = customElements[expandedLayout] || []
+      const updatedElements = layoutElements.map(el =>
+        el.id === elementKey ? { ...el, width: size.width, height: size.height } : el
+      )
+      
+      setSKU({
+        ...sku,
+        customElements: {
+          ...customElements,
+          [expandedLayout]: updatedElements
+        }
+      })
+    } else {
+      // Regular element
+      const currentOverrides = sku.positionOverrides || {}
+      const layoutOverrides = currentOverrides[expandedLayout] || {}
+      const elementOverride = layoutOverrides[elementKey] || {}
+      
+      console.log('[handleVisualSizeChange] Updating:', { elementKey, size, elementOverride })
+      
+      setSKU({
+        ...sku,
+        positionOverrides: {
+          ...currentOverrides,
+          [expandedLayout]: {
+            ...layoutOverrides,
+            [elementKey]: {
+              ...elementOverride,
+              width: size.width,
+              height: size.height
+            }
+          }
+        }
+      })
+    }
+  }
+
+  function handleVisualRotationChange(elementKey: string, rotation: number) {
+    if (!expandedLayout || !sku) return
+    
+    setVisualEditorChanges(true)
+    
+    // Check if it's a custom element
+    if (elementKey.startsWith('custom-')) {
+      const customElements = sku.customElements || {}
+      const layoutElements = customElements[expandedLayout] || []
+      const updatedElements = layoutElements.map(el =>
+        el.id === elementKey ? { ...el, rotation } : el
+      )
+      
+      setSKU({
+        ...sku,
+        customElements: {
+          ...customElements,
+          [expandedLayout]: updatedElements
+        }
+      })
+    } else {
+      // Regular element
+      const currentOverrides = sku.positionOverrides || {}
+      const layoutOverrides = currentOverrides[expandedLayout] || {}
+      const elementOverride = layoutOverrides[elementKey] || {}
+      
+      setSKU({
+        ...sku,
+        positionOverrides: {
+          ...currentOverrides,
+          [expandedLayout]: {
+            ...layoutOverrides,
+            [elementKey]: {
+              ...elementOverride,
+              rotation
+            }
+          }
+        }
+      })
+    }
+  }
+
+  function handleBenefitIconChange(benefitKey: string, icon: string) {
+    if (!sku || !expandedLayout) return
+    
+    setVisualEditorChanges(true)
+    
+    // Update the icon in the SKU copy data
+    const iconField = `${benefitKey}_icon`
+    setSKU({
+      ...sku,
+      copy: {
+        ...sku.copy,
+        bottle: {
+          ...sku.copy.bottle,
+          [iconField]: icon
+        }
+      }
+    })
+  }
+
+  function handleVisualEditorSave() {
+    handleSave()
+    setVisualEditorChanges(false)
+  }
+
+  function handleVisualEditorCancel() {
+    // Reload data to discard changes
+    loadData()
+    setVisualEditorChanges(false)
+    setSelectedElement(null)
+  }
+
+  function handleLayerReorder(newOrder: any[]) {
+    if (!expandedLayout || !sku) return
+    
+    setVisualEditorChanges(true)
+    
+    // Update z-index for each element based on new order
+    // Use high base number (100) to override spec defaults
+    const currentOverrides = sku.positionOverrides || {}
+    const layoutOverrides = currentOverrides[expandedLayout] || {}
+    const updatedLayoutOverrides = { ...layoutOverrides }
+    
+    newOrder.forEach((layer, index) => {
+      const elementOverride = layoutOverrides[layer.key] || {}
+      const newZIndex = (index + 1) * 10 // Spacing of 10 between each layer for flexibility
+      
+      updatedLayoutOverrides[layer.key] = {
+        ...elementOverride,
+        // Ensure we have at least x and y so the override is valid
+        x: elementOverride.x ?? 0,
+        y: elementOverride.y ?? 0,
+        zIndex: newZIndex
+      }
+    })
+    
+    setSKU({
+      ...sku,
+      positionOverrides: {
+        ...currentOverrides,
+        [expandedLayout]: updatedLayoutOverrides
+      }
+    })
+    
+    console.log('[Layer Reorder] Updated z-indexes:', newOrder.map((l, i) => `${l.key}: ${(i + 1) * 10}`))
+  }
+
+  function handleAddElement(type: ElementType) {
+    if (!expandedLayout || !sku) return
+    
+    setVisualEditorChanges(true)
+    
+    // Generate unique ID
+    const timestamp = Date.now()
+    const elementId = `custom-${type}-${timestamp}`
+    
+    // Create new custom element
+    const newElement: CustomElementType = {
+      id: elementId,
+      type,
+      label: `Custom ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      x: 540, // Center of canvas
+      y: 540,
+      width: type === 'badge' ? 200 : type === 'text' ? 400 : 200,
+      height: type === 'badge' ? 56 : type === 'text' ? 80 : 200,
+      zIndex: 100, // High z-index to appear on top
+      content: {
+        text: type === 'text' || type === 'badge' ? 'Edit me' : undefined,
+        colorKey: 'primary'
+      },
+      style: {
+        fontSize: type === 'text' ? 48 : 22,
+        fontWeight: 700,
+        padding: type === 'badge' ? 14 : 0,
+        borderRadius: type === 'badge' ? 28 : type === 'shape' ? 8 : 0,
+        backgroundColor: type === 'badge' || type === 'shape' ? 'primarySoft' : undefined,
+        textColor: type === 'text' || type === 'badge' ? 'primary' : undefined,
+        objectFit: 'contain'
+      },
+      createdAt: new Date().toISOString()
+    }
+    
+    // Add to SKU custom elements
+    const currentElements = sku.customElements || {}
+    const layoutElements = currentElements[expandedLayout] || []
+    
+    setSKU({
+      ...sku,
+      customElements: {
+        ...currentElements,
+        [expandedLayout]: [...layoutElements, newElement]
+      }
+    })
+    
+    // Auto-select the new element
+    setSelectedElement(elementId)
+    
+    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} element added!`, {
+      description: 'Configure it in the right sidebar'
+    })
+    
+    console.log('[Add Element] Created:', newElement)
+  }
+
+  function handleUpdateCustomElement(elementId: string, updates: Partial<CustomElementType>) {
+    if (!expandedLayout || !sku) return
+    
+    setVisualEditorChanges(true)
+    
+    const customElements = sku.customElements || {}
+    const layoutElements = customElements[expandedLayout] || []
+    const updatedElements = layoutElements.map(el =>
+      el.id === elementId ? { ...el, ...updates } : el
+    )
+    
+    setSKU({
+      ...sku,
+      customElements: {
+        ...customElements,
+        [expandedLayout]: updatedElements
+      }
+    })
+    
+    console.log('[Update Custom Element]:', elementId, updates)
+  }
+
+  function handleDeleteCustomElement(elementId: string) {
+    if (!expandedLayout || !sku) return
+    
+    setVisualEditorChanges(true)
+    
+    const customElements = sku.customElements || {}
+    const layoutElements = customElements[expandedLayout] || []
+    const filteredElements = layoutElements.filter(el => el.id !== elementId)
+    
+    setSKU({
+      ...sku,
+      customElements: {
+        ...customElements,
+        [expandedLayout]: filteredElements
+      }
+    })
+    
+    toast.success('Element deleted')
+    console.log('[Delete Custom Element]:', elementId)
+  }
+
+  function handleChangeBackgroundColor(colorKey: string) {
+    if (!brand) return
+    setVisualEditorChanges(true)
+    
+    // Update brand background color
+    setBrand({
+      ...brand,
+      colors: {
+        ...brand.colors,
+        bg: brand.colors[colorKey as keyof typeof brand.colors] || brand.colors.bg
+      }
+    })
+    
+    console.log('[Background Color Changed]:', colorKey)
+  }
+
+  function handleChangeBackgroundImage(imageKey: string | undefined) {
+    if (!expandedLayout || !sku) return
+    setVisualEditorChanges(true)
+    
+    // Store background image choice in image overrides
+    if (imageKey) {
+      updateFieldImageMapping(expandedLayout, 'Background Image', imageKey)
+    } else {
+      // Remove background image
+      const updated = { ...sku.imageOverrides }
+      if (updated[expandedLayout]) {
+        delete updated[expandedLayout]['Background Image']
+      }
+      setSKU({ ...sku, imageOverrides: updated })
+    }
+    
+    console.log('[Background Image Changed]:', imageKey)
+  }
+
   async function downloadAll() {
     if (!brand || !sku) return
 
     const layouts = [
       { name: 'Comparison', type: 'comparison', ref: compareRef },
       { name: 'Testimonial', type: 'testimonial', ref: testimonialRef },
-      { name: 'Benefits', type: 'benefits', ref: benefitsRef },
       { name: 'BigStat', type: 'bigStat', ref: bigStatRef },
       { name: 'MultiStats', type: 'multiStats', ref: multiStatsRef },
       { name: 'PromoProduct', type: 'promoProduct', ref: promoProductRef },
       { name: 'BottleList', type: 'bottleList', ref: bottleListRef },
       { name: 'Timeline', type: 'timeline', ref: timelineRef },
-      { name: 'Statement', type: 'statement', ref: statementRef },
       { name: 'BeforeAfter', type: 'beforeAfter', ref: beforeAfterRef },
-      { name: 'ProblemSolution', type: 'problemSolution', ref: problemSolutionRef },
       { name: 'FeatureGrid', type: 'featureGrid', ref: featureGridRef },
-      { name: 'SocialProof', type: 'socialProof', ref: socialProofRef },
-      { name: 'IngredientHero', type: 'ingredientHero', ref: ingredientHeroRef }
+      { name: 'SocialProof', type: 'socialProof', ref: socialProofRef }
     ]
 
     setRendering(true)
@@ -419,18 +784,421 @@ export default function SKUEditorPage() {
         a.click()
         URL.revokeObjectURL(url)
         
-      alert(`Downloaded ${successCount} of ${layouts.length} layouts as ZIP file!`)
+      toast.success(`Downloaded ${successCount} of ${layouts.length} layouts!`, {
+        description: 'ZIP file saved to your downloads folder'
+      })
     } catch (error) {
       console.error('Failed to download all:', error)
-      alert(`Failed to download layouts: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      toast.error('Failed to download layouts', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      })
     } finally {
       setRendering(false)
     }
   }
 
+  function getAvailableLayouts(): LayoutOption[] {
+    return [
+      { id: 'comparison', name: 'Comparison', displayName: 'Comparison: Ours vs Theirs', ref: compareRef },
+      { id: 'testimonial', name: 'Testimonial', displayName: 'Testimonial: Photo + Quote', ref: testimonialRef },
+      { id: 'bigStat', name: 'Big_Stat', displayName: 'Big Stat: Large Percentage', ref: bigStatRef },
+      { id: 'multiStats', name: 'Multi_Stats', displayName: 'Multi Stats: 3 Statistics', ref: multiStatsRef },
+      { id: 'promoProduct', name: 'Promo_Product', displayName: 'Promo Product', ref: promoProductRef },
+      { id: 'bottleList', name: 'Bottle_List', displayName: 'Bottle List', ref: bottleListRef },
+      { id: 'timeline', name: 'Timeline', displayName: 'Timeline', ref: timelineRef },
+      { id: 'beforeAfter', name: 'Before_After', displayName: 'Before/After', ref: beforeAfterRef },
+      { id: 'featureGrid', name: 'Feature_Grid', displayName: 'Feature Grid', ref: featureGridRef },
+      { id: 'socialProof', name: 'Social_Proof', displayName: 'Social Proof', ref: socialProofRef },
+    ]
+  }
+
+  async function uploadSingleLayoutToFluid(destination: 'product' | 'media' | 'both') {
+    if (!expandedLayout || !brand || !sku) return
+    
+    const layoutRef = {
+      compare: compareRef,
+      testimonial: testimonialRef,
+      bigStat: bigStatRef,
+      multiStats: multiStatsRef,
+      promoProduct: promoProductRef,
+      bottleList: bottleListRef,
+      timeline: timelineRef,
+      beforeAfter: beforeAfterRef,
+      featureGrid: featureGridRef,
+      socialProof: socialProofRef
+    }[expandedLayout]
+    
+    if (!layoutRef?.current) {
+      toast.error('Layout not ready for upload')
+      return
+    }
+    
+    setUploadingToFluid(true)
+    
+    try {
+      const layoutName = copyFieldsByLayout.find(l => l.layoutKey === expandedLayout)?.layoutName || expandedLayout
+      
+      const destinationText = destination === 'product' 
+        ? 'Product Images' 
+        : destination === 'media' 
+          ? 'Media Library' 
+          : 'Product Images & Media Library'
+      
+      toast.info(`Uploading to ${destinationText}...`, {
+        description: `Processing ${layoutName}`
+      })
+
+      // Render the layout to a blob at high quality
+      // Now sending actual files to Fluid (not base64), so we can use high quality!
+      const { renderLayoutFromElement } = await import('@/lib/render-engine')
+      const blob = await renderLayoutFromElement(layoutRef.current, {
+        scale: 2,
+        format: uploadFormat,
+        quality: uploadFormat === 'jpg' ? 0.95 : uploadFormat === 'webp' ? 0.9 : undefined
+      })
+      
+      // Create a File from the blob
+      const mimeType = uploadFormat === 'png' ? 'image/png' : uploadFormat === 'jpg' ? 'image/jpeg' : 'image/webp'
+      const filename = `${brand.name}_${sku.name}_${layoutName}.${uploadFormat}`
+      const file = new File([blob], filename, { type: mimeType })
+      
+      // Handle different destinations
+      const uploads = []
+      
+      if (destination === 'product' || destination === 'both') {
+        // Upload to Fluid Product Images
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('title', `${sku.name} - ${layoutName}`)
+        formData.append('description', `${sku.name} - ${layoutName}`)
+        formData.append('apiToken', brand.fluidDam!.apiToken!)
+        formData.append('baseUrl', brand.fluidDam!.baseUrl!)
+        formData.append('productId', String(sku.fluidMetadata!.productId))
+        formData.append('position', '1')
+        formData.append('uploadType', 'product_image')
+        
+        uploads.push(
+          fetch('/api/fluid-dam/upload', {
+            method: 'POST',
+            body: formData
+          })
+        )
+      }
+      
+      if (destination === 'media' || destination === 'both') {
+        // Generate AI title and description for Media Library
+        let title = `${sku.name} - ${layoutName}`
+        let description = title
+        
+        try {
+          const metadataResponse = await fetch('/api/generate-media-metadata', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              layoutName: expandedLayout,
+              layoutDisplayName: layoutName,
+              skuName: sku.name,
+              productInfo: sku.productInformation
+            })
+          })
+          
+          if (metadataResponse.ok) {
+            const metadata = await metadataResponse.json()
+            title = metadata.title
+            description = metadata.description
+            console.log('[Upload] Using AI-generated title:', title)
+          } else {
+            console.warn('[Upload] AI metadata generation failed, using default title')
+          }
+        } catch (error) {
+          console.warn('[Upload] AI metadata generation unavailable (OpenAI API key not configured?), using default title')
+        }
+        
+        // Upload to Fluid Company Media - send file directly
+        const formData = new FormData()
+        formData.append('file', file) // Send the actual file
+        formData.append('title', title)
+        formData.append('description', description)
+        formData.append('apiToken', brand.fluidDam!.apiToken!)
+        formData.append('baseUrl', brand.fluidDam!.baseUrl!)
+        formData.append('uploadType', 'company_media')
+        
+        uploads.push(
+          fetch('/api/fluid-dam/upload', {
+            method: 'POST',
+            body: formData
+          })
+        )
+      }
+      
+      // Execute all uploads
+      const responses = await Promise.all(uploads)
+      
+      // Check for errors
+      for (const response of responses) {
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error('[Upload] Fluid API error:', errorData)
+          
+          // Extract error message from various possible formats
+          let errorMessage = 'Upload failed'
+          if (errorData.error) {
+            errorMessage = errorData.error
+          } else if (errorData.details) {
+            try {
+              const details = JSON.parse(errorData.details)
+              if (details.medium) {
+                errorMessage = `Fluid API error: ${JSON.stringify(details.medium)}`
+              }
+            } catch (e) {
+              errorMessage = errorData.details
+            }
+          }
+          
+          throw new Error(errorMessage)
+        }
+      }
+      
+      toast.success(`Uploaded to ${destinationText}!`, {
+        description: layoutName
+      })
+    } catch (error) {
+      console.error('[Upload] Upload failed:', error)
+      toast.error('Failed to upload to Fluid', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      })
+    } finally {
+      setUploadingToFluid(false)
+    }
+  }
+
+  async function uploadToFluid(selectedLayoutIds: string[], destination: FluidDestination) {
+    if (!brand || !sku) return
+    
+    setUploadingToFluid(true)
+    setPushToFluidModalOpen(false) // Close modal
+    
+    try {
+      const allLayouts = getAvailableLayouts()
+      const layouts = allLayouts.filter(l => selectedLayoutIds.includes(l.id))
+      
+      let successCount = 0
+      let failCount = 0
+      
+      // Handle "both" destination
+      const destinations: ('product_images' | 'company_media')[] = 
+        destination === 'both' 
+          ? ['product_images', 'company_media'] 
+          : [destination as 'product_images' | 'company_media']
+      
+      const targetName = destination === 'both' 
+        ? 'Product Images & Media Library'
+        : destination === 'company_media' 
+          ? 'Media Library' 
+          : 'Product Images'
+          
+      toast.info(`Uploading to Fluid ${targetName}...`, {
+        description: `Processing ${layouts.length} layout${layouts.length > 1 ? 's' : ''}`
+      })
+
+      for (const layout of layouts) {
+        try {
+          console.log(`[Upload ${successCount + 1}/${layouts.length * destinations.length}] Processing ${layout.name}...`)
+          
+          if (!layout.ref.current) {
+            console.warn(`${layout.name} ref not available, skipping`)
+            continue
+          }
+
+          // Render the layout to a blob (once per layout)
+          const { renderLayoutFromElement } = await import('@/lib/render-engine')
+          const blob = await renderLayoutFromElement(layout.ref.current, {
+            scale: 2,
+            format: 'png',
+            quality: 0.95
+          })
+          
+          console.log(`[Upload] ${layout.name} rendered, size: ${blob.size} bytes`)
+          
+          // Upload to each destination
+          for (const dest of destinations) {
+            try {
+              // Create a File from the blob
+              const filename = `${brand.name}_${sku.name}_${layout.name}.png`
+              const file = new File([blob], filename, { type: 'image/png' })
+              
+              // For Company Media, generate AI title and description
+              let title = `${sku.name} - ${layout.name}`
+              let description = title
+              
+              if (dest === 'company_media') {
+                try {
+                  console.log(`[Upload] Generating AI metadata for ${layout.name}...`)
+                  const metadataResponse = await fetch('/api/generate-media-metadata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      layoutName: layout.name,
+                      layoutDisplayName: layout.displayName,
+                      skuName: sku.name,
+                      productInfo: sku.productInformation
+                    })
+                  })
+                  
+                  if (metadataResponse.ok) {
+                    const metadata = await metadataResponse.json()
+                    title = metadata.title
+                    description = metadata.description
+                    console.log(`[Upload] AI generated: "${title}"`)
+                  }
+                } catch (error) {
+                  console.warn(`[Upload] Failed to generate AI metadata, using default:`, error)
+                }
+              }
+              
+              // Upload to Fluid
+              const formData = new FormData()
+              formData.append('file', file)
+              formData.append('title', title)
+              formData.append('description', description)
+              formData.append('apiToken', brand.fluidDam!.apiToken!)
+              formData.append('baseUrl', brand.fluidDam!.baseUrl!)
+              
+              if (dest === 'company_media') {
+                formData.append('uploadType', 'company_media')
+                console.log(`[Upload] Uploading to Company Media: "${title}"`)
+              } else {
+                formData.append('productId', String(sku.fluidMetadata!.productId))
+                formData.append('position', String(successCount + 1))
+                formData.append('uploadType', 'product_image')
+                console.log(`[Upload] Uploading to product ${sku.fluidMetadata!.productId} images`)
+              }
+              
+              console.log(`[Upload] Sending to /api/fluid-dam/upload...`)
+              const response = await fetch('/api/fluid-dam/upload', {
+                method: 'POST',
+                body: formData
+              })
+              
+              console.log(`[Upload] Response status: ${response.status}`)
+              
+              if (!response.ok) {
+                const error = await response.json()
+                console.error(`[Upload] Failed to upload ${layout.name} to ${dest}:`, error)
+                failCount++
+                continue
+              }
+              
+              const result = await response.json()
+              console.log(`[Upload] ✅ Success for ${layout.name} to ${dest}:`, result)
+              successCount++
+            } catch (error) {
+              console.error(`[Upload] ❌ Error uploading ${layout.name} to ${dest}:`, error)
+              failCount++
+            }
+          }
+        } catch (error) {
+          console.error(`[Upload] ❌ Error processing ${layout.name}:`, error)
+          failCount++
+        }
+      }
+      
+      if (successCount > 0) {
+        toast.success(`Uploaded ${successCount} image${successCount > 1 ? 's' : ''} to Fluid!`, {
+          description: failCount > 0 
+            ? `${failCount} upload${failCount > 1 ? 's' : ''} failed. Check console for details.`
+            : destination === 'both'
+              ? 'Images added to both destinations'
+              : `Images added to ${destination === 'company_media' ? 'Media Library' : sku.fluidMetadata!.productTitle || 'product'}`
+        })
+      } else {
+        toast.error('Upload failed', {
+          description: 'No images were successfully uploaded. Check console for details.'
+        })
+      }
+    } catch (error) {
+      console.error('Failed to upload to Fluid:', error)
+      toast.error('Upload failed', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      })
+    } finally {
+      setUploadingToFluid(false)
+    }
+  }
+
+  async function generateLayoutPreviews() {
+    if (!brand || !sku) return
+
+    setGeneratingPreviews(true)
+    const previews: Record<string, string> = {}
+    
+    try {
+      const layouts = getAvailableLayouts()
+      
+      for (const layout of layouts) {
+        if (layout.ref.current) {
+          try {
+            const { renderLayoutFromElement } = await import('@/lib/render-engine')
+            const blob = await renderLayoutFromElement(layout.ref.current, {
+              scale: 0.5, // Lower scale for previews (faster)
+              format: 'jpg',
+              quality: 0.7
+            })
+            
+            // Convert blob to data URL for preview
+            const dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader()
+              reader.onloadend = () => resolve(reader.result as string)
+              reader.readAsDataURL(blob)
+            })
+            
+            previews[layout.id] = dataUrl
+          } catch (error) {
+            console.warn(`Failed to generate preview for ${layout.name}:`, error)
+          }
+        }
+      }
+      
+      setLayoutPreviews(previews)
+    } catch (error) {
+      console.error('Failed to generate previews:', error)
+    } finally {
+      setGeneratingPreviews(false)
+    }
+  }
+
+  async function handlePushToFluidClick(destination: FluidDestination) {
+    if (!brand || !sku) return
+    
+    // Check if Fluid credentials are configured
+    if (!brand.fluidDam?.apiToken || !brand.fluidDam?.baseUrl) {
+      toast.error('Fluid not configured', {
+        description: 'Please configure Fluid DAM credentials in brand settings first.'
+      })
+      return
+    }
+    
+    // Check if we have Fluid product metadata (only for product_images destination)
+    if (destination === 'product_images' && !sku.fluidMetadata?.productId) {
+      toast.error('No Fluid product linked', {
+        description: 'This SKU was not imported from Fluid. Please link it to a Fluid product first.'
+      })
+      return
+    }
+
+    // Set destination and open the selection modal
+    setFluidDestination(destination)
+    setPushToFluidModalOpen(true)
+    
+    // Generate previews in the background
+    if (Object.keys(layoutPreviews).length === 0) {
+      generateLayoutPreviews()
+    }
+  }
+
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout currentBrandId={brandId}>
         <PageHeader breadcrumbs={[{ label: 'All Brands', href: '/' }, { label: 'Loading...' }]} />
         <div className="flex-1 p-6 space-y-6">
           <Skeleton className="h-10 w-64" />
@@ -548,6 +1316,17 @@ export default function SKUEditorPage() {
                   </>
                 )}
                 <Badge variant="secondary" className="text-xs">Real-time</Badge>
+                {/* Edit Layout Button */}
+                <Button
+                  onClick={() => setVisualEditorOpen(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7"
+                  title="Edit layout"
+                >
+                  <Edit3 className="h-3 w-3 mr-1.5" />
+                  <span className="text-xs">Edit Layout</span>
+                </Button>
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -571,18 +1350,14 @@ export default function SKUEditorPage() {
             >
               {expandedLayout === 'compare' && <ComparisonLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'testimonial' && <TestimonialLayout brand={displayBrand} sku={displaySKU} />}
-              {expandedLayout === 'benefits' && <BenefitsLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'bigStat' && <BigStatLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'multiStats' && <MultiStatsLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'promoProduct' && <PromoProductLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'bottleList' && <BottleListLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'timeline' && <TimelineLayout brand={displayBrand} sku={displaySKU} />}
-              {expandedLayout === 'statement' && <StatementLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'beforeAfter' && <BeforeAfterLayout brand={displayBrand} sku={displaySKU} />}
-              {expandedLayout === 'problemSolution' && <ProblemSolutionLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'featureGrid' && <FeatureGridLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'socialProof' && <SocialProofLayout brand={displayBrand} sku={displaySKU} />}
-              {expandedLayout === 'ingredientHero' && <IngredientHeroLayout brand={displayBrand} sku={displaySKU} />}
             </div>
           </div>
         </div>
@@ -590,10 +1365,125 @@ export default function SKUEditorPage() {
     )
   }
 
-  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'benefits' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'statement' | 'beforeAfter' | 'problemSolution' | 'featureGrid' | 'socialProof' | 'ingredientHero') {
+  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof') {
     setExpandedLayout(layoutKey)
     initializeColorVariations(layoutKey)
     setDrawerOpen(true)
+    
+    // Initialize position overrides with defaults from spec - ALWAYS do this to enable layer reordering
+    if (sku && (layoutKey === 'compare' || layoutKey === 'testimonial' || layoutKey === 'bigStat' || layoutKey === 'multiStats' || layoutKey === 'promoProduct' || layoutKey === 'bottleList' || layoutKey === 'timeline' || layoutKey === 'beforeAfter' || layoutKey === 'featureGrid' || layoutKey === 'socialProof')) {
+      const existing = sku.positionOverrides?.[layoutKey] || {}
+      
+      // Define all elements with their spec defaults per layout
+      const layoutDefaults: Record<string, any> = {
+        compare: {
+          background: { x: 0, y: 0, width: 1080, height: 1350, zIndex: 0 },
+          leftColumn: { x: 546, y: 164, width: 217, height: 847, zIndex: 1 },
+          rightColumn: { x: 806, y: 164, width: 217, height: 847, zIndex: 1 },
+          headline: { x: 56, y: 115, width: 470, height: 150, zIndex: 20 },
+          row1: { x: 75, y: 436, width: 949, height: 80, zIndex: 20 },
+          row2: { x: 75, y: 544, width: 949, height: 80, zIndex: 20 },
+          row3: { x: 75, y: 652, width: 949, height: 80, zIndex: 20 },
+          row4: { x: 75, y: 760, width: 949, height: 80, zIndex: 20 },
+          leftImage: { x: 534, y: 64, width: 229, height: 229, zIndex: 30 },
+          rightImage: { x: 815, y: 76, width: 200, height: 200, zIndex: 30 },
+          leftLabel: { x: 655, y: 306, width: 200, height: 50, zIndex: 40 },
+          rightLabel: { x: 915, y: 306, width: 200, height: 50, zIndex: 40 }
+        },
+        testimonial: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          quoteContainer: { x: 60, y: 680, width: 960, height: 280, zIndex: 20 },
+          stars: { x: 60, y: 710, width: 960, height: 40, zIndex: 21 },
+          quote: { x: 60, y: 770, width: 960, height: 104, zIndex: 21 },
+          name: { x: 60, y: 889, width: 960, height: 40, zIndex: 21 },
+          ctaStrip: { x: 0, y: 995, width: 1080, height: 85, zIndex: 10 },
+          ctaText: { x: 540, y: 1036, width: 1080, height: 60, zIndex: 20 }
+        },
+        bigStat: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          statValue: { x: 540, y: 384, width: 1080, height: 300, zIndex: 20 },
+          headline: { x: 540, y: 676, width: 729, height: 100, zIndex: 20 },
+          ingredient1: { x: 26, y: 113, width: 409, height: 409, zIndex: 40 },
+          ingredient2: { x: 496, y: -69, width: 627, height: 627, zIndex: 40 },
+          ingredient3: { x: 26, y: 699, width: 395, height: 395, zIndex: 40 },
+          ingredient4: { x: 564, y: 591, width: 611, height: 611, zIndex: 40 },
+          label1: { x: 210, y: 310, width: 120, height: 40, zIndex: 50 },
+          label2: { x: 725, y: 236, width: 170, height: 40, zIndex: 50 },
+          label3: { x: 200, y: 980, width: 139, height: 40, zIndex: 50 },
+          label4: { x: 782, y: 897, width: 195, height: 40, zIndex: 50 }
+        },
+        multiStats: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          headline: { x: 72, y: 103, width: 936, height: 100, zIndex: 20 },
+          stat1: { x: 657, y: 285, width: 393, height: 184, zIndex: 20 },
+          stat2: { x: 652, y: 549, width: 351, height: 184, zIndex: 20 },
+          stat3: { x: 650, y: 796, width: 420, height: 184, zIndex: 20 },
+          disclaimer: { x: 657, y: 1036, width: 395, height: 45, zIndex: 20 }
+        },
+        promoProduct: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          headline: { x: 80, y: 80, width: 656, height: 120, zIndex: 20 },
+          statsContainer: { x: 80, y: 494, width: 400, height: 400, zIndex: 20 },
+          productImage: { x: 489, y: 352, width: 632, height: 772, zIndex: 30 },
+          badge: { x: 770, y: 60, width: 240, height: 240, zIndex: 40 },
+          badgeText: { x: 890, y: 189, width: 200, height: 60, zIndex: 41 }
+        },
+        bottleList: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          headline: { x: 487, y: 135, width: 500, height: 207, zIndex: 20 },
+          benefit1: { x: 487, y: 392, width: 500, height: 150, zIndex: 30 },
+          benefit2: { x: 487, y: 592, width: 500, height: 150, zIndex: 30 },
+          benefit3: { x: 487, y: 792, width: 500, height: 150, zIndex: 30 },
+          productImage: { x: 155, y: 20, width: 377, height: 1154, rotation: 358, zIndex: 10 }
+        },
+        timeline: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 10 },
+          headline: { x: 540, y: 61, width: 796, height: 96, zIndex: 30 },
+          timelineLine: { x: 575, y: 355, width: 2, height: 296, zIndex: 20 },
+          milestone1: { x: 487, y: 300, width: 518, height: 80, zIndex: 40 },
+          milestone2: { x: 487, y: 460, width: 518, height: 80, zIndex: 50 },
+          milestone3: { x: 487, y: 620, width: 518, height: 80, zIndex: 60 },
+          productImage: { x: -67, y: 280, width: 632, height: 772, zIndex: 70 }
+        },
+        beforeAfter: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          headline: { x: 540, y: 80, width: 960, height: 120, zIndex: 20 },
+          beforePanel: { x: 60, y: 240, width: 460, height: 590, zIndex: 20 },
+          afterPanel: { x: 560, y: 240, width: 460, height: 590, zIndex: 20 },
+          divider: { x: 538, y: 240, width: 4, height: 590, zIndex: 15 },
+          productImage: { x: 340, y: 860, width: 400, height: 180, zIndex: 30 }
+        },
+        featureGrid: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          headline: { x: 60, y: 60, width: 960, height: 100, zIndex: 20 },
+          productImage: { x: 140, y: 180, width: 800, height: 300, zIndex: 30 }
+        },
+        socialProof: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          headline: { x: 60, y: 60, width: 960, height: 100, zIndex: 20 },
+          productImage: { x: 390, y: 820, width: 300, height: 200, zIndex: 30 }
+        }
+      }
+      
+      const defaults = layoutDefaults[layoutKey]
+      
+      // Merge existing overrides with defaults (existing takes precedence)
+      const mergedOverrides: any = {}
+      Object.keys(defaults).forEach(key => {
+        mergedOverrides[key] = {
+          ...(defaults as any)[key],
+          ...existing[key] // Existing overrides take precedence
+        }
+      })
+      
+      setSKU({
+        ...sku,
+        positionOverrides: {
+          ...sku.positionOverrides,
+          [layoutKey]: mergedOverrides
+        }
+      })
+    }
   }
 
   function closeLayoutEditor() {
@@ -688,19 +1578,6 @@ export default function SKUEditorPage() {
       ]
     },
     {
-      layoutName: 'Benefits: Pack + Callouts',
-      layoutSize: '1080×1080',
-      layoutKey: 'benefits' as const,
-      fields: [
-        { type: 'image', imageKey: 'backgroundBenefits', label: 'Background Image', imageType: 'brand' },
-        { section: 'benefits', field: 'headline', label: 'Headline', placeholder: 'Train Harder, Bounce Back Faster', type: 'textarea', colors: ['primary'] },
-        { section: 'benefits', field: 'bullet1', label: 'Benefit 1 (Top Left)', placeholder: '54% better overall performance*', colors: ['primary', 'bgAlt'] },
-        { section: 'benefits', field: 'bullet2', label: 'Benefit 2 (Top Right)', placeholder: '47% less muscle fatigue*', colors: ['primary', 'bgAlt'] },
-        { section: 'benefits', field: 'bullet3', label: 'Benefit 3 (Bottom Right)', placeholder: '4X more muscle protein synthesis*', colors: ['primary', 'bgAlt'] },
-        { section: 'benefits', field: 'bullet4', label: 'Benefit 4 (Bottom Left)', placeholder: '144% stronger strength recovery vs whey*', colors: ['primary', 'bgAlt'] },
-      ]
-    },
-    {
       layoutName: 'Big Stat: Large Percentage',
       layoutSize: '1080×1080',
       layoutKey: 'bigStat' as const,
@@ -756,10 +1633,13 @@ export default function SKUEditorPage() {
       fields: [
         { type: 'background', colorKey: 'bg', label: 'Background Color' },
         { section: 'bottle', field: 'headline', label: 'Headline', placeholder: 'Stronger, Longer', colors: ['accent'] },
+        { type: 'icon', section: 'bottle', field: 'benefit1_icon', label: 'Benefit 1 Icon', benefitNumber: 1 },
         { section: 'bottle', field: 'benefit1', label: 'Benefit 1 Title', placeholder: 'Stronger muscles', colors: ['accent'] },
         { section: 'bottle', field: 'benefit1_detail', label: 'Benefit 1 Description', placeholder: 'SUPPORTS MUSCLE PROTEIN SYNTHESIS AND LEAN MUSCLE REPAIR', colors: ['textSecondary'] },
+        { type: 'icon', section: 'bottle', field: 'benefit2_icon', label: 'Benefit 2 Icon', benefitNumber: 2 },
         { section: 'bottle', field: 'benefit2', label: 'Benefit 2 Title', placeholder: 'Faster recovery', colors: ['accent'] },
         { section: 'bottle', field: 'benefit2_detail', label: 'Benefit 2 Description', placeholder: 'SUPPORTS MUSCLE STRENGTH RECOVERY BETWEEN WORKOUTS', colors: ['textSecondary'] },
+        { type: 'icon', section: 'bottle', field: 'benefit3_icon', label: 'Benefit 3 Icon', benefitNumber: 3 },
         { section: 'bottle', field: 'benefit3', label: 'Benefit 3 Title', placeholder: 'Healthy aging', colors: ['accent'] },
         { section: 'bottle', field: 'benefit3_detail', label: 'Benefit 3 Description', placeholder: 'HELPS MAINTAIN NAD+ LEVELS TO SUPPORT LONG-TERM MUSCLE FUNCTION', colors: ['textSecondary'] },
         { type: 'image', imageKey: 'lifestyleA', label: 'Hand Holding Product Image', imageType: 'sku', variants: ['lifestyleA', 'lifestyleB', 'lifestyleC'] },
@@ -782,20 +1662,6 @@ export default function SKUEditorPage() {
       ]
     },
     {
-      layoutName: 'Statement: Bold Question',
-      layoutSize: '1080×1080',
-      layoutKey: 'statement' as const,
-      fields: [
-        { type: 'background', colorKey: 'bg', label: 'Background Color' },
-        { section: 'statement', field: 'statement', label: 'Bold Statement/Question', placeholder: 'Ready to feel the difference?', type: 'textarea', colors: ['accent'] },
-        { section: 'statement', field: 'benefit1', label: 'Benefit Pill 1', placeholder: 'Science-backed', colors: ['primarySoft', 'primary'] },
-        { section: 'statement', field: 'benefit2', label: 'Benefit Pill 2', placeholder: 'No artificial ingredients', colors: ['primarySoft', 'primary'] },
-        { section: 'statement', field: 'benefit3', label: 'Benefit Pill 3', placeholder: 'Results you can feel', colors: ['primarySoft', 'primary'] },
-        { section: 'statement', field: 'cta', label: 'CTA Text', placeholder: 'SHOP NOW • SAVE 25%', colors: ['accent'] },
-        { type: 'image', imageKey: 'productPrimary', label: 'Product Image (Primary)', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
-      ]
-    },
-    {
       layoutName: 'Before/After: Transformation',
       layoutSize: '1080×1080',
       layoutKey: 'beforeAfter' as const,
@@ -807,21 +1673,6 @@ export default function SKUEditorPage() {
         { section: 'beforeAfter', field: 'afterLabel', label: 'After Label', placeholder: 'AFTER', colors: ['accent'] },
         { section: 'beforeAfter', field: 'afterText', label: 'After Description', placeholder: 'Sustained energy and mental clarity all day long', type: 'textarea', colors: ['text'] },
         { type: 'background', colorKey: 'primarySoft', label: 'Divider Color' },
-        { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
-      ]
-    },
-    {
-      layoutName: 'Problem/Solution Flow',
-      layoutSize: '1080×1080',
-      layoutKey: 'problemSolution' as const,
-      fields: [
-        { type: 'background', colorKey: 'bg', label: 'Background Color' },
-        { type: 'background', colorKey: 'bgAlt', label: 'Problem Panel Color' },
-        { section: 'problemSolution', field: 'problemLabel', label: 'Problem Label', placeholder: 'THE PROBLEM', colors: ['textSecondary'] },
-        { section: 'problemSolution', field: 'problemText', label: 'Problem Description', placeholder: 'You\'re tired of products that don\'t deliver', type: 'textarea', colors: ['text'] },
-        { type: 'background', colorKey: 'accent', label: 'Solution Panel Color' },
-        { section: 'problemSolution', field: 'solutionLabel', label: 'Solution Label', placeholder: 'THE SOLUTION', colors: [] },
-        { section: 'problemSolution', field: 'solutionText', label: 'Solution Description', placeholder: 'Real results from science-backed ingredients', type: 'textarea', colors: [] },
         { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
       ]
     },
@@ -868,26 +1719,10 @@ export default function SKUEditorPage() {
         { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
       ]
     },
-    {
-      layoutName: 'Ingredient Hero: Spotlight',
-      layoutSize: '1080×1080',
-      layoutKey: 'ingredientHero' as const,
-      fields: [
-        { type: 'background', colorKey: 'bg', label: 'Background Color' },
-        { section: 'ingredientHero', field: 'ingredientName', label: 'Ingredient Name', placeholder: 'L-THEANINE', colors: ['accent'] },
-        { section: 'ingredientHero', field: 'tagline', label: 'Tagline', placeholder: 'The focus and calm amino acid', colors: ['textSecondary'] },
-        { type: 'image', imageKey: 'ingredientA', label: 'Ingredient Image', imageType: 'sku', variants: ['ingredientA', 'ingredientB', 'ingredientC', 'ingredientD'] },
-        { section: 'ingredientHero', field: 'benefit1', label: 'Benefit 1', placeholder: 'Boosts energy', colors: ['accent'] },
-        { section: 'ingredientHero', field: 'benefit2', label: 'Benefit 2', placeholder: 'Supports recovery', colors: ['accent'] },
-        { section: 'ingredientHero', field: 'benefit3', label: 'Benefit 3', placeholder: 'Enhances focus', colors: ['accent'] },
-        { type: 'background', colorKey: 'primarySoft', label: 'Product Badge Background' },
-        { section: 'ingredientHero', field: 'productBadge', label: 'Product Badge Text', placeholder: 'INSIDE', colors: ['primary'] },
-      ]
-    },
   ]
 
   return (
-    <AdminLayout>
+    <AdminLayout currentBrandId={brandId}>
       <PageHeader 
         breadcrumbs={[
           { label: 'All Brands', href: '/' },
@@ -943,6 +1778,44 @@ export default function SKUEditorPage() {
                   </>
                 )}
               </Button>
+              {sku?.fluidMetadata?.productId && brand?.fluidDam?.apiToken && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      disabled={uploadingToFluid || rendering}
+                      variant="outline"
+                      className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900"
+                    >
+                      {uploadingToFluid ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Push to Fluid
+                        </>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handlePushToFluidClick('product_images')}>
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      Push to Product Images
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePushToFluidClick('company_media')}>
+                      <Layers className="mr-2 h-4 w-4" />
+                      Push to Media Library
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handlePushToFluidClick('both')}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Push to Both
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               <Button onClick={handleSave} disabled={saving}>
                 <Save className="mr-2 h-4 w-4" />
                 {saving ? 'Saving...' : 'Save Changes'}
@@ -1020,7 +1893,7 @@ export default function SKUEditorPage() {
                     <h3 className="text-lg font-semibold">Layout Templates</h3>
                     <p className="text-sm text-muted-foreground mt-1">Click a layout to edit content and preview</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                     {copyFieldsByLayout.map((layout) => {
                       const layoutSKU = getDisplaySKU(layout.layoutKey)
                       return (
@@ -1031,25 +1904,24 @@ export default function SKUEditorPage() {
                         >
                           <CardContent className="p-0">
                             <div className="relative">
-                              {/* Live Preview Thumbnail */}
-                              <div className="aspect-square bg-muted/30 dark:bg-muted/10 overflow-hidden relative">
+                              {/* Live Preview Thumbnail - Responsive scaling with CSS zoom */}
+                              <div className="w-full bg-muted/30 dark:bg-muted/10 overflow-hidden relative aspect-square flex items-center justify-center">
                                 <div 
+                                  className="w-[1080px] h-[1080px] origin-center"
                                   style={{ 
-                                    transform: 'scale(0.24)',
-                                    transformOrigin: 'top left',
-                                    width: '1080px',
-                                    height: '1080px',
+                                    zoom: '0.33',
                                   }}
-                                  className="absolute top-0 left-0"
                                 >
                                   {layout.layoutKey === 'compare' && <ComparisonLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'testimonial' && <TestimonialLayout brand={brand} sku={layoutSKU} />}
-                                  {layout.layoutKey === 'benefits' && <BenefitsLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'bigStat' && <BigStatLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'multiStats' && <MultiStatsLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'promoProduct' && <PromoProductLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'bottleList' && <BottleListLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'timeline' && <TimelineLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'beforeAfter' && <BeforeAfterLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'featureGrid' && <FeatureGridLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'socialProof' && <SocialProofLayout brand={brand} sku={layoutSKU} />}
                                 </div>
                               {/* Hover overlay */}
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -1083,6 +1955,125 @@ export default function SKUEditorPage() {
             </TabsContent>
             <TabsContent value="images" className="mt-6">
               <div className="space-y-6">
+            
+            {/* Custom Image Elements Section */}
+            {(() => {
+              const customImageElements = sku.customElements?.[expandedLayout]?.filter(el => el.type === 'image') || []
+              if (customImageElements.length === 0) return null
+              
+              return (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Custom Image Elements</CardTitle>
+                    <CardDescription>Images added via the visual editor</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      {customImageElements.map((customEl) => {
+                        const imageKey = customEl.content.imageKey
+                        const imageSrc = imageKey ? (brand?.images[imageKey as keyof typeof brand.images] || sku.images[imageKey as keyof typeof sku.images]) : undefined
+                        
+                        return (
+                          <div key={customEl.id} className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
+                            <label className="block text-sm font-medium mb-2">
+                              {customEl.label}
+                            </label>
+                            {imageSrc ? (
+                              <div className="relative">
+                                <img 
+                                  src={imageSrc} 
+                                  alt={customEl.label}
+                                  className="w-full h-32 object-contain"
+                                />
+                                <button
+                                  onClick={() => {
+                                    // Remove image reference from custom element
+                                    const updatedElements = customImageElements.map(el =>
+                                      el.id === customEl.id ? { ...el, content: { ...el.content, imageKey: undefined } } : el
+                                    )
+                                    setSKU({
+                                      ...sku,
+                                      customElements: {
+                                        ...sku.customElements,
+                                        [expandedLayout]: [
+                                          ...(sku.customElements?.[expandedLayout]?.filter(el => el.type !== 'image') || []),
+                                          ...updatedElements
+                                        ]
+                                      }
+                                    })
+                                  }}
+                                  className="absolute top-0 right-0 bg-red-500 text-white px-2 py-1 text-xs rounded"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <label className="cursor-pointer flex flex-col items-center justify-center h-24 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary">
+                                  <span className="text-sm text-muted-foreground">Upload File</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0]
+                                      if (!file) return
+                                      
+                                      try {
+                                        // Upload to Supabase
+                                        const path = `sku-${sku.id}/custom-${customEl.id}-${Date.now()}`
+                                        const publicUrl = await uploadImage(STORAGE_BUCKETS.SKU_IMAGES, file, path)
+                                        
+                                        // Update custom element with image key
+                                        const updatedElements = (sku.customElements?.statement || []).map(el =>
+                                          el.id === customEl.id ? { ...el, content: { ...el.content, imageKey: 'customImage' } } : el
+                                        )
+                                        
+                                        // Also store the URL in SKU images
+                                        setSKU({
+                                          ...sku,
+                                          images: {
+                                            ...sku.images,
+                                            [`custom_${customEl.id}`]: publicUrl
+                                          },
+                                          customElements: {
+                                            ...sku.customElements,
+                                            [expandedLayout]: updatedElements
+                                          }
+                                        })
+                                        
+                                        toast.success('Image uploaded successfully!')
+                                      } catch (error) {
+                                        console.error('Failed to upload:', error)
+                                        toast.error('Failed to upload image')
+                                      }
+                                    }}
+                                  />
+                                </label>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => {
+                                    // TODO: Open DAM browser for custom element
+                                    toast.info('DAM browser for custom elements coming soon!')
+                                  }}
+                                >
+                                  <ImageIcon className="mr-2 h-4 w-4" />
+                                  Browse DAM
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })()}
+            
+            {/* Product Images */}
             {/* Product Images */}
             <Card>
               <CardHeader>
@@ -1421,28 +2412,122 @@ export default function SKUEditorPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {colorVariations.length > 0 && (
+                      {/* Download Individual Layout */}
+                      <Button
+                        onClick={async () => {
+                          if (!expandedLayout || !brand || !sku) return
+                          
+                          const layoutRef = {
+                            compare: compareRef,
+                            testimonial: testimonialRef,
+                            bigStat: bigStatRef,
+                            multiStats: multiStatsRef,
+                            promoProduct: promoProductRef,
+                            bottleList: bottleListRef,
+                            timeline: timelineRef,
+                            beforeAfter: beforeAfterRef,
+                            featureGrid: featureGridRef,
+                            socialProof: socialProofRef
+                          }[expandedLayout]
+                          
+                          if (!layoutRef?.current) {
+                            toast.error('Layout not ready for download')
+                            return
+                          }
+                          
+                          try {
+                            setRendering(true)
+                            const { renderLayoutFromElement } = await import('@/lib/render-engine')
+                            const blob = await renderLayoutFromElement(layoutRef.current, {
+                              scale: 2,
+                              format: downloadFormat,
+                              quality: downloadFormat === 'jpg' ? 0.95 : undefined
+                            })
+                            
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            const layoutName = copyFieldsByLayout.find(l => l.layoutKey === expandedLayout)?.layoutName || expandedLayout
+                            a.download = `${brand.name}_${sku.name}_${layoutName}.${downloadFormat}`
+                            a.click()
+                            URL.revokeObjectURL(url)
+                            
+                            toast.success('Layout downloaded!', {
+                              description: `${layoutName}.${downloadFormat}`
+                            })
+                          } catch (error) {
+                            console.error('Download failed:', error)
+                            toast.error('Failed to download layout')
+                          } finally {
+                            setRendering(false)
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        disabled={rendering}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                      {/* Send to Fluid Dropdown & Format Selector */}
+                      {sku?.fluidMetadata?.productId && brand?.fluidDam?.apiToken && (
                         <>
-                          <Button
-                            onClick={() => shuffleColorVariation('prev')}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <div className="text-xs text-muted-foreground min-w-[140px] text-center">
-                            <div className="font-medium">{colorVariations[currentVariationIndex]?.name || 'Default'}</div>
-                            <div className="text-[10px]">
-                              {currentVariationIndex + 1} of {colorVariations.length}
-                            </div>
-                          </div>
-                          <Button
-                            onClick={() => shuffleColorVariation('next')}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                          <Select value={uploadFormat} onValueChange={(v) => setUploadFormat(v as 'png' | 'jpg' | 'webp')}>
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="webp">WebP</SelectItem>
+                              <SelectItem value="png">PNG</SelectItem>
+                              <SelectItem value="jpg">JPG</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                      <Button
+                                disabled={uploadingToFluid || rendering}
+                        variant="outline"
+                        size="sm"
+                                className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900"
+                              >
+                                {uploadingToFluid ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Send to Fluid
+                                  </>
+                                )}
+                      </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={() => uploadSingleLayoutToFluid('product')}
+                                disabled={uploadingToFluid || rendering}
+                              >
+                                <ImageIcon className="h-4 w-4 mr-2" />
+                                Product Images
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => uploadSingleLayoutToFluid('media')}
+                                disabled={uploadingToFluid || rendering}
+                              >
+                                <Layers className="h-4 w-4 mr-2" />
+                                Media Library
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => uploadSingleLayoutToFluid('both')}
+                                disabled={uploadingToFluid || rendering}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Both Locations
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </>
                       )}
                       <Button 
@@ -1497,6 +2582,42 @@ export default function SKUEditorPage() {
                             </tr>
                           </thead>
                           <tbody>
+                            {/* Custom Element Content Fields */}
+                            {sku.customElements?.[expandedLayout]?.filter(el => el.type === 'text' || el.type === 'badge').map((customEl) => (
+                              <tr key={customEl.id} className="border-b hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-3 align-top">
+                                  <Label className="text-sm font-medium">
+                                    {customEl.label}
+                                    <Badge variant="secondary" className="ml-2 text-[9px]">Custom</Badge>
+                                  </Label>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Input
+                                    type="text"
+                                    value={sku.customElementContent?.[customEl.id]?.text || customEl.content.text || ''}
+                                    onChange={(e) => {
+                                      setSKU({
+                                        ...sku,
+                                        customElementContent: {
+                                          ...sku.customElementContent,
+                                          [customEl.id]: {
+                                            ...sku.customElementContent?.[customEl.id],
+                                            text: e.target.value
+                                          }
+                                        }
+                                      })
+                                    }}
+                                    className="text-sm"
+                                    placeholder={customEl.type === 'badge' ? 'Badge text...' : 'Text content...'}
+                                  />
+                                </td>
+                                <td className="px-4 py-3 align-top">
+                                  <span className="text-xs text-muted-foreground">
+                                    Edit in visual editor
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
                             {copyFieldsByLayout
                               .find((l) => l.layoutKey === expandedLayout)
                               ?.fields.map((field, fieldIndex) => {
@@ -1504,7 +2625,9 @@ export default function SKUEditorPage() {
                                 if (field.type === 'background') {
                                   const defaultColorKey = field.colorKey
                                   const currentColorKey = getFieldColor(expandedLayout, field.label, defaultColorKey)
-                                  const colorValue = brand.colors[currentColorKey as keyof typeof brand.colors]
+                                  // Use previewBrand colors if available (shows current variation)
+                                  const displayBrand = previewBrand || brand
+                                  const colorValue = displayBrand.colors[currentColorKey as keyof typeof displayBrand.colors]
                                   const isOverridden = currentColorKey !== defaultColorKey
 
                                   return (
@@ -1535,7 +2658,7 @@ export default function SKUEditorPage() {
                                             </div>
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {Object.entries(brand.colors).map(([key, value]) => (
+                                            {Object.entries(displayBrand.colors).map(([key, value]) => (
                                               <SelectItem key={key} value={key}>
                                                 <div className="flex items-center gap-2">
                                                   <div
@@ -1632,6 +2755,33 @@ export default function SKUEditorPage() {
                                   )
                                 }
 
+                                // Handle icon picker fields
+                                if (field.type === 'icon') {
+                                  if (!field.section || !field.field) return null
+                                  
+                                  const section = sku.copy[field.section as keyof typeof sku.copy] as any
+                                  const currentIcon = section?.[field.field] || 'dumbbell'
+                                  const benefitNum = (field as any).benefitNumber || 1
+                                  
+                                  return (
+                                    <tr key={fieldIndex} className="border-b hover:bg-muted/30 transition-colors">
+                                      <td className="px-4 py-3 align-middle">
+                                        <Label className="text-sm font-medium">{field.label}</Label>
+                                      </td>
+                                      <td className="px-4 py-3 align-middle">
+                                        <BenefitIconPicker
+                                          currentIcon={currentIcon}
+                                          benefitNumber={benefitNum}
+                                          onIconChange={(icon) => updateCopyField(field.section!, field.field!, icon)}
+                                        />
+                                      </td>
+                                      <td className="px-4 py-3 align-middle">
+                                        <span className="text-xs text-muted-foreground">—</span>
+                                      </td>
+                                    </tr>
+                                  )
+                                }
+
                                 // Handle regular copy fields
                                 const section = sku.copy[field.section as keyof typeof sku.copy] as any
                                 const value = section?.[field.field] || ''
@@ -1665,7 +2815,9 @@ export default function SKUEditorPage() {
                                         <div className="space-y-2">
                                           {field.colors.map((defaultColorKey, colorIndex) => {
                                             const currentColorKey = getFieldColor(expandedLayout, field.label, defaultColorKey)
-                                            const colorValue = brand.colors[currentColorKey as keyof typeof brand.colors]
+                                            // Use previewBrand colors if available (shows current variation)
+                                            const displayBrand = previewBrand || brand
+                                            const colorValue = displayBrand.colors[currentColorKey as keyof typeof displayBrand.colors]
                                             const isOverridden = currentColorKey !== defaultColorKey
 
                                             return (
@@ -1691,7 +2843,7 @@ export default function SKUEditorPage() {
                                                   </div>
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                  {Object.entries(brand.colors).map(([key, value]) => (
+                                                  {Object.entries(displayBrand.colors).map(([key, value]) => (
                                                     <SelectItem key={key} value={key}>
                                                       <div className="flex items-center gap-2">
                                                         <div
@@ -1738,9 +2890,6 @@ export default function SKUEditorPage() {
             <div ref={testimonialRef}>
               <TestimonialLayout brand={brand} sku={sku} />
             </div>
-            <div ref={benefitsRef}>
-              <BenefitsLayout brand={brand} sku={sku} />
-            </div>
             <div ref={bigStatRef}>
               <BigStatLayout brand={brand} sku={sku} />
             </div>
@@ -1756,23 +2905,14 @@ export default function SKUEditorPage() {
             <div ref={timelineRef}>
               <TimelineLayout brand={brand} sku={sku} />
             </div>
-            <div ref={statementRef}>
-              <StatementLayout brand={brand} sku={sku} />
-          </div>
             <div ref={beforeAfterRef}>
               <BeforeAfterLayout brand={brand} sku={sku} />
-            </div>
-            <div ref={problemSolutionRef}>
-              <ProblemSolutionLayout brand={brand} sku={sku} />
             </div>
             <div ref={featureGridRef}>
               <FeatureGridLayout brand={brand} sku={sku} />
             </div>
             <div ref={socialProofRef}>
               <SocialProofLayout brand={brand} sku={sku} />
-            </div>
-            <div ref={ingredientHeroRef}>
-              <IngredientHeroLayout brand={brand} sku={sku} />
             </div>
           </div>
         </div>
@@ -1785,6 +2925,194 @@ export default function SKUEditorPage() {
         onSelect={handleFluidDAMSelect}
         brandFluidDam={brand?.fluidDam}
       />
+
+      {/* Push to Fluid Modal */}
+      <PushToFluidModal
+        open={pushToFluidModalOpen}
+        onClose={() => setPushToFluidModalOpen(false)}
+        layouts={getAvailableLayouts().map(layout => ({
+          ...layout,
+          previewUrl: layoutPreviews[layout.id]
+        }))}
+        onPush={(selectedLayoutIds) => uploadToFluid(selectedLayoutIds, fluidDestination)}
+        isPushing={uploadingToFluid}
+        isGeneratingPreviews={generatingPreviews}
+        destination={fluidDestination}
+      />
+
+      {/* Visual Layout Editor Modal - Works for ALL layouts */}
+      {expandedLayout && brand && sku && (
+        <VisualEditorModal
+          open={visualEditorOpen}
+          onClose={() => {
+            setVisualEditorOpen(false)
+            setSelectedElement(null)
+          }}
+          layoutKey={expandedLayout}
+          layoutName={copyFieldsByLayout.find(l => l.layoutKey === expandedLayout)?.layoutName || 'Layout'}
+          layers={getLayoutElements(
+            expandedLayout,
+            sku.customElements?.[expandedLayout] || [],
+            sku.positionOverrides?.[expandedLayout] || {}
+          ).map(def => ({
+            ...def,
+            hasOverride: !!sku.positionOverrides?.[expandedLayout]?.[def.key] || def.key.startsWith('custom-'),
+            zIndex: sku.positionOverrides?.[expandedLayout]?.[def.key]?.zIndex ?? def.defaultZIndex ?? 0
+          }))}
+          selectedElement={selectedElement}
+          onSelectElement={setSelectedElement}
+          positionOverrides={sku.positionOverrides}
+          customElements={sku.customElements?.[expandedLayout] || []}
+          brand={brand}
+          sku={sku}
+          backgroundColorKey="bg"
+          backgroundImageKey={getFieldImage(expandedLayout, 'Background Image', 'backgroundBenefits')}
+          onPositionChange={handleVisualPositionChange}
+          onSizeChange={handleVisualSizeChange}
+          onRotationChange={handleVisualRotationChange}
+          onUpdateCustomElement={handleUpdateCustomElement}
+          onDeleteCustomElement={handleDeleteCustomElement}
+          onChangeBackgroundColor={handleChangeBackgroundColor}
+          onChangeBackgroundImage={handleChangeBackgroundImage}
+          onLayerReorder={handleLayerReorder}
+          onAddElement={handleAddElement}
+          onBenefitIconChange={handleBenefitIconChange}
+          onSave={handleVisualEditorSave}
+          onCancel={handleVisualEditorCancel}
+          hasChanges={visualEditorChanges}
+        >
+          <div
+            style={{
+              transform: 'scale(0.72)',
+              transformOrigin: 'top left',
+              width: '1080px',
+              height: '1080px'
+            }}
+          >
+            {/* Render appropriate layout based on expandedLayout */}
+            {expandedLayout === 'compare' && (
+              <ComparisonLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onPositionChange={handleVisualPositionChange}
+                onSizeChange={handleVisualSizeChange}
+                onRotationChange={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'testimonial' && (
+              <TestimonialLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onPositionChange={handleVisualPositionChange}
+                onSizeChange={handleVisualSizeChange}
+                onRotationChange={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'bigStat' && (
+              <BigStatLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onPositionChange={handleVisualPositionChange}
+                onSizeChange={handleVisualSizeChange}
+                onRotationChange={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'multiStats' && (
+              <MultiStatsLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onPositionChange={handleVisualPositionChange}
+                onSizeChange={handleVisualSizeChange}
+                onRotationChange={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'promoProduct' && (
+              <PromoProductLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onPositionChange={handleVisualPositionChange}
+                onSizeChange={handleVisualSizeChange}
+                onRotationChange={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'bottleList' && (
+              <BottleListLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onPositionChange={handleVisualPositionChange}
+                onSizeChange={handleVisualSizeChange}
+                onRotationChange={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'timeline' && (
+              <TimelineLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onPositionChange={handleVisualPositionChange}
+                onSizeChange={handleVisualSizeChange}
+                onRotationChange={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'beforeAfter' && (
+              <BeforeAfterLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onElementDrag={handleVisualPositionChange}
+                onElementResize={handleVisualSizeChange}
+                onElementRotate={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'featureGrid' && (
+              <FeatureGridLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onElementDrag={handleVisualPositionChange}
+                onElementResize={handleVisualSizeChange}
+                onElementRotate={handleVisualRotationChange}
+              />
+            )}
+            {expandedLayout === 'socialProof' && (
+              <SocialProofLayoutEditable
+                brand={brand}
+                sku={sku}
+                isEditMode={true}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                onElementDrag={handleVisualPositionChange}
+                onElementResize={handleVisualSizeChange}
+                onElementRotate={handleVisualRotationChange}
+              />
+            )}
+          </div>
+        </VisualEditorModal>
+      )}
     </AdminLayout>
   )
 }

@@ -2,6 +2,7 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { PROMO_PRODUCT_SPEC } from '@/lib/layouts/specs/promo-product-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition, combineTransforms } from '@/lib/layout-utils'
 
 interface PromoProductLayoutProps {
   brand: Brand
@@ -39,6 +40,10 @@ export function PromoProductLayout({ brand, sku }: PromoProductLayoutProps) {
     }
   ]
 
+  // Resolve positions with overrides
+  const headlinePos = resolveElementPosition('promoProduct', 'headline', spec.elements.headline, sku.positionOverrides)
+  const productImagePos = resolveElementPosition('promoProduct', 'productImage', spec.elements.productImage, sku.positionOverrides)
+
   return (
     <div
       style={{
@@ -67,10 +72,10 @@ export function PromoProductLayout({ brand, sku }: PromoProductLayoutProps) {
       <p
         style={{
           position: 'absolute',
-          top: spec.elements.headline.top,
-          left: spec.elements.headline.left,
-          width: spec.elements.headline.width,
-          height: spec.elements.headline.height,
+          top: headlinePos.top,
+          left: headlinePos.left,
+          width: headlinePos.width,
+          height: headlinePos.height,
           fontFamily: fonts.family,
           fontSize: spec.elements.headline.fontSize,
           fontWeight: spec.elements.headline.fontWeight,
@@ -78,9 +83,10 @@ export function PromoProductLayout({ brand, sku }: PromoProductLayoutProps) {
           letterSpacing: `${spec.elements.headline.letterSpacing}px`,
           color: headlineColor,
           textAlign: spec.elements.headline.textAlign,
-          zIndex: spec.elements.headline.zIndex,
+          zIndex: headlinePos.zIndex ?? spec.elements.headline.zIndex,
           margin: 0,
-          padding: 0
+          padding: 0,
+          transform: combineTransforms(undefined, headlinePos.rotation)
         }}
       >
         {sku.copy.promo?.headline || 'Peptide fuel. Not another pre-workout.'}
@@ -139,7 +145,10 @@ export function PromoProductLayout({ brand, sku }: PromoProductLayoutProps) {
                 width: stat.labelWidth,
                 height: stat.labelHeight,
                 margin: 0,
-                padding: 0
+                padding: 0,
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word'
               }}
             >
               {stat.label}
@@ -149,30 +158,32 @@ export function PromoProductLayout({ brand, sku }: PromoProductLayoutProps) {
       </div>
 
       {/* Product Image */}
-      {sku.images.productAngle && (
+      {(sku.images.productAngle || true) && (
         <div
           style={{
             position: 'absolute',
-            top: spec.elements.productImage.top,
-            left: spec.elements.productImage.left,
-            width: spec.elements.productImage.width,
-            height: spec.elements.productImage.height,
+            top: productImagePos.top,
+            left: productImagePos.left,
+            width: productImagePos.width,
+            height: productImagePos.height,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            zIndex: spec.elements.productImage.zIndex
+            zIndex: productImagePos.zIndex ?? spec.elements.productImage.zIndex,
+            transform: combineTransforms(undefined, productImagePos.rotation)
           }}
         >
           <img
-            src={sku.images.productAngle}
+            src={sku.images.productAngle || '/placeholder-image.svg'}
             alt="Product"
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
               width: 'auto',
               height: 'auto',
-              objectFit: 'contain'
+              objectFit: 'contain',
+              opacity: sku.images.productAngle ? 1 : 0.3
             }}
           />
         </div>

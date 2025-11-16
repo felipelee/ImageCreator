@@ -43,7 +43,7 @@ export default function BrandPreviewPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout currentBrandId={brandId}>
         <PageHeader breadcrumbs={[{ label: 'All Brands', href: '/' }, { label: 'Preview' }]} />
         <div className="flex-1 p-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -84,7 +84,7 @@ export default function BrandPreviewPage() {
 
   if (skus.length === 0) {
     return (
-      <AdminLayout>
+      <AdminLayout currentBrandId={brandId}>
         <PageHeader breadcrumbs={[{ label: 'All Brands', href: '/' }, { label: brand.name, href: `/brands/${brandId}` }, { label: 'Preview' }]} />
         <div className="flex-1 p-6">
           <Card className="max-w-2xl mx-auto">
@@ -105,7 +105,7 @@ export default function BrandPreviewPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout currentBrandId={brandId}>
       <PageHeader 
         breadcrumbs={[
           { label: 'All Brands', href: '/' },

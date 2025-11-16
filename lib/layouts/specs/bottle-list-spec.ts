@@ -51,7 +51,7 @@ export const BOTTLE_LIST_SPEC = {
       top: 392, // 135 + 207 (headline height) + 50 (spacing)
       left: 487,
       gap: 50,
-      zIndex: 2
+      zIndex: 30
     },
     
     benefitStyle: {

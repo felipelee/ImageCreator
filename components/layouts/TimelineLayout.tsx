@@ -2,6 +2,7 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { TIMELINE_SPEC } from '@/lib/layouts/specs/timeline-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition, combineTransforms } from '@/lib/layout-utils'
 
 interface TimelineLayoutProps {
   brand: Brand
@@ -34,6 +35,42 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
     }
   ]
 
+  // Resolve positions with overrides
+  const headlinePos = resolveElementPosition('timeline', 'headline', spec.elements.headline, sku.positionOverrides)
+  const productImagePos = resolveElementPosition('timeline', 'productImage', spec.elements.productImage, sku.positionOverrides)
+  const timelineLinePos = resolveElementPosition('timeline', 'timelineLine', spec.elements.timelineLine, sku.positionOverrides)
+  
+  // Individual milestone positions
+  const milestone1Pos = resolveElementPosition('timeline', 'milestone1', {
+    top: 300,
+    left: 487,
+    x: 487,
+    y: 300,
+    width: 518,
+    height: 80,
+    zIndex: 40
+  }, sku.positionOverrides)
+  
+  const milestone2Pos = resolveElementPosition('timeline', 'milestone2', {
+    top: 460,
+    left: 487,
+    x: 487,
+    y: 460,
+    width: 518,
+    height: 80,
+    zIndex: 50
+  }, sku.positionOverrides)
+  
+  const milestone3Pos = resolveElementPosition('timeline', 'milestone3', {
+    top: 620,
+    left: 487,
+    x: 487,
+    y: 620,
+    width: 518,
+    height: 80,
+    zIndex: 60
+  }, sku.positionOverrides)
+
   return (
     <div
       style={{
@@ -45,9 +82,9 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
       }}
     >
       {/* Background Image */}
-      {sku.images.lifestyleTimeline && (
+      {(sku.images.lifestyleTimeline || true) && (
         <img
-          src={sku.images.lifestyleTimeline}
+          src={sku.images.lifestyleTimeline || '/placeholder-image.svg'}
           alt=""
           style={{
             position: 'absolute',
@@ -56,7 +93,8 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
             width: spec.elements.background.width,
             height: spec.elements.background.height,
             objectFit: spec.elements.background.objectFit,
-            zIndex: spec.elements.background.zIndex
+            zIndex: spec.elements.background.zIndex,
+            opacity: sku.images.lifestyleTimeline ? 1 : 0.3
           }}
         />
       )}
@@ -78,10 +116,10 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
       <p
         style={{
           position: 'absolute',
-          top: spec.elements.headline.top,
-          left: spec.elements.headline.left,
-          width: spec.elements.headline.width,
-          height: spec.elements.headline.height,
+          top: headlinePos.top,
+          left: headlinePos.left,
+          width: headlinePos.width,
+          height: headlinePos.height,
           fontFamily: fonts.family,
           fontSize: spec.elements.headline.fontSize,
           fontWeight: spec.elements.headline.fontWeight,
@@ -89,8 +127,8 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
           letterSpacing: `${spec.elements.headline.letterSpacing}px`,
           color: headlineColor,
           textAlign: spec.elements.headline.textAlign,
-          transform: spec.elements.headline.transform,
-          zIndex: spec.elements.headline.zIndex,
+          transform: combineTransforms(spec.elements.headline.transform, headlinePos.rotation),
+          zIndex: headlinePos.zIndex ?? spec.elements.headline.zIndex,
           margin: 0,
           padding: 0
         }}
@@ -98,125 +136,263 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
         {sku.copy.timeline?.headline || 'Feel the change'}
       </p>
 
-      {/* Timeline Container */}
+      {/* Milestone 1 */}
       <div
         style={{
           position: 'absolute',
-          top: spec.elements.timelineContainer.top,
-          left: spec.elements.timelineContainer.left,
-          width: spec.elements.timelineContainer.width,
+          top: milestone1Pos.top,
+          left: milestone1Pos.left,
+          width: milestone1Pos.width,
+          height: milestone1Pos.height,
           display: 'flex',
-          flexDirection: 'column',
-          gap: spec.elements.timelineContainer.gap,
-          zIndex: spec.elements.timelineContainer.zIndex
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spec.elements.milestoneStyle.container.gap,
+          zIndex: milestone1Pos.zIndex ?? 40
         }}
       >
-        {milestones.map((milestone, index) => (
-          <div
-            key={index}
+        {/* Time Badge */}
+        <div
+          style={{
+            backgroundColor: badgeColor,
+            paddingLeft: spec.elements.milestoneStyle.badge.paddingX,
+            paddingRight: spec.elements.milestoneStyle.badge.paddingX,
+            paddingTop: spec.elements.milestoneStyle.badge.paddingY,
+            paddingBottom: spec.elements.milestoneStyle.badge.paddingY,
+            borderRadius: spec.elements.milestoneStyle.badge.borderRadius,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            minHeight: '44px'
+          }}
+        >
+          <p
             style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: spec.elements.milestoneStyle.container.gap,
-              width: '100%'
+              fontFamily: fonts.family,
+              fontSize: spec.elements.milestoneStyle.badge.fontSize,
+              fontWeight: spec.elements.milestoneStyle.badge.fontWeight,
+              lineHeight: spec.elements.milestoneStyle.badge.lineHeight,
+              letterSpacing: `${spec.elements.milestoneStyle.badge.letterSpacing}px`,
+              textTransform: spec.elements.milestoneStyle.badge.textTransform,
+              color: spec.elements.milestoneStyle.badge.color,
+              textAlign: spec.elements.milestoneStyle.badge.textAlign,
+              margin: 0,
+              padding: 0,
+              whiteSpace: 'pre',
+              display: 'block'
             }}
           >
-            {/* Time Badge */}
-            <div
-              style={{
-                backgroundColor: badgeColor,
-                paddingLeft: spec.elements.milestoneStyle.badge.paddingX,
-                paddingRight: spec.elements.milestoneStyle.badge.paddingX,
-                paddingTop: spec.elements.milestoneStyle.badge.paddingY,
-                paddingBottom: spec.elements.milestoneStyle.badge.paddingY,
-                borderRadius: spec.elements.milestoneStyle.badge.borderRadius,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                minHeight: '44px'
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: fonts.family,
-                  fontSize: spec.elements.milestoneStyle.badge.fontSize,
-                  fontWeight: spec.elements.milestoneStyle.badge.fontWeight,
-                  lineHeight: spec.elements.milestoneStyle.badge.lineHeight,
-                  letterSpacing: `${spec.elements.milestoneStyle.badge.letterSpacing}px`,
-                  textTransform: spec.elements.milestoneStyle.badge.textTransform,
-                  color: spec.elements.milestoneStyle.badge.color,
-                  textAlign: spec.elements.milestoneStyle.badge.textAlign,
-                  margin: 0,
-                  padding: 0,
-                  whiteSpace: 'pre',
-                  display: 'block'
-                }}
-              >
-                {milestone.time}
-              </p>
-            </div>
+            {milestones[0].time}
+          </p>
+        </div>
 
-            {/* Description */}
-            <p
-              style={{
-                fontFamily: fonts.family,
-                fontSize: spec.elements.milestoneStyle.description.fontSize,
-                fontWeight: spec.elements.milestoneStyle.description.fontWeight,
-                lineHeight: spec.elements.milestoneStyle.description.lineHeight,
-                letterSpacing: `${spec.elements.milestoneStyle.description.letterSpacing}px`,
-                color: descriptionColor,
-                flex: 1,
-                margin: 0,
-                padding: 0
-              }}
-            >
-              {milestone.title}
-            </p>
-          </div>
-        ))}
+        {/* Description */}
+        <p
+          style={{
+            fontFamily: fonts.family,
+            fontSize: spec.elements.milestoneStyle.description.fontSize,
+            fontWeight: spec.elements.milestoneStyle.description.fontWeight,
+            lineHeight: spec.elements.milestoneStyle.description.lineHeight,
+            letterSpacing: `${spec.elements.milestoneStyle.description.letterSpacing}px`,
+            color: descriptionColor,
+            flex: 1,
+            margin: 0,
+            padding: 0,
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word'
+          }}
+        >
+          {milestones[0].title}
+        </p>
+      </div>
+
+      {/* Milestone 2 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: milestone2Pos.top,
+          left: milestone2Pos.left,
+          width: milestone2Pos.width,
+          height: milestone2Pos.height,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spec.elements.milestoneStyle.container.gap,
+          zIndex: milestone2Pos.zIndex ?? 50
+        }}
+      >
+        {/* Time Badge */}
+        <div
+          style={{
+            backgroundColor: badgeColor,
+            paddingLeft: spec.elements.milestoneStyle.badge.paddingX,
+            paddingRight: spec.elements.milestoneStyle.badge.paddingX,
+            paddingTop: spec.elements.milestoneStyle.badge.paddingY,
+            paddingBottom: spec.elements.milestoneStyle.badge.paddingY,
+            borderRadius: spec.elements.milestoneStyle.badge.borderRadius,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            minHeight: '44px'
+          }}
+        >
+          <p
+            style={{
+              fontFamily: fonts.family,
+              fontSize: spec.elements.milestoneStyle.badge.fontSize,
+              fontWeight: spec.elements.milestoneStyle.badge.fontWeight,
+              lineHeight: spec.elements.milestoneStyle.badge.lineHeight,
+              letterSpacing: `${spec.elements.milestoneStyle.badge.letterSpacing}px`,
+              textTransform: spec.elements.milestoneStyle.badge.textTransform,
+              color: spec.elements.milestoneStyle.badge.color,
+              textAlign: spec.elements.milestoneStyle.badge.textAlign,
+              margin: 0,
+              padding: 0,
+              whiteSpace: 'pre',
+              display: 'block'
+            }}
+          >
+            {milestones[1].time}
+          </p>
+        </div>
+
+        {/* Description */}
+        <p
+          style={{
+            fontFamily: fonts.family,
+            fontSize: spec.elements.milestoneStyle.description.fontSize,
+            fontWeight: spec.elements.milestoneStyle.description.fontWeight,
+            lineHeight: spec.elements.milestoneStyle.description.lineHeight,
+            letterSpacing: `${spec.elements.milestoneStyle.description.letterSpacing}px`,
+            color: descriptionColor,
+            flex: 1,
+            margin: 0,
+            padding: 0,
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word'
+          }}
+        >
+          {milestones[1].title}
+        </p>
+      </div>
+
+      {/* Milestone 3 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: milestone3Pos.top,
+          left: milestone3Pos.left,
+          width: milestone3Pos.width,
+          height: milestone3Pos.height,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spec.elements.milestoneStyle.container.gap,
+          zIndex: milestone3Pos.zIndex ?? 60
+        }}
+      >
+        {/* Time Badge */}
+        <div
+          style={{
+            backgroundColor: badgeColor,
+            paddingLeft: spec.elements.milestoneStyle.badge.paddingX,
+            paddingRight: spec.elements.milestoneStyle.badge.paddingX,
+            paddingTop: spec.elements.milestoneStyle.badge.paddingY,
+            paddingBottom: spec.elements.milestoneStyle.badge.paddingY,
+            borderRadius: spec.elements.milestoneStyle.badge.borderRadius,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            minHeight: '44px'
+          }}
+        >
+          <p
+            style={{
+              fontFamily: fonts.family,
+              fontSize: spec.elements.milestoneStyle.badge.fontSize,
+              fontWeight: spec.elements.milestoneStyle.badge.fontWeight,
+              lineHeight: spec.elements.milestoneStyle.badge.lineHeight,
+              letterSpacing: `${spec.elements.milestoneStyle.badge.letterSpacing}px`,
+              textTransform: spec.elements.milestoneStyle.badge.textTransform,
+              color: spec.elements.milestoneStyle.badge.color,
+              textAlign: spec.elements.milestoneStyle.badge.textAlign,
+              margin: 0,
+              padding: 0,
+              whiteSpace: 'pre',
+              display: 'block'
+            }}
+          >
+            {milestones[2].time}
+          </p>
+        </div>
+
+        {/* Description */}
+        <p
+          style={{
+            fontFamily: fonts.family,
+            fontSize: spec.elements.milestoneStyle.description.fontSize,
+            fontWeight: spec.elements.milestoneStyle.description.fontWeight,
+            lineHeight: spec.elements.milestoneStyle.description.lineHeight,
+            letterSpacing: `${spec.elements.milestoneStyle.description.letterSpacing}px`,
+            color: descriptionColor,
+            flex: 1,
+            margin: 0,
+            padding: 0,
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word'
+          }}
+        >
+          {milestones[2].title}
+        </p>
       </div>
 
       {/* Timeline Line (vertical line connecting milestones) */}
       <div
         style={{
           position: 'absolute',
-          top: spec.elements.timelineLine.top,
-          left: spec.elements.timelineLine.left,
-          width: spec.elements.timelineLine.width,
-          height: spec.elements.timelineLine.height,
+          top: timelineLinePos.top,
+          left: timelineLinePos.left,
+          width: timelineLinePos.width,
+          height: timelineLinePos.height,
           backgroundColor: spec.elements.timelineLine.backgroundColor,
-          transform: spec.elements.timelineLine.transform,
-          zIndex: spec.elements.timelineLine.zIndex
+          transform: combineTransforms(spec.elements.timelineLine.transform, timelineLinePos.rotation),
+          zIndex: timelineLinePos.zIndex ?? spec.elements.timelineLine.zIndex
         }}
       />
 
       {/* Product Image */}
-      {sku.images.productAngle && (
+      {(sku.images.productAngle || true) && (
         <div
           style={{
             position: 'absolute',
-            top: spec.elements.productImage.top,
-            left: spec.elements.productImage.left,
-            width: spec.elements.productImage.width,
-            height: spec.elements.productImage.height,
+            top: productImagePos.top,
+            left: productImagePos.left,
+            width: productImagePos.width,
+            height: productImagePos.height,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            zIndex: spec.elements.productImage.zIndex
+            zIndex: productImagePos.zIndex ?? spec.elements.productImage.zIndex,
+            transform: combineTransforms(undefined, productImagePos.rotation)
           }}
         >
           <img
-            src={sku.images.productAngle}
+            src={sku.images.productAngle || '/placeholder-image.svg'}
             alt="Product"
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
               width: 'auto',
               height: 'auto',
-              objectFit: 'contain'
+              objectFit: 'contain',
+              opacity: sku.images.productAngle ? 1 : 0.3
             }}
           />
         </div>

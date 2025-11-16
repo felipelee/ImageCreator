@@ -33,7 +33,7 @@ export const COMPARISON_SPEC = {
     },
     
     // Left highlight column (dark - "yours")
-    highlightLeft: {
+    leftColumn: {
       type: 'rectangle' as const,
       position: 'absolute' as const,
       top: 164,
@@ -46,7 +46,7 @@ export const COMPARISON_SPEC = {
     },
     
     // Right highlight column (light - "theirs")
-    highlightRight: {
+    rightColumn: {
       type: 'rectangle' as const,
       position: 'absolute' as const,
       top: 164,
@@ -58,32 +58,28 @@ export const COMPARISON_SPEC = {
       zIndex: 1
     },
     
-    // Left comparison image (circular)
-    comparisonYours: {
+    // Left comparison image
+    leftImage: {
       type: 'image' as const,
       position: 'absolute' as const,
       top: 64,
       left: 534,
       width: 229,
       height: 229,
-      borderRadius: 114.5,
       objectFit: 'contain' as const,
-      clipPath: 'circle(50%)',
       zIndex: 3,
       imageKey: 'comparisonOurs'
     },
     
-    // Right comparison image (circular)
-    comparisonTheirs: {
+    // Right comparison image
+    rightImage: {
       type: 'image' as const,
       position: 'absolute' as const,
       top: 76,
       left: 815,
       width: 200,
       height: 200,
-      borderRadius: 100,
       objectFit: 'cover' as const,
-      clipPath: 'circle(50%)',
       zIndex: 3,
       imageKey: 'comparisonTheirs'
     },
@@ -132,6 +128,46 @@ export const COMPARISON_SPEC = {
       left: 75,
       width: 880,
       zIndex: 2
+    },
+    
+    // Row 1
+    row1: {
+      type: 'container' as const,
+      position: 'absolute' as const,
+      top: 436,
+      left: 75,
+      width: 880,
+      zIndex: 20
+    },
+    
+    // Row 2
+    row2: {
+      type: 'container' as const,
+      position: 'absolute' as const,
+      top: 544,
+      left: 75,
+      width: 880,
+      zIndex: 20
+    },
+    
+    // Row 3
+    row3: {
+      type: 'container' as const,
+      position: 'absolute' as const,
+      top: 652,
+      left: 75,
+      width: 880,
+      zIndex: 20
+    },
+    
+    // Row 4
+    row4: {
+      type: 'container' as const,
+      position: 'absolute' as const,
+      top: 760,
+      left: 75,
+      width: 880,
+      zIndex: 20
     },
     
     // Individual row specs (4 rows total)

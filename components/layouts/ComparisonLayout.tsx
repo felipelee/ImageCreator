@@ -2,6 +2,8 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { COMPARISON_SPEC } from '@/lib/layouts/specs/comparison-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition } from '@/lib/layout-utils'
+import { CustomElementRenderer } from '@/components/layout-editor/CustomElementRenderer'
 
 interface ComparisonLayoutProps {
   brand: Brand
@@ -26,6 +28,21 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
     { label: sku.copy.compare?.row3_label || 'Feature 3' },
     { label: sku.copy.compare?.row4_label || 'Feature 4' }
   ]
+
+  // Resolve positions with overrides
+  const leftColumnPos = resolveElementPosition('compare', 'leftColumn', spec.elements.leftColumn, sku.positionOverrides)
+  const rightColumnPos = resolveElementPosition('compare', 'rightColumn', spec.elements.rightColumn, sku.positionOverrides)
+  const headlinePos = resolveElementPosition('compare', 'headline', spec.elements.headline, sku.positionOverrides)
+  const leftImagePos = resolveElementPosition('compare', 'leftImage', spec.elements.leftImage, sku.positionOverrides)
+  const rightImagePos = resolveElementPosition('compare', 'rightImage', spec.elements.rightImage, sku.positionOverrides)
+  const leftLabelPos = resolveElementPosition('compare', 'leftLabel', spec.elements.leftLabel, sku.positionOverrides)
+  const rightLabelPos = resolveElementPosition('compare', 'rightLabel', spec.elements.rightLabel, sku.positionOverrides)
+  
+  // Row positions
+  const row1Pos = resolveElementPosition('compare', 'row1', spec.elements.row1, sku.positionOverrides)
+  const row2Pos = resolveElementPosition('compare', 'row2', spec.elements.row2, sku.positionOverrides)
+  const row3Pos = resolveElementPosition('compare', 'row3', spec.elements.row3, sku.positionOverrides)
+  const row4Pos = resolveElementPosition('compare', 'row4', spec.elements.row4, sku.positionOverrides)
 
   return (
     <div
@@ -55,9 +72,9 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
       <h1
         style={{
           position: 'absolute',
-          top: spec.elements.headline.top,
-          left: spec.elements.headline.left,
-          width: spec.elements.headline.width,
+          top: headlinePos.top,
+          left: headlinePos.left,
+          width: headlinePos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.headline.fontSize,
           fontWeight: spec.elements.headline.fontWeight,
@@ -65,9 +82,10 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
           letterSpacing: `${spec.elements.headline.letterSpacing}px`,
           color: headlineColor,
           textAlign: spec.elements.headline.textAlign,
-          zIndex: spec.elements.headline.zIndex,
+          zIndex: headlinePos.zIndex ?? spec.elements.headline.zIndex,
           margin: 0,
-          padding: 0
+          padding: 0,
+          transform: headlinePos.rotation ? `rotate(${headlinePos.rotation}deg)` : undefined
         }}
       >
         {sku.copy.compare?.headline || 'COMPARE THE\nDIFFERENCE'}
@@ -77,13 +95,14 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
       <div
         style={{
           position: 'absolute',
-          top: spec.elements.highlightLeft.top,
-          left: spec.elements.highlightLeft.left,
-          width: spec.elements.highlightLeft.width,
-          height: spec.elements.highlightLeft.height,
-          borderRadius: spec.elements.highlightLeft.borderRadius,
+          top: leftColumnPos.top,
+          left: leftColumnPos.left,
+          width: leftColumnPos.width ? `${leftColumnPos.width}px` : spec.elements.leftColumn.width,
+          height: leftColumnPos.height ? `${leftColumnPos.height}px` : spec.elements.leftColumn.height,
+          borderRadius: spec.elements.leftColumn.borderRadius,
           backgroundColor: colors.accent,
-          zIndex: spec.elements.highlightLeft.zIndex
+          zIndex: leftColumnPos.zIndex ?? spec.elements.leftColumn.zIndex,
+          transform: leftColumnPos.rotation ? `rotate(${leftColumnPos.rotation}deg)` : undefined
         }}
       />
 
@@ -91,69 +110,70 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
       <div
         style={{
           position: 'absolute',
-          top: spec.elements.highlightRight.top,
-          left: spec.elements.highlightRight.left,
-          width: spec.elements.highlightRight.width,
-          height: spec.elements.highlightRight.height,
-          borderRadius: spec.elements.highlightRight.borderRadius,
+          top: rightColumnPos.top,
+          left: rightColumnPos.left,
+          width: rightColumnPos.width ? `${rightColumnPos.width}px` : spec.elements.rightColumn.width,
+          height: rightColumnPos.height ? `${rightColumnPos.height}px` : spec.elements.rightColumn.height,
+          borderRadius: spec.elements.rightColumn.borderRadius,
           backgroundColor: colors.bgAlt,
-          zIndex: spec.elements.highlightRight.zIndex
+          zIndex: rightColumnPos.zIndex ?? spec.elements.rightColumn.zIndex,
+          transform: rightColumnPos.rotation ? `rotate(${rightColumnPos.rotation}deg)` : undefined
         }}
       />
 
       {/* Left Comparison Image (Yours) */}
-      {sku.images.comparisonOurs && (
+      {(sku.images.comparisonOurs || true) && (
         <div
           style={{
             position: 'absolute',
-            top: spec.elements.comparisonYours.top,
-            left: spec.elements.comparisonYours.left,
-            width: spec.elements.comparisonYours.width,
-            height: spec.elements.comparisonYours.height,
-            borderRadius: spec.elements.comparisonYours.borderRadius,
-            overflow: 'hidden',
+            top: leftImagePos.top,
+            left: leftImagePos.left,
+            width: leftImagePos.width,
+            height: leftImagePos.height,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: spec.elements.comparisonYours.zIndex
+            zIndex: leftImagePos.zIndex ?? spec.elements.leftImage.zIndex,
+            transform: leftImagePos.rotation ? `rotate(${leftImagePos.rotation}deg)` : undefined
           }}
         >
           <img
-            src={sku.images.comparisonOurs}
+            src={sku.images.comparisonOurs || '/placeholder-image.svg'}
             alt="Your Product"
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'contain'
+              objectFit: 'contain',
+              opacity: sku.images.comparisonOurs ? 1 : 0.3
             }}
           />
         </div>
       )}
 
       {/* Right Comparison Image (Theirs) */}
-      {sku.images.comparisonTheirs && (
+      {(sku.images.comparisonTheirs || true) && (
         <div
           style={{
             position: 'absolute',
-            top: spec.elements.comparisonTheirs.top,
-            left: spec.elements.comparisonTheirs.left,
-            width: spec.elements.comparisonTheirs.width,
-            height: spec.elements.comparisonTheirs.height,
-            borderRadius: spec.elements.comparisonTheirs.borderRadius,
-            overflow: 'hidden',
+            top: rightImagePos.top,
+            left: rightImagePos.left,
+            width: rightImagePos.width,
+            height: rightImagePos.height,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: spec.elements.comparisonTheirs.zIndex
+            zIndex: rightImagePos.zIndex ?? spec.elements.rightImage.zIndex,
+            transform: rightImagePos.rotation ? `rotate(${rightImagePos.rotation}deg)` : undefined
           }}
         >
           <img
-            src={sku.images.comparisonTheirs}
+            src={sku.images.comparisonTheirs || '/placeholder-image.svg'}
             alt="Their Product"
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover'
+              objectFit: 'cover',
+              opacity: sku.images.comparisonTheirs ? 1 : 0.3
             }}
           />
         </div>
@@ -163,9 +183,9 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
       <p
         style={{
           position: 'absolute',
-          top: spec.elements.leftLabel.top,
-          left: spec.elements.leftLabel.left,
-          width: spec.elements.leftLabel.width,
+          top: leftLabelPos.top,
+          left: leftLabelPos.left,
+          width: leftLabelPos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.leftLabel.fontSize,
           fontWeight: spec.elements.leftLabel.fontWeight,
@@ -174,7 +194,7 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
           color: leftLabelColor,
           textAlign: spec.elements.leftLabel.textAlign,
           transform: spec.elements.leftLabel.transform,
-          zIndex: spec.elements.leftLabel.zIndex,
+          zIndex: leftLabelPos.zIndex ?? spec.elements.leftLabel.zIndex,
           margin: 0,
           padding: 0
         }}
@@ -186,9 +206,9 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
       <p
         style={{
           position: 'absolute',
-          top: spec.elements.rightLabel.top,
-          left: spec.elements.rightLabel.left,
-          width: spec.elements.rightLabel.width,
+          top: rightLabelPos.top,
+          left: rightLabelPos.left,
+          width: rightLabelPos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.rightLabel.fontSize,
           fontWeight: spec.elements.rightLabel.fontWeight,
@@ -197,7 +217,7 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
           color: rightLabelColor,
           textAlign: spec.elements.rightLabel.textAlign,
           transform: spec.elements.rightLabel.transform,
-          zIndex: spec.elements.rightLabel.zIndex,
+          zIndex: rightLabelPos.zIndex ?? spec.elements.rightLabel.zIndex,
           margin: 0,
           padding: 0
         }}
@@ -211,7 +231,7 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
           position: 'absolute',
           top: spec.elements.rowsContainer.top,
           left: spec.elements.rowsContainer.left,
-          width: spec.elements.rowsContainer.width,
+          width: 949, // Pixel-perfect to right edge
           zIndex: spec.elements.rowsContainer.zIndex
         }}
       >
@@ -228,7 +248,7 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
                 position: 'relative',
                 marginTop: index > 0 ? `${spec.elements.row.gap}px` : 0,
                 paddingBottom: index < rows.length - 1 ? `${spec.elements.row.gap}px` : 0,
-                borderBottom: index < rows.length - 1 ? '1px solid rgba(108, 108, 108, 0.3)' : 'none',
+                borderBottom: index < rows.length - 1 ? '1px solid #6c6c6c' : 'none', // Solid gray
                 minHeight: `${minRowHeight}px`,
                 display: 'flex',
                 alignItems: 'center'
@@ -319,6 +339,15 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
           )
         })}
       </div>
+
+      {/* Custom Elements */}
+      <CustomElementRenderer
+        customElements={sku.customElements?.compare || []}
+        brand={brand}
+        sku={sku}
+        skuContentOverrides={sku.customElementContent || {}}
+        isEditMode={false}
+      />
     </div>
   )
 }

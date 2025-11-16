@@ -2,6 +2,8 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { TESTIMONIAL_SPEC } from '@/lib/layouts/specs/testimonial-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition } from '@/lib/layout-utils'
+import { CustomElementRenderer } from '@/components/layout-editor/CustomElementRenderer'
 
 interface TestimonialLayoutProps {
   brand: Brand
@@ -17,6 +19,30 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
   const quoteColor = getFieldColorValue(brand, sku, 'testimonial', 'Quote', 'text')
   const ratingColor = getFieldColorValue(brand, sku, 'testimonial', 'Rating', 'accent')
   const ctaColor = getFieldColorValue(brand, sku, 'testimonial', 'CTA Strip', 'accent')
+
+  // Resolve positions
+  const quoteContainerPos = resolveElementPosition('testimonial', 'quoteContainer', {
+    top: 680, left: 60, x: 60, y: 680, width: 960, height: 280, zIndex: 20
+  }, sku.positionOverrides)
+  
+  const starsPos = resolveElementPosition('testimonial', 'stars', {
+    top: 710, left: 60, x: 60, y: 710, width: 960, height: 40, zIndex: 21
+  }, sku.positionOverrides)
+  
+  const quotePos = resolveElementPosition('testimonial', 'quote', {
+    top: 770, left: 60, x: 60, y: 770, width: 960, height: 104, zIndex: 21
+  }, sku.positionOverrides)
+  
+  const namePos = resolveElementPosition('testimonial', 'name', {
+    top: 889, left: 60, x: 60, y: 889, width: 960, height: 40, zIndex: 21
+  }, sku.positionOverrides)
+  
+  const ctaStripPos = resolveElementPosition('testimonial', 'ctaStrip', spec.elements.ctaStrip, sku.positionOverrides)
+  const ctaTextPos = resolveElementPosition('testimonial', 'ctaText', {
+    ...spec.elements.ctaText,
+    top: 1036,
+    y: 1036
+  }, sku.positionOverrides)
 
   return (
     <div
@@ -45,28 +71,29 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
         />
       )}
 
-      {/* Quote Container - Auto Height */}
+      {/* Quote Container Background */}
       <div
         style={{
           position: 'absolute',
-          bottom: spec.elements.quoteContainer.bottom,
-          left: spec.elements.quoteContainer.left,
-          right: spec.elements.quoteContainer.right,
-          maxWidth: spec.elements.quoteContainer.maxWidth,
-          margin: '0 auto',
+          top: quoteContainerPos.top,
+          left: quoteContainerPos.left,
+          width: quoteContainerPos.width ? `${quoteContainerPos.width}px` : 960,
+          height: quoteContainerPos.height ? `${quoteContainerPos.height}px` : 320,
           borderRadius: spec.elements.quoteContainer.cornerRadius,
           backgroundColor: quotePanelColor,
           opacity: spec.elements.quoteContainer.opacity,
-          padding: `${spec.elements.quoteContainer.padding.top}px ${spec.elements.quoteContainer.padding.right}px ${spec.elements.quoteContainer.padding.bottom}px ${spec.elements.quoteContainer.padding.left}px`,
-          zIndex: spec.elements.quoteContainer.zIndex,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
+          zIndex: quoteContainerPos.zIndex ?? spec.elements.quoteContainer.zIndex,
+          transform: quoteContainerPos.rotation ? `rotate(${quoteContainerPos.rotation}deg)` : undefined
         }}
-      >
+      />
+
       {/* Stars */}
       <p
         style={{
+          position: 'absolute',
+          top: starsPos.top,
+          left: starsPos.left,
+          width: starsPos.width ? `${starsPos.width}px` : 960,
           fontFamily: fonts.family,
           fontSize: spec.elements.stars.fontSize,
           fontWeight: spec.elements.stars.fontWeight,
@@ -74,9 +101,10 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
           letterSpacing: `${spec.elements.stars.letterSpacing}px`,
           color: ratingColor,
           textAlign: spec.elements.stars.textAlign,
-          marginBottom: spec.elements.stars.marginBottom,
-          margin: `0 0 ${spec.elements.stars.marginBottom}px 0`,
-          padding: 0
+          zIndex: starsPos.zIndex ?? 21,
+          margin: 0,
+          padding: 0,
+          transform: starsPos.rotation ? `rotate(${starsPos.rotation}deg)` : undefined
         }}
       >
         {sku.copy.testimonial?.ratingLabel || '★★★★★'}
@@ -85,6 +113,11 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
       {/* Quote Text */}
       <p
         style={{
+          position: 'absolute',
+          top: quotePos.top,
+          left: quotePos.left,
+          width: quotePos.width ? `${quotePos.width}px` : 960,
+          height: quotePos.height ? `${quotePos.height}px` : 'auto',
           fontFamily: fonts.family,
           fontSize: spec.elements.quoteText.fontSize,
           fontWeight: spec.elements.quoteText.fontWeight,
@@ -92,8 +125,11 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
           letterSpacing: `${spec.elements.quoteText.letterSpacing}px`,
           color: quoteColor,
           textAlign: spec.elements.quoteText.textAlign,
-          margin: `0 0 ${spec.elements.quoteText.marginBottom}px 0`,
-          padding: 0
+          zIndex: quotePos.zIndex ?? 21,
+          margin: 0,
+          padding: 0,
+          overflow: 'hidden',
+          transform: quotePos.rotation ? `rotate(${quotePos.rotation}deg)` : undefined
         }}
       >
         "{sku.copy.testimonial?.quote || 'This product has completely changed my life. I feel better, have more energy, and the results are amazing!'}"
@@ -102,6 +138,10 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
       {/* Name */}
       <p
         style={{
+          position: 'absolute',
+          top: namePos.top,
+          left: namePos.left,
+          width: namePos.width ? `${namePos.width}px` : 960,
           fontFamily: fonts.family,
           fontSize: spec.elements.nameText.fontSize,
           fontWeight: spec.elements.nameText.fontWeight,
@@ -109,24 +149,26 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
           letterSpacing: `${spec.elements.nameText.letterSpacing}px`,
           color: quoteColor,
           textAlign: spec.elements.nameText.textAlign,
+          zIndex: namePos.zIndex ?? 21,
           margin: 0,
-          padding: 0
+          padding: 0,
+          transform: namePos.rotation ? `rotate(${namePos.rotation}deg)` : undefined
         }}
       >
         {sku.copy.testimonial?.name || '-Sarah S.'}
       </p>
-      </div>
 
       {/* CTA Strip Background */}
       <div
         style={{
           position: 'absolute',
-          top: spec.elements.ctaStrip.top,
-          left: spec.elements.ctaStrip.left,
-          width: spec.elements.ctaStrip.width,
-          height: spec.elements.ctaStrip.height,
+          top: ctaStripPos.top,
+          left: ctaStripPos.left,
+          width: ctaStripPos.width,
+          height: ctaStripPos.height,
           backgroundColor: ctaColor,
-          zIndex: spec.elements.ctaStrip.zIndex
+          zIndex: ctaStripPos.zIndex ?? spec.elements.ctaStrip.zIndex,
+          transform: ctaStripPos.rotation ? `rotate(${ctaStripPos.rotation}deg)` : undefined
         }}
       />
 
@@ -134,9 +176,9 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
       <p
         style={{
           position: 'absolute',
-          top: spec.elements.ctaText.top,
-          left: spec.elements.ctaText.left,
-          width: spec.elements.ctaText.width,
+          top: ctaTextPos.top,
+          left: ctaTextPos.left,
+          width: ctaTextPos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.ctaText.fontSize,
           fontWeight: spec.elements.ctaText.fontWeight,
@@ -144,14 +186,23 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
           letterSpacing: `${spec.elements.ctaText.letterSpacing}px`,
           color: spec.elements.ctaText.color,
           textAlign: spec.elements.ctaText.textAlign,
-          transform: spec.elements.ctaText.transform,
-          zIndex: spec.elements.ctaText.zIndex,
+          transform: spec.elements.ctaText.transform || 'translateX(-50%)',
+          zIndex: ctaTextPos.zIndex ?? spec.elements.ctaText.zIndex,
           margin: 0,
           padding: 0
         }}
       >
         {sku.copy.testimonial?.ctaStrip || 'Save $10 off your first order'}
       </p>
+
+      {/* Custom Elements */}
+      <CustomElementRenderer
+        customElements={sku.customElements?.testimonial || []}
+        brand={brand}
+        sku={sku}
+        skuContentOverrides={sku.customElementContent || {}}
+        isEditMode={false}
+      />
     </div>
   )
 }

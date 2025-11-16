@@ -2,6 +2,8 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { BIG_STAT_SPEC } from '@/lib/layouts/specs/big-stat-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition } from '@/lib/layout-utils'
+import { CustomElementRenderer } from '@/components/layout-editor/CustomElementRenderer'
 
 interface BigStatLayoutProps {
   brand: Brand
@@ -31,6 +33,30 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
     sku.copy.stat97?.ingredient3 || 'Ingredient 3',
     sku.copy.stat97?.ingredient4 || 'Ingredient 4'
   ]
+
+  // Resolve positions
+  const statValuePos = resolveElementPosition('bigStat', 'statValue', spec.elements.statValue, sku.positionOverrides)
+  const headlinePos = resolveElementPosition('bigStat', 'headline', spec.elements.headline, sku.positionOverrides)
+  
+  const ingredientPositions = spec.elements.ingredients.map((ing, i) => ({
+    image: resolveElementPosition('bigStat', `ingredient${i + 1}`, {
+      top: ing.image.top,
+      left: ing.image.left,
+      x: ing.image.left,
+      y: ing.image.top,
+      width: ing.image.size,
+      height: ing.image.size,
+      zIndex: ing.image.zIndex
+    }, sku.positionOverrides),
+    label: resolveElementPosition('bigStat', `label${i + 1}`, {
+      top: ing.label.top,
+      left: ing.label.left,
+      x: ing.label.left,
+      y: ing.label.top,
+      width: ing.label.width,
+      zIndex: ing.image.zIndex + 1
+    }, sku.positionOverrides)
+  }))
 
   return (
     <div
@@ -77,9 +103,9 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
       <p
         style={{
           position: 'absolute',
-          top: spec.elements.statValue.top,
-          left: spec.elements.statValue.left,
-          width: spec.elements.statValue.width,
+          top: statValuePos.top,
+          left: statValuePos.left,
+          width: statValuePos.width,
           fontFamily: fonts.family,
           fontSize: fonts.sizes.display,
           fontWeight: fonts.weights.display,
@@ -88,7 +114,7 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
           color: statColor,
           textAlign: spec.elements.statValue.textAlign,
           transform: spec.elements.statValue.transform,
-          zIndex: spec.elements.statValue.zIndex,
+          zIndex: statValuePos.zIndex ?? spec.elements.statValue.zIndex,
           margin: 0,
           padding: 0
         }}
@@ -100,9 +126,9 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
       <p
         style={{
           position: 'absolute',
-          top: spec.elements.headline.top,
-          left: spec.elements.headline.left,
-          width: spec.elements.headline.width,
+          top: headlinePos.top,
+          left: headlinePos.left,
+          width: headlinePos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.headline.fontSize,
           fontWeight: spec.elements.headline.fontWeight,
@@ -111,7 +137,7 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
           color: headlineColor,
           textAlign: spec.elements.headline.textAlign,
           transform: spec.elements.headline.transform,
-          zIndex: spec.elements.headline.zIndex,
+          zIndex: headlinePos.zIndex ?? spec.elements.headline.zIndex,
           margin: 0,
           padding: 0
         }}
@@ -119,71 +145,80 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
         {sku.copy.stat97?.headline || 'Naturally sourced Bioactive Precision Peptides™'}
       </p>
 
-      {/* 4 Ingredient Images with Labels */}
-      {spec.elements.ingredients.map((ingredient, index) => (
-        <div key={index}>
-          {/* Circular Ingredient Image */}
-          {ingredientImages[index] && (
+      {/* Ingredient Images and Labels */}
+      {ingredientImages.map((image, index) => {
+        const positions = ingredientPositions[index]
+        
+        return (
+          <div key={index}>
+            {/* Ingredient Image */}
             <div
               style={{
                 position: 'absolute',
-                top: ingredient.image.top,
-                left: ingredient.image.left,
-                width: ingredient.image.size,
-                height: ingredient.image.size,
-                borderRadius: ingredient.image.size / 2,
+                top: positions.image.top,
+                left: positions.image.left,
+                width: positions.image.width ? `${positions.image.width}px` : spec.elements.ingredients[index].image.size,
+                height: positions.image.height ? `${positions.image.height}px` : spec.elements.ingredients[index].image.size,
+                borderRadius: '50%',
                 overflow: 'hidden',
-                zIndex: ingredient.image.zIndex
+                zIndex: positions.image.zIndex ?? spec.elements.ingredients[index].image.zIndex,
+                transform: positions.image.rotation ? `rotate(${positions.image.rotation}deg)` : undefined
               }}
             >
               <img
-                src={ingredientImages[index]}
-                alt={ingredientLabels[index]}
+                src={image || '/placeholder-image.svg'}
+                alt={`Ingredient ${index + 1}`}
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover'
+                  objectFit: 'cover',
+                  opacity: image ? 1 : 0.3
                 }}
               />
             </div>
-          )}
 
-          {/* Label Pill with Text */}
-          <div
-            style={{
-              position: 'absolute',
-              top: ingredient.label.top,
-              left: ingredient.label.left,
-              width: ingredient.label.width,
-              height: spec.elements.ingredientLabelStyle.height,
-              backgroundColor: labelColor,
-              borderRadius: spec.elements.ingredientLabelStyle.borderRadius,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 5,
-              padding: '0 10px'
-            }}
-          >
-            <span
+            {/* Ingredient Label - Auto-grows with text */}
+            <div
               style={{
-                fontFamily: fonts.family,
+                position: 'absolute',
+                top: positions.label.top,
+                left: positions.label.left,
+                minWidth: positions.label.width ? undefined : spec.elements.ingredientLabelStyle.height,
+                width: positions.label.width ? `${positions.label.width}px` : undefined,
+                maxWidth: positions.label.width ? `${positions.label.width}px` : undefined,
+                height: spec.elements.ingredientLabelStyle.height,
+                backgroundColor: labelColor,
+                color: spec.elements.ingredientLabelStyle.color,
                 fontSize: spec.elements.ingredientLabelStyle.fontSize,
                 fontWeight: spec.elements.ingredientLabelStyle.fontWeight,
-                lineHeight: spec.elements.ingredientLabelStyle.height,
-                color: spec.elements.ingredientLabelStyle.color,
-                textAlign: spec.elements.ingredientLabelStyle.textAlign,
-                margin: 0,
-                padding: 0,
-                width: '100%',
-                display: 'block'
+                borderRadius: spec.elements.ingredientLabelStyle.borderRadius,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 16px',
+                fontFamily: fonts.family,
+                boxSizing: 'border-box',
+                zIndex: positions.label.zIndex ?? 50,
+                transform: positions.label.rotation ? `rotate(${positions.label.rotation}deg)` : undefined,
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                textAlign: 'center'
               }}
             >
               {ingredientLabels[index]}
-            </span>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
+
+      {/* Custom Elements */}
+      <CustomElementRenderer
+        customElements={sku.customElements?.bigStat || []}
+        brand={brand}
+        sku={sku}
+        skuContentOverrides={sku.customElementContent || {}}
+        isEditMode={false}
+      />
     </div>
   )
 }

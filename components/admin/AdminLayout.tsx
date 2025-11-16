@@ -1,23 +1,28 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { AppSidebar } from './AppSidebar'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { IconSidebar } from './IconSidebar'
+import { BrandSidebar } from './BrandSidebar'
 
 interface AdminLayoutProps {
   children: ReactNode
+  currentBrandId?: number
 }
 
-export function AdminLayout({ children }: AdminLayoutProps) {
+export function AdminLayout({ children, currentBrandId }: AdminLayoutProps) {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <div className="flex flex-1 flex-col">
-          {children}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="flex h-screen overflow-hidden">
+      {/* Icon-only sidebar (always visible) */}
+      <IconSidebar />
+      
+      {/* Brand context sidebar (only when in brand context) */}
+      {currentBrandId && <BrandSidebar currentBrandId={currentBrandId} />}
+      
+      {/* Main content */}
+      <div className="flex flex-1 flex-col overflow-y-auto">
+        {children}
+      </div>
+    </div>
   )
 }
 

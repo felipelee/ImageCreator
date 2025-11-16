@@ -12,6 +12,28 @@ export interface SKU {
       [fieldKey: string]: string // e.g., { "Background Image": "lifestyleA" } means use lifestyleA instead of default
     }
   }
+  positionOverrides?: {
+    [layoutKey: string]: {
+      [elementKey: string]: {
+        x?: number
+        y?: number
+        width?: number
+        height?: number
+        rotation?: number
+        zIndex?: number
+      }
+    }
+  }
+  customElements?: {
+    [layoutKey: string]: import('@/types/custom-element').CustomElement[]
+  }
+  customElementContent?: {
+    [elementId: string]: {
+      text?: string
+      imageKey?: string
+      colorKey?: string
+    }
+  }
   copy: {
     hero1?: {
       headline: string
@@ -259,6 +281,12 @@ export interface SKU {
     productImage?: string
   }
   productInformation?: string // Product-specific information for AI content generation
+  fluidMetadata?: {
+    productId?: string | number // Fluid product ID (if imported from Fluid)
+    variantId?: string | number // Fluid variant ID (if specific variant)
+    productSlug?: string // Fluid product slug
+    productTitle?: string // Fluid product title for reference
+  }
   createdAt: Date
   updatedAt: Date
 }

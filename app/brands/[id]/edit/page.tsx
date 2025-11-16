@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function BrandEditPage() {
   const params = useParams()
@@ -207,7 +208,7 @@ export default function BrandEditPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout currentBrandId={brandId}>
         <PageHeader breadcrumbs={[{ label: 'All Brands', href: '/' }, { label: 'Edit DNA' }]} />
         <div className="flex-1 p-6 space-y-6">
           <Skeleton className="h-10 w-64" />
@@ -247,7 +248,7 @@ export default function BrandEditPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout currentBrandId={brandId}>
       <PageHeader 
         breadcrumbs={[
           { label: 'All Brands', href: '/' },
@@ -270,8 +271,18 @@ export default function BrandEditPage() {
             </Button>
           </div>
 
-          {/* Brand Name */}
-          <Card>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="colors">Colors</TabsTrigger>
+              <TabsTrigger value="design">Typography & Images</TabsTrigger>
+              <TabsTrigger value="content">Integrations</TabsTrigger>
+            </TabsList>
+
+            {/* Tab 1: Overview */}
+            <TabsContent value="overview" className="space-y-6">
+              {/* Brand Name */}
+              <Card>
             <CardHeader>
               <CardTitle>Brand Name</CardTitle>
               <CardDescription>The name of your brand</CardDescription>
@@ -286,6 +297,65 @@ export default function BrandEditPage() {
             </CardContent>
           </Card>
 
+          {/* Brand Knowledge */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Brand Knowledge</CardTitle>
+              <CardDescription>Information about your brand's voice and context. This will be used by AI to generate content for all SKUs.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            
+            <div className="space-y-6">
+              {/* Brand Voice */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">
+                  Brand Voice & Way of Talking
+                </Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Describe your brand's tone, style, and how you communicate. Examples: "Casual and friendly", "Professional and authoritative", "Playful and energetic"
+                </p>
+                <Textarea
+                  value={brand.knowledge?.brandVoice || ''}
+                  onChange={(e) => setBrand({
+                    ...brand,
+                    knowledge: {
+                      ...brand.knowledge,
+                      brandVoice: e.target.value
+                    }
+                  })}
+                  placeholder="Example: Our brand speaks in a confident, science-backed tone. We use clear, direct language without jargon. We're friendly but professional, focusing on real results and benefits..."
+                  className="min-h-[120px] font-mono text-sm"
+                />
+              </div>
+
+              {/* Brand Information */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">
+                  Brand Information & Context
+                </Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  General information about your brand, mission, values, target audience, and any important context. Think of this like a Claude project knowledge base.
+                </p>
+                <Textarea
+                  value={brand.knowledge?.information || ''}
+                  onChange={(e) => setBrand({
+                    ...brand,
+                    knowledge: {
+                      ...brand.knowledge,
+                      information: e.target.value
+                    }
+                  })}
+                  placeholder="Example: Make Wellness is a premium supplement brand focused on peptides and longevity. Our target audience is health-conscious adults aged 30-55 who value science-backed products. We emphasize quality, transparency, and real results..."
+                  className="min-h-[200px] font-mono text-sm"
+                />
+              </div>
+            </div>
+            </CardContent>
+          </Card>
+            </TabsContent>
+
+            {/* Tab 2: Colors */}
+            <TabsContent value="colors" className="space-y-6">
           {/* Color Palette */}
           <Card>
             <CardHeader>
@@ -422,7 +492,10 @@ export default function BrandEditPage() {
             </div>
             </CardContent>
           </Card>
+            </TabsContent>
 
+            {/* Tab 3: Typography & Images */}
+            <TabsContent value="design" className="space-y-6">
           {/* Typography System */}
           <Card>
             <CardHeader>
@@ -709,62 +782,6 @@ export default function BrandEditPage() {
             </CardContent>
           </Card>
 
-          {/* Brand Knowledge */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Brand Knowledge</CardTitle>
-              <CardDescription>Information about your brand's voice and context. This will be used by AI to generate content for all SKUs.</CardDescription>
-            </CardHeader>
-            <CardContent>
-            
-            <div className="space-y-6">
-              {/* Brand Voice */}
-              <div>
-                <Label className="text-sm font-semibold mb-2 block">
-                  Brand Voice & Way of Talking
-                </Label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Describe your brand's tone, style, and how you communicate. Examples: "Casual and friendly", "Professional and authoritative", "Playful and energetic"
-                </p>
-                <Textarea
-                  value={brand.knowledge?.brandVoice || ''}
-                  onChange={(e) => setBrand({
-                    ...brand,
-                    knowledge: {
-                      ...brand.knowledge,
-                      brandVoice: e.target.value
-                    }
-                  })}
-                  placeholder="Example: Our brand speaks in a confident, science-backed tone. We use clear, direct language without jargon. We're friendly but professional, focusing on real results and benefits..."
-                  className="min-h-[120px] font-mono text-sm"
-                />
-              </div>
-
-              {/* Brand Information */}
-              <div>
-                <Label className="text-sm font-semibold mb-2 block">
-                  Brand Information & Context
-                </Label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  General information about your brand, mission, values, target audience, and any important context. Think of this like a Claude project knowledge base.
-                </p>
-                <Textarea
-                  value={brand.knowledge?.information || ''}
-                  onChange={(e) => setBrand({
-                    ...brand,
-                    knowledge: {
-                      ...brand.knowledge,
-                      information: e.target.value
-                    }
-                  })}
-                  placeholder="Example: Make Wellness is a premium supplement brand focused on peptides and longevity. Our target audience is health-conscious adults aged 30-55 who value science-backed products. We emphasize quality, transparency, and real results..."
-                  className="min-h-[200px] font-mono text-sm"
-                />
-              </div>
-            </div>
-            </CardContent>
-          </Card>
-
           {/* Typography Preview */}
           <Card>
             <CardHeader>
@@ -834,6 +851,125 @@ export default function BrandEditPage() {
             </div>
             </CardContent>
           </Card>
+            </TabsContent>
+
+            {/* Tab 4: Integrations */}
+            <TabsContent value="content" className="space-y-6">
+          {/* Fluid DAM Integration */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Fluid DAM Integration</CardTitle>
+              <CardDescription>
+                Configure Fluid DAM credentials to import products and push generated images back to Fluid
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">What is this?</h4>
+                  <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                    <li>• <strong>Import Products:</strong> Browse and import products from your Fluid catalog</li>
+                    <li>• <strong>Use DAM Assets:</strong> Pull images from Fluid DAM for your SKU layouts</li>
+                    <li>• <strong>Push to Fluid:</strong> Upload generated marketing images back to Fluid product pages</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="fluidApiToken" className="text-sm font-semibold mb-2 block">
+                      Fluid API Token
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Your Fluid API token for authentication. Find this in your Fluid settings.
+                    </p>
+                    <Input
+                      id="fluidApiToken"
+                      type="password"
+                      value={brand.fluidDam?.apiToken || ''}
+                      onChange={(e) => setBrand({
+                        ...brand,
+                        fluidDam: {
+                          ...brand.fluidDam,
+                          apiToken: e.target.value
+                        }
+                      })}
+                      placeholder="Enter your Fluid API token"
+                      className="font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="fluidBaseUrl" className="text-sm font-semibold mb-2 block">
+                      Fluid Base URL
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Your Fluid instance URL (e.g., https://yourbrand.fluid.app)
+                    </p>
+                    <Input
+                      id="fluidBaseUrl"
+                      type="url"
+                      value={brand.fluidDam?.baseUrl || ''}
+                      onChange={(e) => setBrand({
+                        ...brand,
+                        fluidDam: {
+                          ...brand.fluidDam,
+                          baseUrl: e.target.value
+                        }
+                      })}
+                      placeholder="https://yourbrand.fluid.app"
+                      className="font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="fluidSubdomain" className="text-sm font-semibold mb-2 block">
+                      Fluid Subdomain (Optional)
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Your Fluid subdomain (e.g., "yourbrand" from yourbrand.fluid.app)
+                    </p>
+                    <Input
+                      id="fluidSubdomain"
+                      type="text"
+                      value={brand.fluidDam?.subdomain || ''}
+                      onChange={(e) => setBrand({
+                        ...brand,
+                        fluidDam: {
+                          ...brand.fluidDam,
+                          subdomain: e.target.value
+                        }
+                      })}
+                      placeholder="yourbrand"
+                      className="font-mono"
+                    />
+                  </div>
+                </div>
+
+                {brand.fluidDam?.apiToken && brand.fluidDam?.baseUrl && (
+                  <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p className="text-xs text-green-800 dark:text-green-200">
+                      ✓ Fluid DAM is configured! You can now:
+                    </p>
+                    <ul className="text-xs text-green-700 dark:text-green-300 mt-1 ml-4">
+                      <li>• Import products from Fluid on the brand page</li>
+                      <li>• Browse DAM assets when editing SKU images</li>
+                      <li>• Push generated images to Fluid product pages</li>
+                    </ul>
+                  </div>
+                )}
+
+                {(!brand.fluidDam?.apiToken || !brand.fluidDam?.baseUrl) && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <p className="text-xs text-amber-800 dark:text-amber-200">
+                      💡 Both API Token and Base URL are required to enable Fluid integration
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+            </TabsContent>
+          </Tabs>
 
           <div className="flex justify-end gap-2 pt-6">
             <Link href={`/brands/${brandId}`}>

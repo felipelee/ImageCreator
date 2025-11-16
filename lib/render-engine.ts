@@ -158,14 +158,14 @@ async function convertBlobFormat(blob: Blob, format: 'jpg' | 'webp', quality: nu
       URL.revokeObjectURL(url)
       
       const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/webp'
-      canvas.toBlob(
+    canvas.toBlob(
         (result) => {
           if (result) resolve(result)
           else reject(new Error('Failed to convert format'))
-        },
-        mimeType,
-        quality
-      )
+      },
+      mimeType,
+      quality
+    )
     }
     
     img.onerror = () => {

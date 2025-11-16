@@ -16,6 +16,12 @@ body.exporting .editor-grid {
   display: none !important;
 }
 
+/* Visual editor hover states */
+.editable-element:hover {
+  outline: 1px dashed #3b82f6 !important;
+  outline-offset: 2px;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -2,6 +2,7 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { SOCIAL_PROOF_SPEC } from '@/lib/layouts/specs/social-proof-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition, combineTransforms } from '@/lib/layout-utils'
 
 interface SocialProofLayoutProps {
   brand: Brand
@@ -39,6 +40,10 @@ export function SocialProofLayout({ brand, sku }: SocialProofLayoutProps) {
     }
   ]
 
+  // Resolve positions with overrides
+  const headlinePos = resolveElementPosition('socialProof', 'headline', spec.elements.headline, sku.positionOverrides)
+  const productImagePos = resolveElementPosition('socialProof', 'productImage', spec.elements.productImage, sku.positionOverrides)
+
   return (
     <div
       style={{
@@ -67,9 +72,9 @@ export function SocialProofLayout({ brand, sku }: SocialProofLayoutProps) {
       <h1
         style={{
           position: 'absolute',
-          top: spec.elements.headline.top,
-          left: spec.elements.headline.left,
-          width: spec.elements.headline.width,
+          top: headlinePos.top,
+          left: headlinePos.left,
+          width: headlinePos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.headline.fontSize,
           fontWeight: spec.elements.headline.fontWeight,
@@ -77,9 +82,15 @@ export function SocialProofLayout({ brand, sku }: SocialProofLayoutProps) {
           letterSpacing: `${spec.elements.headline.letterSpacing}px`,
           color: headlineColor,
           textAlign: spec.elements.headline.textAlign,
-          zIndex: spec.elements.headline.zIndex,
+          zIndex: headlinePos.zIndex ?? spec.elements.headline.zIndex,
           margin: 0,
-          padding: 0
+          padding: 0,
+          transform: combineTransforms(
+            headlinePos.rotation ? `rotate(${headlinePos.rotation}deg)` : undefined
+          ),
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word'
         }}
       >
         {sku.copy.socialProof?.headline || 'Real People. Real Results.'}
@@ -132,7 +143,10 @@ export function SocialProofLayout({ brand, sku }: SocialProofLayoutProps) {
                 color: quoteColor,
                 margin: 0,
                 padding: 0,
-                marginBottom: `${spec.elements.reviewCard.quote.marginBottom}px`
+                marginBottom: `${spec.elements.reviewCard.quote.marginBottom}px`,
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word'
               }}
             >
               "{review.quote}"
@@ -161,14 +175,17 @@ export function SocialProofLayout({ brand, sku }: SocialProofLayoutProps) {
         <div
           style={{
             position: 'absolute',
-            top: spec.elements.productImage.top,
-            left: spec.elements.productImage.left,
-            width: spec.elements.productImage.width,
-            height: spec.elements.productImage.height,
+            top: productImagePos.top,
+            left: productImagePos.left,
+            width: productImagePos.width,
+            height: productImagePos.height,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: spec.elements.productImage.zIndex
+            zIndex: productImagePos.zIndex ?? spec.elements.productImage.zIndex,
+            transform: combineTransforms(
+              productImagePos.rotation ? `rotate(${productImagePos.rotation}deg)` : undefined
+            )
           }}
         >
           <img

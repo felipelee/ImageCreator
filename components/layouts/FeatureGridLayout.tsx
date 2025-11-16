@@ -2,6 +2,7 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { FEATURE_GRID_SPEC } from '@/lib/layouts/specs/feature-grid-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition, combineTransforms } from '@/lib/layout-utils'
 
 interface FeatureGridLayoutProps {
   brand: Brand
@@ -43,6 +44,10 @@ export function FeatureGridLayout({ brand, sku }: FeatureGridLayoutProps) {
     }
   ]
 
+  // Resolve positions with overrides
+  const headlinePos = resolveElementPosition('featureGrid', 'headline', spec.elements.headline, sku.positionOverrides)
+  const productImagePos = resolveElementPosition('featureGrid', 'productImage', spec.elements.productImage, sku.positionOverrides)
+
   return (
     <div
       style={{
@@ -71,9 +76,9 @@ export function FeatureGridLayout({ brand, sku }: FeatureGridLayoutProps) {
       <h1
         style={{
           position: 'absolute',
-          top: spec.elements.headline.top,
-          left: spec.elements.headline.left,
-          width: spec.elements.headline.width,
+          top: headlinePos.top,
+          left: headlinePos.left,
+          width: headlinePos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.headline.fontSize,
           fontWeight: spec.elements.headline.fontWeight,
@@ -81,38 +86,48 @@ export function FeatureGridLayout({ brand, sku }: FeatureGridLayoutProps) {
           letterSpacing: `${spec.elements.headline.letterSpacing}px`,
           color: headlineColor,
           textAlign: spec.elements.headline.textAlign,
-          zIndex: spec.elements.headline.zIndex,
+          zIndex: headlinePos.zIndex ?? spec.elements.headline.zIndex,
           margin: 0,
-          padding: 0
+          padding: 0,
+          transform: combineTransforms(
+            headlinePos.rotation ? `rotate(${headlinePos.rotation}deg)` : undefined
+          ),
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word'
         }}
       >
         {sku.copy.featureGrid?.headline || 'Why You\'ll Love It'}
       </h1>
 
       {/* Product Image */}
-      {sku.images.productPrimary && (
+      {(sku.images.productPrimary || true) && (
         <div
           style={{
             position: 'absolute',
-            top: spec.elements.productImage.top,
-            left: spec.elements.productImage.left,
-            width: spec.elements.productImage.width,
-            height: spec.elements.productImage.height,
+            top: productImagePos.top,
+            left: productImagePos.left,
+            width: productImagePos.width,
+            height: productImagePos.height,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: spec.elements.productImage.zIndex
+            zIndex: productImagePos.zIndex ?? spec.elements.productImage.zIndex,
+            transform: combineTransforms(
+              productImagePos.rotation ? `rotate(${productImagePos.rotation}deg)` : undefined
+            )
           }}
         >
           <img
-            src={sku.images.productPrimary}
+            src={sku.images.productPrimary || '/placeholder-image.svg'}
             alt="Product"
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
               width: 'auto',
               height: 'auto',
-              objectFit: 'contain'
+              objectFit: 'contain',
+              opacity: sku.images.productPrimary ? 1 : 0.3
             }}
           />
         </div>
@@ -163,7 +178,10 @@ export function FeatureGridLayout({ brand, sku }: FeatureGridLayoutProps) {
                 color: titleColor,
                 margin: 0,
                 padding: 0,
-                marginBottom: `${spec.elements.featureCard.title.marginBottom}px`
+                marginBottom: `${spec.elements.featureCard.title.marginBottom}px`,
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word'
               }}
             >
               {feature.title}
@@ -177,7 +195,10 @@ export function FeatureGridLayout({ brand, sku }: FeatureGridLayoutProps) {
                 letterSpacing: `${spec.elements.featureCard.description.letterSpacing}px`,
                 color: textColor,
                 margin: 0,
-                padding: 0
+                padding: 0,
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word'
               }}
             >
               {feature.description}

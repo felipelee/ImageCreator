@@ -2,6 +2,7 @@ import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { BEFORE_AFTER_SPEC } from '@/lib/layouts/specs/before-after-spec'
 import { getFieldColorValue } from '@/lib/color-utils'
+import { resolveElementPosition, combineTransforms } from '@/lib/layout-utils'
 
 interface BeforeAfterLayoutProps {
   brand: Brand
@@ -19,6 +20,10 @@ export function BeforeAfterLayout({ brand, sku }: BeforeAfterLayoutProps) {
   const beforeTextColor = getFieldColorValue(brand, sku, 'beforeAfter', 'Before Text', 'text')
   const afterTextColor = getFieldColorValue(brand, sku, 'beforeAfter', 'After Text', 'text')
   const dividerColor = getFieldColorValue(brand, sku, 'beforeAfter', 'Divider', 'primarySoft')
+
+  // Resolve positions with overrides
+  const headlinePos = resolveElementPosition('beforeAfter', 'headline', spec.elements.headline, sku.positionOverrides)
+  const productImagePos = resolveElementPosition('beforeAfter', 'productImage', spec.elements.productImage, sku.positionOverrides)
 
   return (
     <div
@@ -48,9 +53,9 @@ export function BeforeAfterLayout({ brand, sku }: BeforeAfterLayoutProps) {
       <h1
         style={{
           position: 'absolute',
-          top: spec.elements.headline.top,
-          left: spec.elements.headline.left,
-          width: spec.elements.headline.width,
+          top: headlinePos.top,
+          left: headlinePos.left,
+          width: headlinePos.width,
           fontFamily: fonts.family,
           fontSize: spec.elements.headline.fontSize,
           fontWeight: spec.elements.headline.fontWeight,
@@ -58,9 +63,10 @@ export function BeforeAfterLayout({ brand, sku }: BeforeAfterLayoutProps) {
           letterSpacing: `${spec.elements.headline.letterSpacing}px`,
           color: headlineColor,
           textAlign: spec.elements.headline.textAlign,
-          zIndex: spec.elements.headline.zIndex,
+          zIndex: headlinePos.zIndex ?? spec.elements.headline.zIndex,
           margin: 0,
-          padding: 0
+          padding: 0,
+          transform: combineTransforms(undefined, headlinePos.rotation)
         }}
       >
         {sku.copy.beforeAfter?.headline || 'The Transformation'}
@@ -178,29 +184,31 @@ export function BeforeAfterLayout({ brand, sku }: BeforeAfterLayoutProps) {
       </div>
 
       {/* Product Image */}
-      {sku.images.productPrimary && (
+      {(sku.images.productPrimary || true) && (
         <div
           style={{
             position: 'absolute',
-            top: spec.elements.productImage.top,
-            left: spec.elements.productImage.left,
-            width: spec.elements.productImage.width,
-            height: spec.elements.productImage.height,
+            top: productImagePos.top,
+            left: productImagePos.left,
+            width: productImagePos.width,
+            height: productImagePos.height,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: spec.elements.productImage.zIndex
+            zIndex: productImagePos.zIndex ?? spec.elements.productImage.zIndex,
+            transform: combineTransforms(undefined, productImagePos.rotation)
           }}
         >
           <img
-            src={sku.images.productPrimary}
+            src={sku.images.productPrimary || '/placeholder-image.svg'}
             alt="Product"
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
               width: 'auto',
               height: 'auto',
-              objectFit: 'contain'
+              objectFit: 'contain',
+              opacity: sku.images.productPrimary ? 1 : 0.3
             }}
           />
         </div>

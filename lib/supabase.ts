@@ -30,9 +30,13 @@ export interface DatabaseSKU {
   name: string
   color_overrides?: SKU['colorOverrides']
   image_overrides?: SKU['imageOverrides']
+  position_overrides?: SKU['positionOverrides']
+  custom_elements?: SKU['customElements']
+  custom_element_content?: SKU['customElementContent']
   copy: SKU['copy']
   images: SKU['images']
   product_information?: string
+  fluid_metadata?: SKU['fluidMetadata']
   created_at: string
   updated_at: string
 }
@@ -65,9 +69,13 @@ export const dbSKUToSKU = (dbSKU: DatabaseSKU): SKU => ({
   name: dbSKU.name,
   colorOverrides: dbSKU.color_overrides,
   imageOverrides: dbSKU.image_overrides,
+  positionOverrides: dbSKU.position_overrides,
+  customElements: dbSKU.custom_elements,
+  customElementContent: dbSKU.custom_element_content,
   copy: dbSKU.copy,
   images: dbSKU.images,
   productInformation: dbSKU.product_information,
+  fluidMetadata: dbSKU.fluid_metadata,
   createdAt: new Date(dbSKU.created_at),
   updatedAt: new Date(dbSKU.updated_at)
 })
@@ -77,9 +85,13 @@ export const skuToDbSKU = (sku: SKU): Partial<DatabaseSKU> => ({
   name: sku.name,
   color_overrides: sku.colorOverrides,
   image_overrides: sku.imageOverrides,
+  position_overrides: sku.positionOverrides,
+  custom_elements: sku.customElements,
+  custom_element_content: sku.customElementContent,
   copy: sku.copy,
   images: sku.images,
-  product_information: sku.productInformation
+  product_information: sku.productInformation,
+  fluid_metadata: sku.fluidMetadata
 })
 
 // Brand operations

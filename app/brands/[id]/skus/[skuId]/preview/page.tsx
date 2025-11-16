@@ -17,14 +17,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import { TestimonialLayout } from '@/components/layouts/TestimonialLayout'
 import { ComparisonLayout } from '@/components/layouts/ComparisonLayout'
-import { BenefitsLayout } from '@/components/layouts/BenefitsLayout'
 import { BigStatLayout } from '@/components/layouts/BigStatLayout'
 import { MultiStatsLayout } from '@/components/layouts/MultiStatsLayout'
 import { PromoProductLayout } from '@/components/layouts/PromoProductLayout'
 import { BottleListLayout } from '@/components/layouts/BottleListLayout'
 import { TimelineLayout } from '@/components/layouts/TimelineLayout'
 import { PriceComparisonLayout } from '@/components/layouts/PriceComparisonLayout'
-import { StatementLayout } from '@/components/layouts/StatementLayout'
 import { renderLayout } from '@/lib/render-engine'
 import JSZip from 'jszip'
 
@@ -41,14 +39,12 @@ export default function PreviewPage() {
 
   const testimonialRef = useRef<HTMLDivElement>(null)
   const comparisonRef = useRef<HTMLDivElement>(null)
-  const benefitsRef = useRef<HTMLDivElement>(null)
   const bigStatRef = useRef<HTMLDivElement>(null)
   const multiStatsRef = useRef<HTMLDivElement>(null)
   const promoProductRef = useRef<HTMLDivElement>(null)
   const bottleListRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
   const priceComparisonRef = useRef<HTMLDivElement>(null)
-  const statementRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadData()
@@ -100,14 +96,12 @@ export default function PreviewPage() {
     const layouts = [
       { name: 'Testimonial', type: 'testimonial' },
       { name: 'Comparison', type: 'comparison' },
-      { name: 'Benefits', type: 'benefits' },
       { name: 'BigStat', type: 'bigStat' },
       { name: 'MultiStats', type: 'multiStats' },
       { name: 'PromoProduct', type: 'promoProduct' },
       { name: 'BottleList', type: 'bottleList' },
       { name: 'Timeline', type: 'timeline' },
-      { name: 'PriceComparison', type: 'priceComparison' },
-      { name: 'Statement', type: 'statement' }
+      { name: 'PriceComparison', type: 'priceComparison' }
     ]
 
     setRendering(true)
@@ -159,7 +153,7 @@ export default function PreviewPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout currentBrandId={brandId}>
         <PageHeader breadcrumbs={[{ label: 'All Brands', href: '/' }, { label: 'Loading...', href: '#' }, { label: 'Preview' }]} />
         <div className="flex-1 p-6 space-y-6">
           <div className="flex items-center justify-between">
@@ -204,7 +198,7 @@ export default function PreviewPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout currentBrandId={brandId}>
       <PageHeader 
         breadcrumbs={[
           { label: 'All Brands', href: '/' },
@@ -315,31 +309,6 @@ export default function PreviewPage() {
               <div className="flex justify-center rounded-lg overflow-hidden border bg-muted/30">
                 <div ref={comparisonRef}>
                   <ComparisonLayout brand={brand} sku={sku} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Benefits Layout */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Benefits: Pack + Callouts</CardTitle>
-                  <CardDescription className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline">1080×1080</Badge>
-                  </CardDescription>
-                </div>
-                <Button onClick={() => downloadLayout('Benefits', benefitsRef, downloadFormat)} disabled={rendering} variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  {rendering ? 'Rendering...' : 'Download'}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center rounded-lg overflow-hidden border bg-muted/30">
-                <div ref={benefitsRef}>
-                  <BenefitsLayout brand={brand} sku={sku} />
                 </div>
               </div>
             </CardContent>
@@ -494,26 +463,11 @@ export default function PreviewPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Statement Layout */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Statement</CardTitle>
-              <CardDescription>Bold question with product and benefits</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center rounded-lg overflow-hidden border bg-muted/30">
-                <div ref={statementRef}>
-                  <StatementLayout brand={brand} sku={sku} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="mt-6 flex justify-center">
           <Badge variant="secondary">
-            10 of 19 layouts implemented • 9 more coming soon
+            8 of 19 layouts implemented • 11 more coming soon
           </Badge>
         </div>
         </div>

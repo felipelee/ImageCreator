@@ -10,9 +10,9 @@ import {
   ChevronRight, 
   Plus,
   Settings,
-  LayoutDashboard,
   Moon,
-  Sun
+  Sun,
+  Layout
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { brandService, skuService } from '@/lib/supabase'
@@ -135,29 +135,8 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent className="flex flex-col gap-2">
-            <SidebarMenu>
-              <SidebarMenuItem className="flex items-center gap-2">
-                <SidebarMenuButton
-                  onClick={createNewBrand}
-                  className="min-w-8 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                >
-                  <Plus />
-                  <span>New Brand</span>
-                </SidebarMenuButton>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-9 w-9 shrink-0"
-                  asChild
-                >
-                  <Link href="/settings">
-                    <Settings />
-                    <span className="sr-only">Settings</span>
-                  </Link>
-                </Button>
-              </SidebarMenuItem>
-            </SidebarMenu>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === '/'}>
@@ -168,11 +147,20 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard">
-                    <LayoutDashboard />
-                    <span>Dashboard</span>
+                <SidebarMenuButton asChild isActive={pathname?.startsWith('/admin/layouts')}>
+                  <Link href="/admin/layouts">
+                    <Layout />
+                    <span>Layouts</span>
                   </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={createNewBrand}
+                  className="bg-sidebar-accent hover:bg-sidebar-accent/90"
+                >
+                  <Plus />
+                  <span>New Brand</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -247,12 +235,6 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={createNewBrand} className="w-full">
-              <Plus />
-              <span>New Brand</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="w-full"
@@ -263,7 +245,7 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="w-full">
               <Link href="/settings">
                 <Settings />
                 <span>Settings</span>

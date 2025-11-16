@@ -110,6 +110,13 @@ export default function BrandDetailPage() {
           // Map additional images if available
           ...(product.images?.[1]?.url && { productAngle: product.images[1].url }),
           ...(product.images?.[2]?.url && { productDetail: product.images[2].url }),
+        },
+        // Save Fluid metadata for future uploads
+        fluidMetadata: {
+          productId: product.id,
+          variantId: product.variants?.[0]?.id, // Save first variant ID if available
+          productSlug: product.slug,
+          productTitle: product.title
         }
       }
       
@@ -129,7 +136,7 @@ export default function BrandDetailPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout currentBrandId={brandId}>
         <PageHeader breadcrumbs={[{ label: 'All Brands', href: '/' }, { label: 'Loading...' }]} />
         <div className="flex-1 p-6 space-y-6">
           <Skeleton className="h-10 w-64" />
@@ -169,7 +176,7 @@ export default function BrandDetailPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout currentBrandId={brandId}>
       <PageHeader 
         breadcrumbs={[
           { label: 'All Brands', href: '/' },
@@ -177,29 +184,11 @@ export default function BrandDetailPage() {
         ]} 
       />
       <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
-            <p className="text-muted-foreground">
-              {skus.length} SKU{skus.length !== 1 ? 's' : ''} • {skus.length * 14} layouts available
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link href={`/brands/${brandId}/edit`}>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit DNA
-              </Button>
-            </Link>
-            <Button onClick={() => setProductBrowserOpen(true)} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Import from Fluid
-            </Button>
-            <Button onClick={createNewSKU}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add SKU
-            </Button>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
+          <p className="text-muted-foreground">
+            {skus.length} SKU{skus.length !== 1 ? 's' : ''} • {skus.length * 14} layouts available
+          </p>
         </div>
 
         <Card>
