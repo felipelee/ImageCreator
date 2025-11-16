@@ -562,15 +562,39 @@ export function VisualEditorModal({
                   return null
                 }
                 
-                // Use DOM rect for accurate position (accounts for transforms)
-                if (element && elementData) {
+                // If we have the element in the DOM, use it to get position/size
+                if (element) {
                   const rect = element.getBoundingClientRect()
+                  const containerRect = element.parentElement?.getBoundingClientRect()
                   
-                  // Use override data for position (what user set)
-                  // Use DOM rect for size (actual rendered size)
+                  // Calculate position relative to container
+                  const computedX = containerRect ? (rect.left - containerRect.left) / scale : 0
+                  const computedY = containerRect ? (rect.top - containerRect.top) / scale : 0
                   const computedWidth = rect.width / scale
                   const computedHeight = rect.height / scale
                   
+                  return (
+                    <SelectionOverlay
+                      elementKey={selectedElement}
+                      position={{
+                        x: elementData?.x ?? computedX,
+                        y: elementData?.y ?? computedY
+                      }}
+                      size={{
+                        width: elementData?.width ?? computedWidth,
+                        height: elementData?.height ?? computedHeight
+                      }}
+                      rotation={elementData?.rotation || 0}
+                      scale={scale}
+                      onPositionChange={(pos) => onPositionChange(selectedElement, pos)}
+                      onSizeChange={(size) => onSizeChange(selectedElement, size)}
+                      onRotationChange={(rot) => onRotationChange(selectedElement, rot)}
+                    />
+                  )
+                }
+                
+                // Fallback: Only if we have elementData but no DOM element
+                if (elementData) {
                   return (
                     <SelectionOverlay
                       elementKey={selectedElement}
@@ -579,8 +603,8 @@ export function VisualEditorModal({
                         y: elementData.y || 0
                       }}
                       size={{
-                        width: elementData.width || computedWidth,
-                        height: elementData.height || computedHeight
+                        width: elementData.width || 100,
+                        height: elementData.height || 100
                       }}
                       rotation={elementData.rotation || 0}
                       scale={scale}
@@ -591,25 +615,7 @@ export function VisualEditorModal({
                   )
                 }
                 
-                // Fallback to position override data
-                return (
-                  <SelectionOverlay
-                    elementKey={selectedElement}
-                    position={{
-                      x: elementData.x || 0,
-                      y: elementData.y || 0
-                    }}
-                    size={{
-                      width: elementData.width || 100,
-                      height: elementData.height || 100
-                    }}
-                    rotation={elementData.rotation || 0}
-                    scale={scale}
-                    onPositionChange={(pos) => onPositionChange(selectedElement, pos)}
-                    onSizeChange={(size) => onSizeChange(selectedElement, size)}
-                    onRotationChange={(rot) => onRotationChange(selectedElement, rot)}
-                  />
-                )
+                return null
               })()}
               
               {/* Grid Overlay */}

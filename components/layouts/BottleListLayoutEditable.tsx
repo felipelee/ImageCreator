@@ -81,30 +81,30 @@ export function BottleListLayoutEditable({
   const productImagePos = resolveElementPosition('bottleList', 'productImage', spec.elements.productImage, sku.positionOverrides)
   
   const benefit1Pos = resolveElementPosition('bottleList', 'benefit1', {
-    top: 392,
+    top: 432,
     left: 487,
     x: 487,
-    y: 392,
+    y: 432,
     width: 500,
     height: 150,
     zIndex: 30
   }, sku.positionOverrides)
   
   const benefit2Pos = resolveElementPosition('bottleList', 'benefit2', {
-    top: 592,
+    top: 632,
     left: 487,
     x: 487,
-    y: 592,
+    y: 632,
     width: 500,
     height: 150,
     zIndex: 30
   }, sku.positionOverrides)
   
   const benefit3Pos = resolveElementPosition('bottleList', 'benefit3', {
-    top: 792,
+    top: 832,
     left: 487,
     x: 487,
-    y: 792,
+    y: 832,
     width: 500,
     height: 150,
     zIndex: 30

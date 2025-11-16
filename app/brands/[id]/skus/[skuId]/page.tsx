@@ -1937,7 +1937,7 @@ export default function SKUEditorPage() {
                           <CardContent className="p-0">
                             <div className="relative">
                               {/* Live Preview Thumbnail - Responsive scaling with CSS zoom */}
-                              <div className="w-full bg-muted/30 dark:bg-muted/10 overflow-hidden relative aspect-square flex items-center justify-center">
+                              <div className="w-full bg-muted/30 dark:bg-muted/10 overflow-hidden relative aspect-square flex items-center justify-center" style={{ isolation: 'isolate' }}>
                                 <div 
                                   className="w-[1080px] h-[1080px] origin-center"
                                   style={{ 

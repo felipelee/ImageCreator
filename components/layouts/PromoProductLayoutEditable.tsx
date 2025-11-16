@@ -57,7 +57,38 @@ export function PromoProductLayoutEditable({
   // Resolve positions
   const headlinePos = resolveElementPosition('promoProduct', 'headline', spec.elements.headline, sku.positionOverrides)
   const productImagePos = resolveElementPosition('promoProduct', 'productImage', spec.elements.productImage, sku.positionOverrides)
-  const statsContainerPos = resolveElementPosition('promoProduct', 'statsContainer', spec.elements.statsContainer, sku.positionOverrides)
+  
+  // Individual stat positions
+  const stat1Pos = resolveElementPosition('promoProduct', 'stat1', {
+    top: 494,
+    left: 80,
+    x: 80,
+    y: 494,
+    width: 400,
+    height: 136,
+    zIndex: 20
+  }, sku.positionOverrides)
+  
+  const stat2Pos = resolveElementPosition('promoProduct', 'stat2', {
+    top: 670,
+    left: 80,
+    x: 80,
+    y: 670,
+    width: 400,
+    height: 136,
+    zIndex: 20
+  }, sku.positionOverrides)
+  
+  const stat3Pos = resolveElementPosition('promoProduct', 'stat3', {
+    top: 846,
+    left: 80,
+    x: 80,
+    y: 846,
+    width: 400,
+    height: 136,
+    zIndex: 20
+  }, sku.positionOverrides)
+  
   const promoBadgePos = resolveElementPosition('promoProduct', 'badge', spec.elements.promoBadge, sku.positionOverrides)
   const badgeTextPos = resolveElementPosition('promoProduct', 'badgeText', spec.elements.badgeTextContainer, sku.positionOverrides)
 
@@ -132,34 +163,33 @@ export function PromoProductLayoutEditable({
         {sku.copy.promo?.headline || 'Peptide fuel. Not another pre-workout.'}
       </p>
 
-      {/* Stats Container - Editable as group */}
-      <div
-        {...getEditableProps('statsContainer')}
-        style={{
-          position: 'absolute',
-          top: statsContainerPos.top ?? spec.elements.statsContainer.top,
-          left: statsContainerPos.left ?? spec.elements.statsContainer.left,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spec.elements.statsContainer.gap,
-          zIndex: statsContainerPos.zIndex ?? spec.elements.statsContainer.zIndex,
-          transform: statsContainerPos.rotation ? `rotate(${statsContainerPos.rotation}deg)` : undefined,
-          ...((getEditableProps('statsContainer') as any).style || {})
-        }}
-      >
-        {stats.map((stat, index) => (
-          <div
-            key={index}
+      {/* Individual Stats - Each Editable */}
+      {[
+        { stat: stats[0], pos: stat1Pos, key: 'stat1' },
+        { stat: stats[1], pos: stat2Pos, key: 'stat2' },
+        { stat: stats[2], pos: stat3Pos, key: 'stat3' }
+      ].map(({ stat, pos, key }) => (
+        <div
+          key={key}
+          {...getEditableProps(key)}
+          style={{
+            position: 'absolute',
+            top: pos.top,
+            left: pos.left,
+            width: pos.width,
+            height: pos.height,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 20,
+            zIndex: pos.zIndex ?? 20,
+            transform: pos.rotation ? `rotate(${pos.rotation}deg)` : undefined,
+            ...((getEditableProps(key) as any).style || {})
+          }}
+        >
+          {/* Stat Value */}
+          <p
             style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 20,
-              height: 136,
-              pointerEvents: isEditMode ? 'none' : 'auto'
-            }}
-          >
-            <p style={{
               fontFamily: fonts.family,
               fontSize: spec.elements.statStyle.value.fontSize,
               fontWeight: spec.elements.statStyle.value.fontWeight,
@@ -167,12 +197,17 @@ export function PromoProductLayoutEditable({
               letterSpacing: `${spec.elements.statStyle.value.letterSpacing}px`,
               color: statColor,
               margin: 0,
-              whiteSpace: 'nowrap'
-            }}>
-              {stat.value}
-            </p>
-
-            <p style={{
+              padding: 0,
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none'
+            }}
+          >
+            {stat.value}
+          </p>
+          
+          {/* Stat Label */}
+          <p
+            style={{
               fontFamily: fonts.family,
               fontSize: spec.elements.statStyle.label.fontSize,
               fontWeight: spec.elements.statStyle.label.fontWeight,
@@ -182,15 +217,17 @@ export function PromoProductLayoutEditable({
               color: statColor,
               width: stat.labelWidth,
               margin: 0,
+              padding: 0,
               whiteSpace: 'normal',
               wordBreak: 'break-word',
-              overflowWrap: 'break-word'
-            }}>
-              {stat.label}
-            </p>
-          </div>
-        ))}
-      </div>
+              overflowWrap: 'break-word',
+              pointerEvents: 'none'
+            }}
+          >
+            {stat.label}
+          </p>
+        </div>
+      ))}
 
       {/* Product Image - Editable */}
       {sku.images.productAngle && (

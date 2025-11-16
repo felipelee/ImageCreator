@@ -225,127 +225,125 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
         {sku.copy.compare?.rightLabel || 'Standard Alternative'}
       </p>
 
-      {/* Comparison Rows */}
-      <div
-        style={{
-          position: 'absolute',
-          top: spec.elements.rowsContainer.top,
-          left: spec.elements.rowsContainer.left,
-          width: 949, // Pixel-perfect to right edge
-          zIndex: spec.elements.rowsContainer.zIndex
-        }}
-      >
-        {rows.map((row, index) => {
-          // Fixed row height with generous spacing for 2 lines of text
-          // fontSize: 32px, lineHeight: 1.4 = 44.8px per line
-          // 2 lines = 89.6px + top/bottom padding for better spacing
-          const rowHeight = 120 // Increased for better spacing
-          const verticalPadding = 24 // Padding above and below content
-          
-          return (
+      {/* Comparison Rows - Individual with position overrides */}
+      {[
+        { row: rows[0], pos: row1Pos, key: 'row1' },
+        { row: rows[1], pos: row2Pos, key: 'row2' },
+        { row: rows[2], pos: row3Pos, key: 'row3' },
+        { row: rows[3], pos: row4Pos, key: 'row4' }
+      ].map(({ row, pos, key }, index) => {
+        if (!row) return null
+        
+        const rowHeight = 120
+        const verticalPadding = 24
+        
+        return (
+          <div
+            key={index}
+            style={{
+              position: 'absolute',
+              top: pos.top,
+              left: pos.left,
+              width: 949,
+              height: `${rowHeight}px`,
+              paddingTop: `${verticalPadding}px`,
+              paddingBottom: `${verticalPadding}px`,
+              display: 'flex',
+              alignItems: 'center',
+              borderBottom: index < 3 ? '1px solid #6c6c6c' : 'none',
+              zIndex: pos.zIndex ?? 20,
+              transform: pos.rotation ? `rotate(${pos.rotation}deg)` : undefined
+            }}
+          >
+            {/* Feature Label */}
             <div
-              key={index}
               style={{
-                position: 'relative',
-                marginTop: index > 0 ? '16px' : 0, // Gap between divider and next row
-                height: `${rowHeight}px`,
-                paddingTop: `${verticalPadding}px`,
-                paddingBottom: `${verticalPadding}px`,
-                borderBottom: index < rows.length - 1 ? '1px solid #6c6c6c' : 'none',
+                width: spec.elements.row.label.width,
+                paddingRight: '20px',
                 display: 'flex',
                 alignItems: 'center'
               }}
             >
-              {/* Feature Label */}
-              <div
+              <p
                 style={{
-                  width: spec.elements.row.label.width,
-                  paddingRight: '20px',
-                  display: 'flex',
-                  alignItems: 'center'
+                  fontSize: spec.elements.row.label.fontSize,
+                  fontWeight: spec.elements.row.label.fontWeight,
+                  lineHeight: spec.elements.row.label.lineHeight,
+                  color: rowTextColor,
+                  margin: 0,
+                  padding: 0,
+                  fontFamily: fonts.family,
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  hyphens: 'auto',
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
                 }}
               >
-                <p
-                  style={{
-                    fontSize: spec.elements.row.label.fontSize,
-                    fontWeight: spec.elements.row.label.fontWeight,
-                    lineHeight: spec.elements.row.label.lineHeight,
-                    color: rowTextColor,
-                    margin: 0,
-                    padding: 0,
-                    fontFamily: fonts.family,
-                    wordWrap: 'break-word',
-                    overflowWrap: 'break-word',
-                    hyphens: 'auto',
-                    overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
-                  }}
-                >
-                  {row.label}
-                </p>
-              </div>
-
-              {/* Checkmark Container (Yours) - Centered in left highlight column */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: spec.elements.row.checkmark.leftPosition - spec.elements.rowsContainer.left,
-                  transform: 'translate(-50%, -50%)',
-                  width: '60px',
-                  height: '60px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 5
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: spec.elements.row.checkmark.fontSize,
-                    color: colors.bgAlt,
-                    fontWeight: 'bold',
-                    lineHeight: 1,
-                    display: 'block'
-                  }}
-                >
-                  {spec.elements.row.checkmark.symbol}
-                </span>
-              </div>
-
-              {/* Cross Container (Theirs) - Centered in right highlight column */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: spec.elements.row.cross.leftPosition - spec.elements.rowsContainer.left,
-                  transform: 'translate(-50%, -50%)',
-                  width: '60px',
-                  height: '60px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 5
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: spec.elements.row.cross.fontSize,
-                    color: colors.accent,
-                    fontWeight: 'bold',
-                    lineHeight: 1,
-                    display: 'block'
-                  }}
-                >
-                  {spec.elements.row.cross.symbol}
-                </span>
-              </div>
+                {row.label}
+              </p>
             </div>
-          )
-        })}
-      </div>
+
+            {/* Checkmark (Yours) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: spec.elements.row.checkmark.leftPosition - 75,
+                transform: 'translate(-50%, -50%)',
+                width: '60px',
+                height: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 5
+              }}
+            >
+              <span
+                style={{
+                  fontSize: spec.elements.row.checkmark.fontSize,
+                  color: colors.bgAlt,
+                  fontWeight: 'bold',
+                  lineHeight: 1,
+                  display: 'block'
+                }}
+              >
+                {spec.elements.row.checkmark.symbol}
+              </span>
+            </div>
+
+            {/* Cross (Theirs) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: spec.elements.row.cross.leftPosition - 75,
+                transform: 'translate(-50%, -50%)',
+                width: '60px',
+                height: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 5
+              }}
+            >
+              <span
+                style={{
+                  fontSize: spec.elements.row.cross.fontSize,
+                  color: colors.accent,
+                  fontWeight: 'bold',
+                  lineHeight: 1,
+                  display: 'block'
+                }}
+              >
+                {spec.elements.row.cross.symbol}
+              </span>
+            </div>
+          </div>
+        )
+      })}
 
       {/* Custom Elements */}
       <CustomElementRenderer

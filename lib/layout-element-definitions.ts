@@ -83,7 +83,9 @@ export const LAYOUT_ELEMENT_DEFINITIONS: Record<string, LayoutElementDefinition[
   promoProduct: [
     { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
     { key: 'headline', label: 'Headline', type: 'text', defaultZIndex: 20 },
-    { key: 'statsContainer', label: 'Stats Container', type: 'container', defaultZIndex: 20 },
+    { key: 'stat1', label: 'Stat 1 (47%)', type: 'container', defaultZIndex: 20 },
+    { key: 'stat2', label: 'Stat 2 (4X)', type: 'container', defaultZIndex: 20 },
+    { key: 'stat3', label: 'Stat 3 (144%)', type: 'container', defaultZIndex: 20 },
     { key: 'productImage', label: 'Product Image', type: 'image', defaultZIndex: 30 },
     { key: 'badge', label: 'Promo Badge', type: 'container', defaultZIndex: 40 },
     { key: 'badgeText', label: 'Badge Text', type: 'text', defaultZIndex: 41 }

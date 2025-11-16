@@ -59,13 +59,15 @@ export const TIMELINE_SPEC = {
     timelineLine: {
       type: 'line' as const,
       position: 'absolute' as const,
-      top: 322,
-      left: 573.67,
+      top: 346,
+      left: 575,
+      x: 575,
+      y: 346,
       width: 2,
-      height: 296,
+      height: 550,
       backgroundColor: 'rgb(255, 255, 255)',
       transform: 'translateX(-50%)',
-      zIndex: 1
+      zIndex: 20
     },
     
     milestoneStyle: {

@@ -182,6 +182,129 @@ export function BottleListLayout({ brand, sku }: BottleListLayoutProps) {
   // Resolve positions with overrides
   const headlinePos = resolveElementPosition('bottleList', 'headline', spec.elements.headline, sku.positionOverrides)
   const productImagePos = resolveElementPosition('bottleList', 'productImage', spec.elements.productImage, sku.positionOverrides)
+  
+  const benefit1Pos = resolveElementPosition('bottleList', 'benefit1', {
+    top: 432,
+    left: 487,
+    x: 487,
+    y: 432,
+    width: 500,
+    height: 150,
+    zIndex: 30
+  }, sku.positionOverrides)
+  
+  const benefit2Pos = resolveElementPosition('bottleList', 'benefit2', {
+    top: 632,
+    left: 487,
+    x: 487,
+    y: 632,
+    width: 500,
+    height: 150,
+    zIndex: 30
+  }, sku.positionOverrides)
+  
+  const benefit3Pos = resolveElementPosition('bottleList', 'benefit3', {
+    top: 832,
+    left: 487,
+    x: 487,
+    y: 832,
+    width: 500,
+    height: 150,
+    zIndex: 30
+  }, sku.positionOverrides)
+
+  // Render a single benefit with icon
+  const renderBenefit = (benefit: typeof benefits[0], pos: any) => {
+    const IconComponent = BENEFIT_ICONS[benefit.icon as keyof typeof BENEFIT_ICONS]
+    
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          top: pos.top,
+          left: pos.left,
+          width: pos.width,
+          height: pos.height,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: spec.elements.benefitStyle.container.gap,
+          zIndex: pos.zIndex ?? 30,
+          transform: combineTransforms(undefined, pos.rotation)
+        }}
+      >
+        {/* Icon */}
+        <div
+          style={{
+            width: spec.elements.benefitStyle.icon.size,
+            height: spec.elements.benefitStyle.icon.size,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}
+        >
+          {IconComponent && (
+            <IconComponent
+              size={spec.elements.benefitStyle.icon.fontSize}
+              style={{
+                color: iconColor,
+                strokeWidth: 1.5
+              }}
+            />
+          )}
+        </div>
+
+        {/* Text Container */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spec.elements.benefitStyle.description.gap
+          }}
+        >
+          {/* Title */}
+          <p
+            style={{
+              fontFamily: fonts.family,
+              fontSize: spec.elements.benefitStyle.title.fontSize,
+              fontWeight: spec.elements.benefitStyle.title.fontWeight,
+              lineHeight: spec.elements.benefitStyle.title.lineHeight,
+              letterSpacing: `${spec.elements.benefitStyle.title.letterSpacing}px`,
+              color: titleColor,
+              width: spec.elements.benefitStyle.title.width,
+              height: spec.elements.benefitStyle.title.height,
+              margin: 0,
+              padding: 0
+            }}
+          >
+            {benefit.title}
+          </p>
+
+          {/* Description */}
+          <p
+            style={{
+              fontFamily: fonts.family,
+              fontSize: spec.elements.benefitStyle.description.fontSize,
+              fontWeight: spec.elements.benefitStyle.description.fontWeight,
+              lineHeight: spec.elements.benefitStyle.description.lineHeight,
+              letterSpacing: `${spec.elements.benefitStyle.description.letterSpacing}px`,
+              textTransform: spec.elements.benefitStyle.description.textTransform,
+              color: descriptionColor,
+              width: spec.elements.benefitStyle.description.width,
+              margin: 0,
+              padding: 0,
+              whiteSpace: 'normal',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
+            }}
+          >
+            {benefit.description}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -254,104 +377,10 @@ export function BottleListLayout({ brand, sku }: BottleListLayoutProps) {
         {sku.copy.bottle?.headline || 'Stronger, Longer'}
       </p>
 
-      {/* Benefits Container */}
-      <div
-        style={{
-          position: 'absolute',
-          top: spec.elements.benefitsContainer.top,
-          left: spec.elements.benefitsContainer.left,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spec.elements.benefitsContainer.gap,
-          zIndex: spec.elements.benefitsContainer.zIndex
-        }}
-      >
-        {benefits.map((benefit, index) => (
-          <div
-            key={index}
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              gap: spec.elements.benefitStyle.container.gap
-            }}
-          >
-            {/* Icon */}
-            <div
-              style={{
-                width: spec.elements.benefitStyle.icon.size,
-                height: spec.elements.benefitStyle.icon.size,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}
-            >
-              {(() => {
-                const IconComponent = BENEFIT_ICONS[benefit.icon as keyof typeof BENEFIT_ICONS]
-                if (!IconComponent) return null
-                return (
-                  <IconComponent
-                    size={spec.elements.benefitStyle.icon.fontSize}
-                    style={{
-                      color: iconColor,
-                      strokeWidth: 1.5
-                    }}
-                  />
-                )
-              })()}
-            </div>
-
-            {/* Text Container */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: spec.elements.benefitStyle.description.gap
-              }}
-            >
-              {/* Title */}
-              <p
-                style={{
-                  fontFamily: fonts.family,
-                  fontSize: spec.elements.benefitStyle.title.fontSize,
-                  fontWeight: spec.elements.benefitStyle.title.fontWeight,
-                  lineHeight: spec.elements.benefitStyle.title.lineHeight,
-                  letterSpacing: `${spec.elements.benefitStyle.title.letterSpacing}px`,
-                  color: titleColor,
-                  width: spec.elements.benefitStyle.title.width,
-                  height: spec.elements.benefitStyle.title.height,
-                  margin: 0,
-                  padding: 0
-                }}
-              >
-                {benefit.title}
-              </p>
-
-              {/* Description */}
-              <p
-                style={{
-                  fontFamily: fonts.family,
-                  fontSize: spec.elements.benefitStyle.description.fontSize,
-                  fontWeight: spec.elements.benefitStyle.description.fontWeight,
-                  lineHeight: spec.elements.benefitStyle.description.lineHeight,
-                  letterSpacing: `${spec.elements.benefitStyle.description.letterSpacing}px`,
-                  textTransform: spec.elements.benefitStyle.description.textTransform,
-                  color: descriptionColor,
-                  width: spec.elements.benefitStyle.description.width,
-                  margin: 0,
-                  padding: 0,
-                  whiteSpace: 'normal',
-                  wordBreak: 'break-word',
-                  overflowWrap: 'break-word'
-                }}
-              >
-                {benefit.description}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Individual Benefits - Each with position overrides */}
+      {renderBenefit(benefits[0], benefit1Pos)}
+      {renderBenefit(benefits[1], benefit2Pos)}
+      {renderBenefit(benefits[2], benefit3Pos)}
     </div>
   )
 }

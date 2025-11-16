@@ -65,25 +65,28 @@ export function TimelineLayoutEditable({
     x: 487,
     y: 300,
     width: 518,
-    zIndex: 2
+    height: 80,
+    zIndex: 40
   }, sku.positionOverrides)
   
   const milestone2Pos = resolveElementPosition('timeline', 'milestone2', {
-    top: 300 + 80 + 80, // container top + gap + first milestone estimated height
+    top: 560,
     left: 487,
     x: 487,
-    y: 380,
+    y: 560,
     width: 518,
-    zIndex: 2
+    height: 80,
+    zIndex: 50
   }, sku.positionOverrides)
   
   const milestone3Pos = resolveElementPosition('timeline', 'milestone3', {
-    top: 300 + 160 + 160,
+    top: 850,
     left: 487,
     x: 487,
-    y: 460,
+    y: 850,
     width: 518,
-    zIndex: 2
+    height: 80,
+    zIndex: 60
   }, sku.positionOverrides)
 
   // Editable props for elements
@@ -199,11 +202,12 @@ export function TimelineLayoutEditable({
           top: milestone1Pos.top,
           left: milestone1Pos.left,
           width: milestone1Pos.width,
+          height: milestone1Pos.height,
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           gap: spec.elements.milestoneStyle.container.gap,
-          zIndex: milestone1Pos.zIndex ?? 2,
+          zIndex: milestone1Pos.zIndex ?? 40,
           transform: combineTransforms(undefined, milestone1Pos.rotation),
           ...((getEditableProps('milestone1') as any).style || {})
         }}
@@ -272,11 +276,12 @@ export function TimelineLayoutEditable({
           top: milestone2Pos.top,
           left: milestone2Pos.left,
           width: milestone2Pos.width,
+          height: milestone2Pos.height,
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           gap: spec.elements.milestoneStyle.container.gap,
-          zIndex: milestone2Pos.zIndex ?? 2,
+          zIndex: milestone2Pos.zIndex ?? 50,
           transform: combineTransforms(undefined, milestone2Pos.rotation),
           ...((getEditableProps('milestone2') as any).style || {})
         }}
@@ -345,11 +350,12 @@ export function TimelineLayoutEditable({
           top: milestone3Pos.top,
           left: milestone3Pos.left,
           width: milestone3Pos.width,
+          height: milestone3Pos.height,
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           gap: spec.elements.milestoneStyle.container.gap,
-          zIndex: milestone3Pos.zIndex ?? 2,
+          zIndex: milestone3Pos.zIndex ?? 60,
           transform: combineTransforms(undefined, milestone3Pos.rotation),
           ...((getEditableProps('milestone3') as any).style || {})
         }}

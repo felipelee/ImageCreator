@@ -52,20 +52,20 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
   }, sku.positionOverrides)
   
   const milestone2Pos = resolveElementPosition('timeline', 'milestone2', {
-    top: 460,
+    top: 560,
     left: 487,
     x: 487,
-    y: 460,
+    y: 560,
     width: 518,
     height: 80,
     zIndex: 50
   }, sku.positionOverrides)
   
   const milestone3Pos = resolveElementPosition('timeline', 'milestone3', {
-    top: 620,
+    top: 850,
     left: 487,
     x: 487,
-    y: 620,
+    y: 850,
     width: 518,
     height: 80,
     zIndex: 60
@@ -148,7 +148,8 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
           flexDirection: 'row',
           alignItems: 'center',
           gap: spec.elements.milestoneStyle.container.gap,
-          zIndex: milestone1Pos.zIndex ?? 40
+          zIndex: milestone1Pos.zIndex ?? 40,
+          transform: milestone1Pos.rotation ? `rotate(${milestone1Pos.rotation}deg)` : undefined
         }}
       >
         {/* Time Badge */}
@@ -220,7 +221,8 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
           flexDirection: 'row',
           alignItems: 'center',
           gap: spec.elements.milestoneStyle.container.gap,
-          zIndex: milestone2Pos.zIndex ?? 50
+          zIndex: milestone2Pos.zIndex ?? 50,
+          transform: milestone2Pos.rotation ? `rotate(${milestone2Pos.rotation}deg)` : undefined
         }}
       >
         {/* Time Badge */}
@@ -292,7 +294,8 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
           flexDirection: 'row',
           alignItems: 'center',
           gap: spec.elements.milestoneStyle.container.gap,
-          zIndex: milestone3Pos.zIndex ?? 60
+          zIndex: milestone3Pos.zIndex ?? 60,
+          transform: milestone3Pos.rotation ? `rotate(${milestone3Pos.rotation}deg)` : undefined
         }}
       >
         {/* Time Badge */}
