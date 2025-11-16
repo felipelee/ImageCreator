@@ -23,15 +23,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Split into 2 smaller batches to avoid timeout
-    console.log('Generating batch 1/2...')
+    // Split into 3 smaller batches to avoid timeout
+    console.log('Generating batch 1/3...')
     const batch1 = await generateBatch(apiKey, brandKnowledge, productInformation, skuName, 1)
     
-    console.log('Generating batch 2/2...')
+    console.log('Generating batch 2/3...')
     const batch2 = await generateBatch(apiKey, brandKnowledge, productInformation, skuName, 2)
     
+    console.log('Generating batch 3/3...')
+    const batch3 = await generateBatch(apiKey, brandKnowledge, productInformation, skuName, 3)
+    
     // Merge results
-    const mergedContent = { ...batch1, ...batch2 }
+    const mergedContent = { ...batch1, ...batch2, ...batch3 }
     
     return NextResponse.json({ content: mergedContent })
   } catch (error) {
@@ -272,6 +275,67 @@ Write conversational, authentic copy. Be specific and benefit-focused. Keep it s
     "benefit2": "benefit (2-3 words)",
     "benefit3": "benefit (2-3 words)",
     "productBadge": "INSIDE"
+  }
+}
+
+Write conversational, authentic copy. Be specific and benefit-focused. Keep it simple and clear.`
+  } else if (batch === 3) {
+    // Batch 3: 7 new layouts
+    prompt += `Generate copy for these 7 layouts. Return valid JSON:
+
+{
+  "hero": {
+    "headline": "headline (3-6 words, uppercase)",
+    "subhead": "subheadline (8-15 words)",
+    "offerBadge": "badge text (3-5 words)"
+  },
+  "ingredientBenefits": {
+    "headline": "ingredient name (uppercase, 1-3 words)",
+    "subheadline": "what it does (8-15 words)",
+    "benefit1": "benefit (2-3 words)",
+    "benefit2": "benefit (2-3 words)",
+    "benefit3": "benefit (2-3 words)",
+    "benefit4": "benefit (2-3 words)",
+    "benefit5": "benefit (2-3 words)"
+  },
+  "packHero": {
+    "headline": "headline (3-6 words, uppercase)",
+    "subhead": "subheadline (8-15 words)"
+  },
+  "priceComparison": {
+    "headline": "headline (3-5 words)",
+    "priceLeft": "price (e.g., '$49')",
+    "labelLeft": "label (2-3 words)",
+    "priceCenter": "price (e.g., '$35')",
+    "labelCenter": "label (2-3 words)",
+    "benefit1": "benefit (3-6 words)",
+    "benefit2": "benefit (3-6 words)",
+    "benefit3": "benefit (3-6 words)",
+    "benefit4": "benefit (3-6 words)",
+    "benefit5": "benefit (3-6 words)",
+    "benefit6": "benefit (3-6 words)",
+    "disclaimer": "disclaimer (10-20 words)"
+  },
+  "statsWithProduct": {
+    "headline": "headline (uppercase, 4-8 words)",
+    "stat1_value": "stat value (e.g., '78%', '2X')",
+    "stat1_label": "stat label (6-10 words)",
+    "stat2_value": "stat value (e.g., '71%', '3X')",
+    "stat2_label": "stat label (6-10 words)",
+    "stat3_value": "stat value (e.g., '69%', '4X')",
+    "stat3_label": "stat label (6-10 words)"
+  },
+  "studyCitation": {
+    "context": "study context (6-10 words)",
+    "finding": "main finding (10-20 words)",
+    "supplementName": "supplement name (2-4 words)",
+    "source": "source citation (e.g., 'Source: Journal Name, Year')"
+  },
+  "testimonialDetail": {
+    "rating": "★★★★★",
+    "quoteHeadline": "quote headline (5-10 words)",
+    "reviewText": "detailed review (20-40 words)",
+    "customerName": "customer name (e.g., 'Sarah M.')"
   }
 }
 
