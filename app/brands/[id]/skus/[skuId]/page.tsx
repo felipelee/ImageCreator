@@ -32,6 +32,12 @@ import { TimelineLayout } from '@/components/layouts/TimelineLayout'
 import { BeforeAfterLayout } from '@/components/layouts/BeforeAfterLayout'
 import { FeatureGridLayout } from '@/components/layouts/FeatureGridLayout'
 import { SocialProofLayout } from '@/components/layouts/SocialProofLayout'
+import { BadgeProductLayout } from '@/components/layouts/BadgeProductLayout'
+import { StudyCitationLayout } from '@/components/layouts/StudyCitationLayout'
+import { UGCGridLayout } from '@/components/layouts/UGCGridLayout'
+import { TestimonialDetailLayout } from '@/components/layouts/TestimonialDetailLayout'
+import { StatsWithProductLayout } from '@/components/layouts/StatsWithProductLayout'
+import { IngredientBenefitsLayout } from '@/components/layouts/IngredientBenefitsLayout'
 import { generateColorVariations, applyColorVariation, ColorVariation } from '@/lib/color-variations'
 import { renderLayout } from '@/lib/render-engine'
 import { FluidDAMBrowser } from '@/components/FluidDAMBrowser'
@@ -45,6 +51,12 @@ import { TimelineLayoutEditable } from '@/components/layouts/TimelineLayoutEdita
 import { BeforeAfterLayoutEditable } from '@/components/layouts/BeforeAfterLayoutEditable'
 import { FeatureGridLayoutEditable } from '@/components/layouts/FeatureGridLayoutEditable'
 import { SocialProofLayoutEditable } from '@/components/layouts/SocialProofLayoutEditable'
+import { BadgeProductLayoutEditable } from '@/components/layouts/BadgeProductLayoutEditable'
+import { StudyCitationLayoutEditable } from '@/components/layouts/StudyCitationLayoutEditable'
+import { UGCGridLayoutEditable } from '@/components/layouts/UGCGridLayoutEditable'
+import { TestimonialDetailLayoutEditable } from '@/components/layouts/TestimonialDetailLayoutEditable'
+import { StatsWithProductLayoutEditable } from '@/components/layouts/StatsWithProductLayoutEditable'
+import { IngredientBenefitsLayoutEditable } from '@/components/layouts/IngredientBenefitsLayoutEditable'
 import { VisualEditorModal } from '@/components/layout-editor/VisualEditorModal'
 import { BenefitIconPicker } from '@/components/layout-editor/BenefitIconPicker'
 import { PushToFluidModal, LayoutOption, FluidDestination } from '@/components/PushToFluidModal'
@@ -64,7 +76,7 @@ export default function SKUEditorPage() {
   const [generating, setGenerating] = useState(false)
   const [showProductInfo, setShowProductInfo] = useState(false)
   const [activeTab, setActiveTab] = useState<'copy' | 'images'>('copy')
-  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof' | null>(null)
+  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof' | 'badgeProduct' | 'studyCitation' | 'ugcGrid' | 'testimonialDetail' | 'statsWithProduct' | 'ingredientBenefits' | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [colorVariations, setColorVariations] = useState<ColorVariation[]>([])
   const [currentVariationIndex, setCurrentVariationIndex] = useState<number>(0)
@@ -96,6 +108,12 @@ export default function SKUEditorPage() {
   const beforeAfterRef = useRef<HTMLDivElement>(null)
   const featureGridRef = useRef<HTMLDivElement>(null)
   const socialProofRef = useRef<HTMLDivElement>(null)
+  const badgeProductRef = useRef<HTMLDivElement>(null)
+  const studyCitationRef = useRef<HTMLDivElement>(null)
+  const ugcGridRef = useRef<HTMLDivElement>(null)
+  const testimonialDetailRef = useRef<HTMLDivElement>(null)
+  const statsWithProductRef = useRef<HTMLDivElement>(null)
+  const ingredientBenefitsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadData()
@@ -725,7 +743,13 @@ export default function SKUEditorPage() {
       { name: 'Timeline', type: 'timeline', ref: timelineRef },
       { name: 'BeforeAfter', type: 'beforeAfter', ref: beforeAfterRef },
       { name: 'FeatureGrid', type: 'featureGrid', ref: featureGridRef },
-      { name: 'SocialProof', type: 'socialProof', ref: socialProofRef }
+      { name: 'SocialProof', type: 'socialProof', ref: socialProofRef },
+      { name: 'BadgeProduct', type: 'badgeProduct', ref: badgeProductRef },
+      { name: 'StudyCitation', type: 'studyCitation', ref: studyCitationRef },
+      { name: 'UGCGrid', type: 'ugcGrid', ref: ugcGridRef },
+      { name: 'TestimonialDetail', type: 'testimonialDetail', ref: testimonialDetailRef },
+      { name: 'StatsWithProduct', type: 'statsWithProduct', ref: statsWithProductRef },
+      { name: 'IngredientBenefits', type: 'ingredientBenefits', ref: ingredientBenefitsRef }
     ]
 
     setRendering(true)
@@ -810,6 +834,12 @@ export default function SKUEditorPage() {
       { id: 'beforeAfter', name: 'Before_After', displayName: 'Before/After', ref: beforeAfterRef },
       { id: 'featureGrid', name: 'Feature_Grid', displayName: 'Feature Grid', ref: featureGridRef },
       { id: 'socialProof', name: 'Social_Proof', displayName: 'Social Proof', ref: socialProofRef },
+      { id: 'badgeProduct', name: 'Badge_Product', displayName: 'Badge Product', ref: badgeProductRef },
+      { id: 'studyCitation', name: 'Study_Citation', displayName: 'Study Citation', ref: studyCitationRef },
+      { id: 'ugcGrid', name: 'UGC_Grid', displayName: 'UGC Grid', ref: ugcGridRef },
+      { id: 'testimonialDetail', name: 'Testimonial_Detail', displayName: 'Testimonial Detail', ref: testimonialDetailRef },
+      { id: 'statsWithProduct', name: 'Stats_With_Product', displayName: 'Stats With Product', ref: statsWithProductRef },
+      { id: 'ingredientBenefits', name: 'Ingredient_Benefits', displayName: 'Ingredient Benefits', ref: ingredientBenefitsRef },
     ]
   }
 
@@ -826,7 +856,13 @@ export default function SKUEditorPage() {
       timeline: timelineRef,
       beforeAfter: beforeAfterRef,
       featureGrid: featureGridRef,
-      socialProof: socialProofRef
+      socialProof: socialProofRef,
+      badgeProduct: badgeProductRef,
+      studyCitation: studyCitationRef,
+      ugcGrid: ugcGridRef,
+      testimonialDetail: testimonialDetailRef,
+      statsWithProduct: statsWithProductRef,
+      ingredientBenefits: ingredientBenefitsRef
     }[expandedLayout]
     
     if (!layoutRef?.current) {
@@ -1359,6 +1395,12 @@ export default function SKUEditorPage() {
               {expandedLayout === 'beforeAfter' && <BeforeAfterLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'featureGrid' && <FeatureGridLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'socialProof' && <SocialProofLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'badgeProduct' && <BadgeProductLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'studyCitation' && <StudyCitationLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'ugcGrid' && <UGCGridLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'testimonialDetail' && <TestimonialDetailLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'statsWithProduct' && <StatsWithProductLayout brand={displayBrand} sku={displaySKU} />}
+              {expandedLayout === 'ingredientBenefits' && <IngredientBenefitsLayout brand={displayBrand} sku={displaySKU} />}
             </div>
           </div>
         </div>
@@ -1366,13 +1408,13 @@ export default function SKUEditorPage() {
     )
   }
 
-  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof') {
+  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof' | 'badgeProduct' | 'studyCitation' | 'ugcGrid' | 'testimonialDetail' | 'statsWithProduct' | 'ingredientBenefits') {
     setExpandedLayout(layoutKey)
     initializeColorVariations(layoutKey)
     setDrawerOpen(true)
     
     // Initialize position overrides with defaults from spec - ALWAYS do this to enable layer reordering
-    if (sku && (layoutKey === 'compare' || layoutKey === 'testimonial' || layoutKey === 'bigStat' || layoutKey === 'multiStats' || layoutKey === 'promoProduct' || layoutKey === 'bottleList' || layoutKey === 'timeline' || layoutKey === 'beforeAfter' || layoutKey === 'featureGrid' || layoutKey === 'socialProof')) {
+    if (sku && (layoutKey === 'compare' || layoutKey === 'testimonial' || layoutKey === 'bigStat' || layoutKey === 'multiStats' || layoutKey === 'promoProduct' || layoutKey === 'bottleList' || layoutKey === 'timeline' || layoutKey === 'beforeAfter' || layoutKey === 'featureGrid' || layoutKey === 'socialProof' || layoutKey === 'badgeProduct' || layoutKey === 'studyCitation' || layoutKey === 'ugcGrid' || layoutKey === 'testimonialDetail' || layoutKey === 'statsWithProduct' || layoutKey === 'ingredientBenefits')) {
       const existing = sku.positionOverrides?.[layoutKey] || {}
       
       // Define all elements with their spec defaults per layout
@@ -1463,6 +1505,56 @@ export default function SKUEditorPage() {
           background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
           headline: { x: 60, y: 60, width: 960, height: 100, zIndex: 20 },
           productImage: { x: 390, y: 820, width: 300, height: 200, zIndex: 30 }
+        },
+        badgeProduct: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          productImage: { x: 240, y: 140, width: 600, height: 800, zIndex: 10 },
+          badge1: { x: 100, y: 180, width: 180, height: 180, zIndex: 20 },
+          badge2: { x: 800, y: 180, width: 180, height: 180, zIndex: 20 },
+          badge3: { x: 100, y: 720, width: 180, height: 180, zIndex: 20 },
+          badge4: { x: 800, y: 720, width: 180, height: 180, zIndex: 20 }
+        },
+        studyCitation: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          studyContext: { x: 84, y: 120, width: 912, height: 60, zIndex: 20 },
+          mainFinding: { x: 84, y: 200, width: 912, height: 450, zIndex: 20 },
+          supplementName: { x: 84, y: 680, width: 500, height: 60, zIndex: 20 },
+          sourceCitation: { x: 84, y: 980, width: 400, height: 60, zIndex: 20 },
+          ingredientImage: { x: 620, y: 680, width: 376, height: 376, zIndex: 15 }
+        },
+        ugcGrid: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          photo1: { x: 0, y: 0, width: 540, height: 540, zIndex: 10 },
+          photo2: { x: 540, y: 0, width: 540, height: 540, zIndex: 10 },
+          photo3: { x: 0, y: 540, width: 540, height: 540, zIndex: 10 },
+          photo4: { x: 540, y: 540, width: 540, height: 540, zIndex: 10 }
+        },
+        testimonialDetail: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          reviewPanel: { x: 0, y: 540, width: 1080, height: 540, zIndex: 15 },
+          lifestylePhoto: { x: 0, y: 0, width: 1080, height: 540, zIndex: 10 },
+          stars: { x: 24, y: 580, width: 200, height: 40, zIndex: 20 },
+          quoteHeadline: { x: 24, y: 640, width: 1032, height: 80, zIndex: 20 },
+          reviewText: { x: 24, y: 740, width: 1032, height: 200, zIndex: 20 },
+          customerName: { x: 24, y: 980, width: 300, height: 40, zIndex: 20 },
+          verifiedBadge: { x: 160, y: 985, width: 160, height: 30, zIndex: 20 }
+        },
+        statsWithProduct: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          headline: { x: 70, y: 95, width: 600, height: 50, zIndex: 20 },
+          stat1Value: { x: 70, y: 220, width: 400, height: 150, zIndex: 20 },
+          stat1Label: { x: 70, y: 380, width: 400, height: 60, zIndex: 20 },
+          stat2Value: { x: 70, y: 480, width: 400, height: 150, zIndex: 20 },
+          stat2Label: { x: 70, y: 640, width: 400, height: 80, zIndex: 20 },
+          stat3Value: { x: 70, y: 760, width: 400, height: 150, zIndex: 20 },
+          stat3Label: { x: 70, y: 920, width: 400, height: 80, zIndex: 20 },
+          productImage: { x: 580, y: 200, width: 450, height: 700, zIndex: 15 }
+        },
+        ingredientBenefits: {
+          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
+          ingredientImage: { x: 0, y: 0, width: 540, height: 820, zIndex: 10 },
+          headline: { x: 530, y: 240, width: 520, height: 240, zIndex: 20 },
+          subheadline: { x: 530, y: 580, width: 520, height: 120, zIndex: 20 }
         }
       }
       
@@ -1584,6 +1676,7 @@ export default function SKUEditorPage() {
       layoutKey: 'bigStat' as const,
       fields: [
         { type: 'background', colorKey: 'bgAlt', label: 'Background Color' },
+        { type: 'image', imageKey: 'backgroundAlt', label: 'Background Image (Optional)', imageType: 'brand', variants: ['backgroundAlt', 'backgroundBenefits', 'backgroundStats', 'backgroundBadgeProduct'] },
         { section: 'stat97', field: 'value', label: 'Stat Value', placeholder: '100%', colors: ['accent'] },
         { section: 'stat97', field: 'headline', label: 'Headline', placeholder: 'Naturally sourced Bioactive Precision Peptides™', type: 'textarea', colors: ['accent'] },
         { section: 'stat97', field: 'ingredient1', label: 'Ingredient 1 (Top Left)', placeholder: 'Citric Acid', colors: ['accent'] },
@@ -1718,6 +1811,94 @@ export default function SKUEditorPage() {
         { section: 'socialProof', field: 'review3_quote', label: 'Review 3 Quote', placeholder: 'Actually works. No gimmicks.', colors: ['text'] },
         { section: 'socialProof', field: 'review3_name', label: 'Review 3 Name', placeholder: '- Sarah K.', colors: ['textSecondary'] },
         { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Badge Product',
+      layoutSize: '1080×1080',
+      layoutKey: 'badgeProduct' as const,
+      fields: [
+        { type: 'image', imageKey: 'backgroundBadgeProduct', label: 'Background Image', imageType: 'brand', variants: ['backgroundBenefits', 'backgroundAlt', 'backgroundStats', 'backgroundBadgeProduct'] },
+        { type: 'image', imageKey: 'productPrimary', label: 'Main Product Photo', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+        { type: 'image', imageKey: 'badge1', label: 'Badge 1 (Top Left)', imageType: 'sku', variants: ['badge1', 'badge2', 'badge3', 'badge4'] },
+        { type: 'image', imageKey: 'badge2', label: 'Badge 2 (Top Right)', imageType: 'sku', variants: ['badge1', 'badge2', 'badge3', 'badge4'] },
+        { type: 'image', imageKey: 'badge3', label: 'Badge 3 (Bottom Left)', imageType: 'sku', variants: ['badge1', 'badge2', 'badge3', 'badge4'] },
+        { type: 'image', imageKey: 'badge4', label: 'Badge 4 (Bottom Right)', imageType: 'sku', variants: ['badge1', 'badge2', 'badge3', 'badge4'] },
+      ]
+    },
+    {
+      layoutName: 'Study Citation',
+      layoutSize: '1080×1080',
+      layoutKey: 'studyCitation' as const,
+      fields: [
+        { type: 'background', colorKey: 'bgAlt', label: 'Background Color' },
+        { section: 'studyCitation', field: 'context', label: 'Study Context (Top)', placeholder: 'In a double-blind, randomized trial,', colors: [] },
+        { section: 'studyCitation', field: 'finding', label: 'Main Finding', placeholder: 'Participants saw a 17% reduction in TSH and a significant increase in both T3 and T4 levels', type: 'textarea', colors: [] },
+        { section: 'studyCitation', field: 'supplementName', label: 'Supplement Name', placeholder: 'with Ashwagandha supplementation', colors: [] },
+        { section: 'studyCitation', field: 'source', label: 'Source Citation', placeholder: 'Source:\nPubMed PMID: 28829155', type: 'textarea', colors: [] },
+        { type: 'image', imageKey: 'ingredientA', label: 'Ingredient Image', imageType: 'sku', variants: ['ingredientA', 'ingredientB', 'ingredientC', 'ingredientD'] },
+      ]
+    },
+    {
+      layoutName: 'UGC Grid: 4 Customers',
+      layoutSize: '1080×1080',
+      layoutKey: 'ugcGrid' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { type: 'image', imageKey: 'testimonialPhoto', label: 'Customer Photo 1 (Top Left)', imageType: 'sku', variants: ['testimonialPhoto', 'testimonialPhoto2', 'testimonialPhoto3', 'testimonialPhoto4', 'lifestyleA', 'lifestyleB', 'lifestyleC'] },
+        { type: 'image', imageKey: 'testimonialPhoto2', label: 'Customer Photo 2 (Top Right)', imageType: 'sku', variants: ['testimonialPhoto', 'testimonialPhoto2', 'testimonialPhoto3', 'testimonialPhoto4', 'lifestyleA', 'lifestyleB', 'lifestyleC'] },
+        { type: 'image', imageKey: 'testimonialPhoto3', label: 'Customer Photo 3 (Bottom Left)', imageType: 'sku', variants: ['testimonialPhoto', 'testimonialPhoto2', 'testimonialPhoto3', 'testimonialPhoto4', 'lifestyleA', 'lifestyleB', 'lifestyleC'] },
+        { type: 'image', imageKey: 'testimonialPhoto4', label: 'Customer Photo 4 (Bottom Right)', imageType: 'sku', variants: ['testimonialPhoto', 'testimonialPhoto2', 'testimonialPhoto3', 'testimonialPhoto4', 'lifestyleA', 'lifestyleB', 'lifestyleC'] },
+      ]
+    },
+    {
+      layoutName: 'Testimonial Detail',
+      layoutSize: '1080×1080',
+      layoutKey: 'testimonialDetail' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { type: 'image', imageKey: 'lifestyleA', label: 'Lifestyle Photo (Top)', imageType: 'sku', variants: ['lifestyleA', 'lifestyleB', 'lifestyleC', 'testimonialPhoto', 'testimonialPhoto2', 'testimonialPhoto3', 'testimonialPhoto4'] },
+        { section: 'testimonialDetail', field: 'rating', label: 'Star Rating', placeholder: '★ ★ ★ ★ ★', colors: ['accent'] },
+        { section: 'testimonialDetail', field: 'quoteHeadline', label: 'Quote Headline', placeholder: 'Noticeable Difference', colors: ['text'] },
+        { section: 'testimonialDetail', field: 'reviewText', label: 'Full Review', placeholder: 'There is a noticeable difference when I drink other coffees...', type: 'textarea', colors: ['text'] },
+        { section: 'testimonialDetail', field: 'customerName', label: 'Customer Name', placeholder: 'Denise T.', colors: ['text'] },
+      ]
+    },
+    {
+      layoutName: 'Stats With Product',
+      layoutSize: '1080×1080',
+      layoutKey: 'statsWithProduct' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { section: 'statsWithProduct', field: 'headline', label: 'Headline', placeholder: 'THE BENEFITS AFTER 60 DAYS', colors: ['text'] },
+        { section: 'statsWithProduct', field: 'stat1_value', label: 'Stat 1 Value', placeholder: '90%', colors: ['text'] },
+        { section: 'statsWithProduct', field: 'stat1_label', label: 'Stat 1 Label', placeholder: 'felt more motivated*', colors: ['text'] },
+        { section: 'statsWithProduct', field: 'stat2_value', label: 'Stat 2 Value', placeholder: '84%', colors: ['text'] },
+        { section: 'statsWithProduct', field: 'stat2_label', label: 'Stat 2 Label', placeholder: 'were more likely to start or complete a task*', colors: ['text'] },
+        { section: 'statsWithProduct', field: 'stat3_value', label: 'Stat 3 Value', placeholder: '79%', colors: ['text'] },
+        { section: 'statsWithProduct', field: 'stat3_label', label: 'Stat 3 Label', placeholder: 'felt more ambitious and able to take on a difficult task*', colors: ['text'] },
+        { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
+      ]
+    },
+    {
+      layoutName: 'Ingredient Benefits',
+      layoutSize: '1080×1080',
+      layoutKey: 'ingredientBenefits' as const,
+      fields: [
+        { type: 'background', colorKey: 'bg', label: 'Background Color' },
+        { type: 'image', imageKey: 'ingredientA', label: 'Ingredient Photo', imageType: 'sku', variants: ['ingredientA', 'ingredientB', 'ingredientC', 'ingredientD'] },
+        { section: 'ingredientBenefits', field: 'headline', label: 'Headline', placeholder: 'What could you do with more energy?', type: 'textarea', colors: ['text'] },
+        { section: 'ingredientBenefits', field: 'subheadline', label: 'Subheadline', placeholder: 'Feel your best every day, wherever it takes you.', type: 'textarea', colors: ['text'] },
+        { section: 'ingredientBenefits', field: 'benefit1_icon', label: 'Benefit 1 Icon', placeholder: 'dumbbell', type: 'icon', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit1_label', label: 'Benefit 1 Label', placeholder: 'Muscle Power', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit2_icon', label: 'Benefit 2 Icon', placeholder: 'brain', type: 'icon', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit2_label', label: 'Benefit 2 Label', placeholder: 'Support Focus', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit3_icon', label: 'Benefit 3 Icon', placeholder: 'flask', type: 'icon', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit3_label', label: 'Benefit 3 Label', placeholder: '3rd Party Tested', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit4_icon', label: 'Benefit 4 Icon', placeholder: 'zap', type: 'icon', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit4_label', label: 'Benefit 4 Label', placeholder: 'Boost Energy', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit5_icon', label: 'Benefit 5 Icon', placeholder: 'refresh', type: 'icon', colors: ['accent'] },
+        { section: 'ingredientBenefits', field: 'benefit5_label', label: 'Benefit 5 Label', placeholder: 'Recover Faster', colors: ['accent'] },
       ]
     },
   ]
@@ -1954,6 +2135,12 @@ export default function SKUEditorPage() {
                                   {layout.layoutKey === 'beforeAfter' && <BeforeAfterLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'featureGrid' && <FeatureGridLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'socialProof' && <SocialProofLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'badgeProduct' && <BadgeProductLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'studyCitation' && <StudyCitationLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'ugcGrid' && <UGCGridLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'testimonialDetail' && <TestimonialDetailLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'statsWithProduct' && <StatsWithProductLayout brand={brand} sku={layoutSKU} />}
+                                  {layout.layoutKey === 'ingredientBenefits' && <IngredientBenefitsLayout brand={brand} sku={layoutSKU} />}
                                 </div>
                               {/* Hover overlay */}
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -2293,64 +2480,68 @@ export default function SKUEditorPage() {
               </CardContent>
             </Card>
 
-            {/* Testimonial Image */}
+            {/* Testimonial Images */}
             <Card>
               <CardHeader>
-                <CardTitle>Testimonial Image</CardTitle>
+                <CardTitle>Testimonial Images</CardTitle>
+                <CardDescription>Customer photos with product - used in Testimonial and UGC Grid layouts</CardDescription>
               </CardHeader>
               <CardContent>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Client Testimonial Photo (Full Background)
-                </label>
-                {sku.images.testimonialPhoto ? (
-                  <div className="relative">
-                    <img 
-                      src={sku.images.testimonialPhoto} 
-                      alt="Testimonial"
-                      className="w-full h-64 object-cover rounded"
-                    />
-                    <button
-                      onClick={() => {
-                        setSKU({
-                          ...sku,
-                          images: { ...sku.images, testimonialPhoto: undefined }
-                        })
-                      }}
-                      className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 text-sm rounded font-medium"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <label className="cursor-pointer flex flex-col items-center justify-center h-48 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary transition-colors">
-                      <svg className="w-12 h-12 text-muted-foreground/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm text-muted-foreground font-medium">Upload File</span>
-                      <span className="text-xs text-muted-foreground/60 mt-1">Lifestyle photo with customer</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleImageUpload('testimonialPhoto', file)
-                        }}
-                      />
+              <div className="grid grid-cols-4 gap-4">
+                {(['testimonialPhoto', 'testimonialPhoto2', 'testimonialPhoto3', 'testimonialPhoto4'] as const).map((key, index) => (
+                  <div key={key} className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Customer {index + 1}
                     </label>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => openFluidDAM('testimonialPhoto')}
-                    >
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      Browse DAM
-                    </Button>
+                    {sku.images[key] ? (
+                      <div className="relative">
+                        <img 
+                          src={sku.images[key]} 
+                          alt={`Customer ${index + 1}`}
+                          className="w-full h-48 object-cover rounded"
+                        />
+                        <button
+                          onClick={() => {
+                            setSKU({
+                              ...sku,
+                              images: { ...sku.images, [key]: undefined }
+                            })
+                          }}
+                          className="absolute top-0 right-0 bg-red-500 text-white px-2 py-1 text-xs rounded"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="cursor-pointer flex flex-col items-center justify-center h-36 border-2 border-dashed border-muted-foreground/25 rounded hover:border-primary transition-colors">
+                          <svg className="w-8 h-8 text-muted-foreground/60 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-xs text-muted-foreground font-medium">Upload File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(key, file)
+                            }}
+                          />
+                        </label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          onClick={() => openFluidDAM(key)}
+                        >
+                          <ImageIcon className="mr-1 h-3 w-3" />
+                          Browse DAM
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
               </CardContent>
             </Card>
@@ -2420,6 +2611,69 @@ export default function SKUEditorPage() {
               </div>
               </CardContent>
             </Card>
+
+            {/* Badge Images */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Badge Images (Circular)</CardTitle>
+                <CardDescription>Used in Badge Product layout - feature callouts, certifications, or benefits</CardDescription>
+              </CardHeader>
+              <CardContent>
+              <div className="grid grid-cols-4 gap-4">
+                {(['badge1', 'badge2', 'badge3', 'badge4'] as const).map((key, index) => (
+                  <div key={key} className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Badge {index + 1}
+                    </label>
+                    {sku.images[key] ? (
+                      <div className="relative">
+                        <img 
+                          src={sku.images[key]} 
+                          alt={key}
+                          className="w-full h-24 object-cover rounded-full"
+                        />
+                        <button
+                          onClick={() => {
+                            setSKU({
+                              ...sku,
+                              images: { ...sku.images, [key]: undefined }
+                            })
+                          }}
+                          className="absolute top-0 right-0 bg-red-500 text-white px-2 py-1 text-xs rounded"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="cursor-pointer flex flex-col items-center justify-center h-20 border-2 border-dashed border-muted-foreground/25 rounded-full hover:border-primary transition-colors">
+                          <span className="text-xs text-muted-foreground">Upload File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(key, file)
+                            }}
+                          />
+                        </label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          onClick={() => openFluidDAM(key)}
+                        >
+                          <ImageIcon className="mr-1 h-3 w-3" />
+                          Browse DAM
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              </CardContent>
+            </Card>
               </div>
             </TabsContent>
           </Tabs>
@@ -2459,7 +2713,13 @@ export default function SKUEditorPage() {
                             timeline: timelineRef,
                             beforeAfter: beforeAfterRef,
                             featureGrid: featureGridRef,
-                            socialProof: socialProofRef
+                            socialProof: socialProofRef,
+                            badgeProduct: badgeProductRef,
+                            studyCitation: studyCitationRef,
+                            ugcGrid: ugcGridRef,
+                            testimonialDetail: testimonialDetailRef,
+                            statsWithProduct: statsWithProductRef,
+                            ingredientBenefits: ingredientBenefitsRef
                           }[expandedLayout]
                           
                           if (!layoutRef?.current) {
@@ -2946,6 +3206,24 @@ export default function SKUEditorPage() {
             <div ref={socialProofRef}>
               <SocialProofLayout brand={brand} sku={sku} />
             </div>
+            <div ref={badgeProductRef}>
+              <BadgeProductLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={studyCitationRef}>
+              <StudyCitationLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={ugcGridRef}>
+              <UGCGridLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={testimonialDetailRef}>
+              <TestimonialDetailLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={statsWithProductRef}>
+              <StatsWithProductLayout brand={brand} sku={sku} />
+            </div>
+            <div ref={ingredientBenefitsRef}>
+              <IngredientBenefitsLayout brand={brand} sku={sku} />
+            </div>
           </div>
         </div>
       </div>
@@ -3142,9 +3420,60 @@ export default function SKUEditorPage() {
                   isEditMode={true}
                   selectedElement={selectedElement}
                   onSelectElement={setSelectedElement}
-                  onElementDrag={handleVisualPositionChange}
-                  onElementResize={handleVisualSizeChange}
-                  onElementRotate={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'badgeProduct' && (
+                <BadgeProductLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                />
+              )}
+              {expandedLayout === 'studyCitation' && (
+                <StudyCitationLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                />
+              )}
+              {expandedLayout === 'ugcGrid' && (
+                <UGCGridLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                />
+              )}
+              {expandedLayout === 'testimonialDetail' && (
+                <TestimonialDetailLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                />
+              )}
+              {expandedLayout === 'statsWithProduct' && (
+                <StatsWithProductLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                />
+              )}
+              {expandedLayout === 'ingredientBenefits' && (
+                <IngredientBenefitsLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
                 />
               )}
             </div>

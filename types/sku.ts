@@ -260,6 +260,41 @@ export interface SKU {
       benefit3: string
       productBadge: string
     }
+    studyCitation?: {
+      context: string
+      finding: string
+      supplementName: string
+      source: string
+    }
+    testimonialDetail?: {
+      rating: string
+      quoteHeadline: string
+      reviewText: string
+      customerName: string
+    }
+    statsWithProduct?: {
+      headline: string
+      stat1_value: string
+      stat1_label: string
+      stat2_value: string
+      stat2_label: string
+      stat3_value: string
+      stat3_label: string
+    }
+    ingredientBenefits?: {
+      headline: string
+      subheadline: string
+      benefit1_icon: string
+      benefit1_label: string
+      benefit2_icon: string
+      benefit2_label: string
+      benefit3_icon: string
+      benefit3_label: string
+      benefit4_icon: string
+      benefit4_label: string
+      benefit5_icon: string
+      benefit5_label: string
+    }
   }
   images: {
     productPrimary?: string
@@ -277,8 +312,16 @@ export interface SKU {
     comparisonOurs?: string
     comparisonTheirs?: string
     testimonialPhoto?: string
+    testimonialPhoto2?: string
+    testimonialPhoto3?: string
+    testimonialPhoto4?: string
     supplementsPile?: string
     productImage?: string
+    backgroundBadgeProduct?: string
+    badge1?: string
+    badge2?: string
+    badge3?: string
+    badge4?: string
   }
   productInformation?: string // Product-specific information for AI content generation
   fluidMetadata?: {

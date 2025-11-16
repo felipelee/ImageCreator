@@ -59,6 +59,7 @@ export interface Brand {
     backgroundAlt?: string
     backgroundBenefits?: string
     backgroundStats?: string
+    backgroundBadgeProduct?: string
     promoBadge?: string
     timelineLine?: string
   }

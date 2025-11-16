@@ -161,6 +161,62 @@ export const LAYOUT_ELEMENT_DEFINITIONS: Record<string, LayoutElementDefinition[
     { key: 'priceLeft', label: 'Price Left', type: 'text', defaultZIndex: 20 },
     { key: 'priceCenter', label: 'Price Center', type: 'text', defaultZIndex: 20 },
     { key: 'benefitsList', label: 'Benefits List', type: 'container', defaultZIndex: 20 }
+  ],
+  
+  badgeProduct: [
+    { key: 'background', label: 'Background Image', type: 'background', locked: true, defaultZIndex: 0 },
+    { key: 'productImage', label: 'Main Product Photo', type: 'image', defaultZIndex: 10 },
+    { key: 'badge1', label: 'Badge 1 (Top Left)', type: 'image', defaultZIndex: 20 },
+    { key: 'badge2', label: 'Badge 2 (Top Right)', type: 'image', defaultZIndex: 20 },
+    { key: 'badge3', label: 'Badge 3 (Bottom Left)', type: 'image', defaultZIndex: 20 },
+    { key: 'badge4', label: 'Badge 4 (Bottom Right)', type: 'image', defaultZIndex: 20 }
+  ],
+  
+  studyCitation: [
+    { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
+    { key: 'studyContext', label: 'Study Context (Top)', type: 'text', defaultZIndex: 20 },
+    { key: 'mainFinding', label: 'Main Finding', type: 'text', defaultZIndex: 20 },
+    { key: 'supplementName', label: 'Supplement Name', type: 'text', defaultZIndex: 20 },
+    { key: 'sourceCitation', label: 'Source Citation', type: 'text', defaultZIndex: 20 },
+    { key: 'ingredientImage', label: 'Ingredient Image', type: 'image', defaultZIndex: 15 }
+  ],
+  
+  ugcGrid: [
+    { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
+    { key: 'photo1', label: 'Photo 1 (Top Left)', type: 'image', defaultZIndex: 10 },
+    { key: 'photo2', label: 'Photo 2 (Top Right)', type: 'image', defaultZIndex: 10 },
+    { key: 'photo3', label: 'Photo 3 (Bottom Left)', type: 'image', defaultZIndex: 10 },
+    { key: 'photo4', label: 'Photo 4 (Bottom Right)', type: 'image', defaultZIndex: 10 }
+  ],
+  
+  testimonialDetail: [
+    { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
+    { key: 'reviewPanel', label: 'Review Panel', type: 'background', locked: true, defaultZIndex: 15 },
+    { key: 'lifestylePhoto', label: 'Lifestyle Photo', type: 'image', defaultZIndex: 10 },
+    { key: 'stars', label: 'Star Rating', type: 'text', defaultZIndex: 20 },
+    { key: 'quoteHeadline', label: 'Quote Headline', type: 'text', defaultZIndex: 20 },
+    { key: 'reviewText', label: 'Review Text', type: 'text', defaultZIndex: 20 },
+    { key: 'customerName', label: 'Customer Name', type: 'text', defaultZIndex: 20 },
+    { key: 'verifiedBadge', label: 'Verified Badge', type: 'container', defaultZIndex: 20 }
+  ],
+  
+  statsWithProduct: [
+    { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
+    { key: 'headline', label: 'Headline', type: 'text', defaultZIndex: 20 },
+    { key: 'stat1Value', label: 'Stat 1 Value', type: 'text', defaultZIndex: 20 },
+    { key: 'stat1Label', label: 'Stat 1 Label', type: 'text', defaultZIndex: 20 },
+    { key: 'stat2Value', label: 'Stat 2 Value', type: 'text', defaultZIndex: 20 },
+    { key: 'stat2Label', label: 'Stat 2 Label', type: 'text', defaultZIndex: 20 },
+    { key: 'stat3Value', label: 'Stat 3 Value', type: 'text', defaultZIndex: 20 },
+    { key: 'stat3Label', label: 'Stat 3 Label', type: 'text', defaultZIndex: 20 },
+    { key: 'productImage', label: 'Product Image', type: 'image', defaultZIndex: 15 }
+  ],
+  
+  ingredientBenefits: [
+    { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
+    { key: 'ingredientImage', label: 'Ingredient Photo', type: 'image', defaultZIndex: 10 },
+    { key: 'headline', label: 'Headline', type: 'text', defaultZIndex: 20 },
+    { key: 'subheadline', label: 'Subheadline', type: 'text', defaultZIndex: 20 }
   ]
 }
 

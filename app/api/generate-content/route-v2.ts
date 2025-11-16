@@ -169,34 +169,37 @@ function buildBatchPrompt(
     "ingredient4": "ingredient name"
   },
   "stats": {
-    "headline": "stats intro (6-12 words)",
-    "stat1_value": "stat (e.g., '78%')",
-    "stat1_label": "outcome (uppercase, 6-10 words)",
-    "stat2_value": "stat (e.g., '71%')",
-    "stat2_label": "outcome (uppercase, 6-10 words)",
-    "stat3_value": "stat (e.g., '69%')",
-    "stat3_label": "outcome (uppercase, 6-10 words)",
-    "disclaimer": "study context (10-20 words)"
+    "headline": "stats intro based on product (6-12 words)",
+    "stat1_value": "compelling stat from product info (e.g., '78%', '2X', '50%')",
+    "stat1_label": "specific outcome for this product (uppercase, 6-10 words)",
+    "stat2_value": "different stat from product info (e.g., '71%', '3X', '45%')",
+    "stat2_label": "specific outcome for this product (uppercase, 6-10 words)",
+    "stat3_value": "third stat from product info (e.g., '69%', '4X', '60%')",
+    "stat3_label": "specific outcome for this product (uppercase, 6-10 words)",
+    "disclaimer": "study context or timeframe (10-20 words)"
   },
   "promo": {
-    "headline": "promo headline (4-8 words)",
-    "stat1_value": "stat (e.g., '47%')",
-    "stat1_label": "benefit (uppercase, 4-8 words)",
-    "stat2_value": "stat (e.g., '4X')",
-    "stat2_label": "benefit (uppercase, 4-8 words)",
-    "stat3_value": "stat (e.g., '144%')",
-    "stat3_label": "benefit (uppercase, 4-8 words)",
-    "badge": "offer (4-8 words)",
-    "badgeNote": "hook (2-4 words)"
+    "headline": "promo headline based on product (4-8 words)",
+    "stat1_value": "compelling stat from product info (e.g., '47%', '2X', '50%')",
+    "stat1_label": "specific benefit for this product (uppercase, 4-8 words)",
+    "stat2_value": "different stat from product info (e.g., '4X', '3X', '100%')",
+    "stat2_label": "specific benefit for this product (uppercase, 4-8 words)",
+    "stat3_value": "third stat from product info (e.g., '144%', '5X', '75%')",
+    "stat3_label": "specific benefit for this product (uppercase, 4-8 words)",
+    "badge": "promotional offer or hook (4-8 words)",
+    "badgeNote": "catchy hook (2-4 words)"
   },
   "bottle": {
-    "headline": "headline (2-4 words)",
-    "benefit1": "title (2-3 words)",
-    "benefit1_detail": "detail (uppercase, 8-12 words)",
-    "benefit2": "title (2-3 words)",
-    "benefit2_detail": "detail (uppercase, 8-12 words)",
-    "benefit3": "title (2-3 words)",
-    "benefit3_detail": "detail (uppercase, 8-12 words)"
+    "headline": "product headline (2-4 words)",
+    "benefit1_icon": "icon matching benefit (choose from: 'dumbbell', 'battery', 'heart-pulse', 'zap', 'brain', 'shield', 'leaf', 'target', 'activity', 'sparkles', 'star', 'award')",
+    "benefit1": "benefit title (2-3 words)",
+    "benefit1_detail": "benefit detail for this product (uppercase, 8-12 words)",
+    "benefit2_icon": "different icon matching benefit (choose from: 'dumbbell', 'battery', 'heart-pulse', 'zap', 'brain', 'shield', 'leaf', 'target', 'activity', 'sparkles', 'star', 'award')",
+    "benefit2": "benefit title (2-3 words)",
+    "benefit2_detail": "benefit detail for this product (uppercase, 8-12 words)",
+    "benefit3_icon": "third icon matching benefit (choose from: 'dumbbell', 'battery', 'heart-pulse', 'zap', 'brain', 'shield', 'leaf', 'target', 'activity', 'sparkles', 'star', 'award')",
+    "benefit3": "benefit title (2-3 words)",
+    "benefit3_detail": "benefit detail for this product (uppercase, 8-12 words)"
   }
 }
 
