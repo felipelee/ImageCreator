@@ -13,7 +13,9 @@ export const HERO_SPEC = {
       width: 1080,
       height: 1350,
       objectFit: 'cover' as const,
-      zIndex: 0
+      zIndex: 0,
+      imageKey: 'backgroundHero',
+      backgroundColorFallback: 'bg' // Color to use when in color mode
     },
     
     overlay: {

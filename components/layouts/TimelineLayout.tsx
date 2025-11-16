@@ -16,6 +16,13 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
   const colors = brand.colors || { bg: '#F9F7F2', primarySoft: '#DCE0D2' }
   const fonts = brand.fonts || { family: 'Inter' }
   
+  // Determine background mode (image or color)
+  const backgroundMode = sku.backgroundMode?.timeline || 
+    (sku.images.lifestyleTimeline ? 'image' : 'color')
+  
+  // Get background color (will be used in color mode)
+  const backgroundColor = getFieldColorValue(brand, sku, 'timeline', 'Background Color', 'bg')
+  
   const headlineColor = '#FFFFFF' // Always white on dark overlay
   const badgeColor = colors.primarySoft || '#DCE0D2'
   const descriptionColor = '#FFFFFF' // Always white
@@ -81,10 +88,10 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background Image */}
-      {(sku.images.lifestyleTimeline || true) && (
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && sku.images.lifestyleTimeline ? (
         <img
-          src={sku.images.lifestyleTimeline || '/placeholder-image.svg'}
+          src={sku.images.lifestyleTimeline}
           alt=""
           style={{
             position: 'absolute',
@@ -93,8 +100,19 @@ export function TimelineLayout({ brand, sku }: TimelineLayoutProps) {
             width: spec.elements.background.width,
             height: spec.elements.background.height,
             objectFit: spec.elements.background.objectFit,
-            zIndex: spec.elements.background.zIndex,
-            opacity: sku.images.lifestyleTimeline ? 1 : 0.3
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor,
+            zIndex: spec.elements.background.zIndex
           }}
         />
       )}

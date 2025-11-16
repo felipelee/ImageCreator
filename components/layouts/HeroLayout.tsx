@@ -13,6 +13,13 @@ export function HeroLayout({ brand, sku }: HeroLayoutProps) {
   const colors = brand.colors
   const fonts = brand.fonts
   
+  // Determine background mode (image or color)
+  const backgroundMode = sku.backgroundMode?.hero || 
+    (brand.images.backgroundHero ? 'image' : 'color')
+  
+  // Get background color (will be used in color mode)
+  const backgroundColor = getFieldColorValue(brand, sku, 'hero', 'Background Color', 'bg')
+  
   // Get colors with potential overrides
   const overlayColor = getFieldColorValue(brand, sku, 'hero1', 'Overlay Color', 'bg')
   const headlineColor = getFieldColorValue(brand, sku, 'hero1', 'Headline', 'text')
@@ -30,8 +37,8 @@ export function HeroLayout({ brand, sku }: HeroLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background Image */}
-      {brand.images.backgroundHero && (
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && brand.images.backgroundHero ? (
         <img
           src={brand.images.backgroundHero}
           alt=""
@@ -42,6 +49,18 @@ export function HeroLayout({ brand, sku }: HeroLayoutProps) {
             width: spec.elements.background.width,
             height: spec.elements.background.height,
             objectFit: spec.elements.background.objectFit,
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor,
             zIndex: spec.elements.background.zIndex
           }}
         />

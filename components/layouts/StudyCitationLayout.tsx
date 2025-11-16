@@ -17,8 +17,11 @@ export function StudyCitationLayout({ brand, sku }: StudyCitationLayoutProps) {
   const colors = brand.colors || { bgAlt: '#8B7F8B' }
   const fonts = brand.fonts || { family: 'Inter' }
   
-  const bgColor = getFieldColorValue(brand, sku, 'studyCitation', 'Background Color', 'bgAlt')
-  const textColor = '#FFFFFF' // Always white for readability
+  const bgColor = getFieldColorValue(brand, sku, 'studyCitation', 'Background', 'bgAlt')
+  const studyContextColor = getFieldColorValue(brand, sku, 'studyCitation', 'Study Context (Top)', 'text')
+  const mainFindingColor = getFieldColorValue(brand, sku, 'studyCitation', 'Main Finding', 'text')
+  const supplementNameColor = getFieldColorValue(brand, sku, 'studyCitation', 'Supplement Name', 'text')
+  const sourceCitationColor = getFieldColorValue(brand, sku, 'studyCitation', 'Source Citation', 'textSecondary')
 
   // Resolve positions with overrides
   const studyContextPos = resolveElementPosition('studyCitation', 'studyContext', {
@@ -107,7 +110,7 @@ export function StudyCitationLayout({ brand, sku }: StudyCitationLayoutProps) {
           fontWeight: spec.elements.studyContext.fontWeight,
           lineHeight: spec.elements.studyContext.lineHeight,
           letterSpacing: `${spec.elements.studyContext.letterSpacing}px`,
-          color: textColor,
+          color: studyContextColor,
           textAlign: spec.elements.studyContext.textAlign,
           zIndex: studyContextPos.zIndex ?? spec.elements.studyContext.zIndex,
           margin: 0,
@@ -131,7 +134,7 @@ export function StudyCitationLayout({ brand, sku }: StudyCitationLayoutProps) {
           fontWeight: spec.elements.mainFinding.fontWeight,
           lineHeight: spec.elements.mainFinding.lineHeight,
           letterSpacing: `${spec.elements.mainFinding.letterSpacing}px`,
-          color: textColor,
+          color: mainFindingColor,
           textAlign: spec.elements.mainFinding.textAlign,
           zIndex: mainFindingPos.zIndex ?? spec.elements.mainFinding.zIndex,
           margin: 0,
@@ -158,7 +161,7 @@ export function StudyCitationLayout({ brand, sku }: StudyCitationLayoutProps) {
           fontWeight: spec.elements.supplementName.fontWeight,
           lineHeight: spec.elements.supplementName.lineHeight,
           letterSpacing: `${spec.elements.supplementName.letterSpacing}px`,
-          color: textColor,
+          color: supplementNameColor,
           textAlign: spec.elements.supplementName.textAlign,
           zIndex: supplementNamePos.zIndex ?? spec.elements.supplementName.zIndex,
           margin: 0,
@@ -182,7 +185,7 @@ export function StudyCitationLayout({ brand, sku }: StudyCitationLayoutProps) {
           fontWeight: spec.elements.sourceCitation.fontWeight,
           lineHeight: spec.elements.sourceCitation.lineHeight,
           letterSpacing: `${spec.elements.sourceCitation.letterSpacing}px`,
-          color: textColor,
+          color: sourceCitationColor,
           textAlign: spec.elements.sourceCitation.textAlign,
           zIndex: sourceCitationPos.zIndex ?? spec.elements.sourceCitation.zIndex,
           margin: 0,

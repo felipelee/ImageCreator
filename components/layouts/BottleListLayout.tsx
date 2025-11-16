@@ -149,6 +149,11 @@ export function BottleListLayout({ brand, sku }: BottleListLayoutProps) {
   const colors = brand.colors || { bg: '#F9F7F2', accent: '#323429', textSecondary: '#6C6C6C' }
   const fonts = brand.fonts || { family: 'Inter' }
   
+  // Determine background mode (image or color)
+  const backgroundImage = brand.images.backgroundBenefits
+  const backgroundMode = sku.backgroundMode?.bottleList || 
+    (backgroundImage ? 'image' : 'color')
+  
   // Get colors with override support
   const backgroundColor = getFieldColorValue(brand, sku, 'bottleList', 'Background Color', 'bg')
   const headlineColor = getFieldColorValue(brand, sku, 'bottleList', 'Headline', 'accent')
@@ -318,17 +323,34 @@ export function BottleListLayout({ brand, sku }: BottleListLayoutProps) {
       }}
     >
       {/* Background */}
-      <div
-        style={{
-          position: 'absolute',
-          top: spec.elements.background.top,
-          left: spec.elements.background.left,
-          width: spec.elements.background.width,
-          height: spec.elements.background.height,
-          backgroundColor: backgroundColor,
-          zIndex: spec.elements.background.zIndex
-        }}
-      />
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && backgroundImage ? (
+        <img
+          src={backgroundImage}
+          alt=""
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            objectFit: 'cover',
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor, // backgroundColor already uses getFieldColorValue
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      )}
 
       {/* Product Image (Hand holding product) */}
       {(sku.images.lifestyleA || true) && (

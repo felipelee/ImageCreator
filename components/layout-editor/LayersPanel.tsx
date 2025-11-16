@@ -36,7 +36,8 @@ interface LayerItem {
 interface LayersPanelProps {
   layers: LayerItem[]
   selectedElement: string | null
-  onSelectElement: (elementKey: string) => void
+  selectedElements?: string[]
+  onSelectElement: (elementKey: string, shiftKey?: boolean) => void
   onToggleVisibility?: (elementKey: string) => void
   onToggleLock?: (elementKey: string) => void
   onReorder?: (newOrder: LayerItem[]) => void
@@ -55,7 +56,7 @@ function SortableLayer({
   layer: LayerItem
   depth?: number
   isSelected: boolean
-  onSelect: () => void
+  onSelect: (e?: React.MouseEvent) => void
   onToggleVisibility?: () => void
   onToggleLock?: () => void
   onDelete?: () => void
@@ -208,6 +209,7 @@ function SortableLayer({
 export function LayersPanel({
   layers,
   selectedElement,
+  selectedElements = [],
   onSelectElement,
   onToggleVisibility,
   onToggleLock,
@@ -247,13 +249,15 @@ export function LayersPanel({
   useState(() => {
     setItems(layers)
   })
+  
+  const selectionSet = new Set(selectedElements.length > 0 ? selectedElements : selectedElement ? [selectedElement] : [])
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold">Layers</h3>
         <Badge variant="outline" className="text-xs">
-          {layers.length} elements
+          {selectedElements.length > 1 ? `${selectedElements.length} selected` : `${layers.length} elements`}
         </Badge>
       </div>
 
@@ -269,8 +273,8 @@ export function LayersPanel({
                 <SortableLayer
                   key={layer.key}
                   layer={layer}
-                  isSelected={selectedElement === layer.key}
-                  onSelect={() => onSelectElement(layer.key)}
+                  isSelected={selectionSet.has(layer.key)}
+                  onSelect={(e?: React.MouseEvent) => onSelectElement(layer.key, e?.shiftKey)}
                   onToggleVisibility={onToggleVisibility ? () => onToggleVisibility(layer.key) : undefined}
                   onToggleLock={onToggleLock ? () => onToggleLock(layer.key) : undefined}
                   onDelete={onDeleteLayer ? () => onDeleteLayer(layer.key) : undefined}
@@ -282,7 +286,7 @@ export function LayersPanel({
       </div>
 
       <div className="text-xs text-muted-foreground space-y-1 p-2 bg-muted/20 rounded">
-        <p><strong>Tip:</strong> Click a layer to select it</p>
+        <p><strong>Tip:</strong> Click to select • Shift+click for multi-select</p>
         <p>• Drag handle: Reorder layers (z-index)</p>
         <p>• Eye icon: Toggle visibility</p>
         <p>• Lock icon: Lock position</p>

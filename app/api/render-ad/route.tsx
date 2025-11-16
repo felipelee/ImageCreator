@@ -54,9 +54,6 @@ export async function POST(request: NextRequest) {
       case 'priceComparison':
         layoutJSX = renderPriceComparisonLayout(brand, sku)
         break
-      case 'beforeAfter':
-        layoutJSX = renderBeforeAfterLayout(brand, sku)
-        break
       case 'problemSolution':
         layoutJSX = renderProblemSolutionLayout(brand, sku)
         break
@@ -1119,108 +1116,6 @@ function renderPriceComparisonLayout(brand: any, sku: any) {
           {sku.copy.priceComparison?.rightLabel || 'All-in-One'}
         </div>
       </div>
-    </div>
-  )
-}
-
-// BeforeAfter Layout
-function renderBeforeAfterLayout(brand: any, sku: any) {
-  const colors = brand.colors
-  const fonts = brand.fonts
-  
-  const headlineColor = getColor(brand, sku, 'beforeAfter', 'Headline', 'accent')
-  const beforeBgColor = getColor(brand, sku, 'beforeAfter', 'Before Panel', 'bgAlt')
-  const afterBgColor = getColor(brand, sku, 'beforeAfter', 'After Panel', 'accent')
-
-  return (
-    <div
-      style={{
-        position: 'relative',
-        width: '1080px',
-        height: '1080px',
-        backgroundColor: colors.bg,
-        fontFamily: fonts.family,
-        display: 'flex',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          top: '60px',
-          left: '60px',
-          width: '960px',
-          fontSize: '72px',
-          fontWeight: 700,
-          color: headlineColor,
-          textAlign: 'center',
-          display: 'flex',
-        }}
-      >
-        {sku.copy.beforeAfter?.headline || 'Real Transformation'}
-      </div>
-
-      <div
-        style={{
-          position: 'absolute',
-          top: '240px',
-          left: '60px',
-          width: '460px',
-          height: '640px',
-          backgroundColor: beforeBgColor,
-          borderRadius: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px',
-        }}
-      >
-        <div style={{ fontSize: '32px', fontWeight: 700, color: colors.text, marginBottom: '20px', display: 'flex' }}>
-          BEFORE
-        </div>
-        <div style={{ fontSize: '24px', color: colors.text, textAlign: 'center', display: 'flex' }}>
-          {sku.copy.beforeAfter?.beforeText || 'Tired and sluggish'}
-        </div>
-      </div>
-
-      <div
-        style={{
-          position: 'absolute',
-          top: '240px',
-          right: '60px',
-          width: '460px',
-          height: '640px',
-          backgroundColor: afterBgColor,
-          borderRadius: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px',
-        }}
-      >
-        <div style={{ fontSize: '32px', fontWeight: 700, color: '#FFFFFF', marginBottom: '20px', display: 'flex' }}>
-          AFTER
-        </div>
-        <div style={{ fontSize: '24px', color: '#FFFFFF', textAlign: 'center', display: 'flex' }}>
-          {sku.copy.beforeAfter?.afterText || 'Energized and strong'}
-        </div>
-      </div>
-
-      {sku.images.productPrimary && (
-        <img
-          src={sku.images.productPrimary}
-          alt="Product"
-          style={{
-            position: 'absolute',
-            bottom: '40px',
-            left: '340px',
-            width: '400px',
-            height: '300px',
-            objectFit: 'contain',
-          }}
-        />
-      )}
     </div>
   )
 }

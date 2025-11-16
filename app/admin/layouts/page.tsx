@@ -32,7 +32,6 @@ import { MultiStatsLayout } from '@/components/layouts/MultiStatsLayout'
 import { PromoProductLayout } from '@/components/layouts/PromoProductLayout'
 import { BottleListLayout } from '@/components/layouts/BottleListLayout'
 import { TimelineLayout } from '@/components/layouts/TimelineLayout'
-import { BeforeAfterLayout } from '@/components/layouts/BeforeAfterLayout'
 import { FeatureGridLayout } from '@/components/layouts/FeatureGridLayout'
 import { SocialProofLayout } from '@/components/layouts/SocialProofLayout'
 import { Brand } from '@/types/brand'
@@ -136,13 +135,6 @@ const SAMPLE_SKU: SKU = {
       milestone3_time: 'Day 90',
       milestone3_title: 'Results',
       milestone3_detail: 'Full effect'
-    },
-    beforeAfter: {
-      headline: 'Real Results',
-      beforeLabel: 'Before',
-      beforeText: 'Tired and weak',
-      afterLabel: 'After',
-      afterText: 'Strong and energized'
     },
     featureGrid: {
       headline: 'Key Features',
@@ -322,7 +314,6 @@ export default function LayoutsPage() {
       promoProduct: <PromoProductLayout {...commonProps} />,
       bottleList: <BottleListLayout {...commonProps} />,
       timeline: <TimelineLayout {...commonProps} />,
-      beforeAfter: <BeforeAfterLayout {...commonProps} />,
       featureGrid: <FeatureGridLayout {...commonProps} />,
       socialProof: <SocialProofLayout {...commonProps} />,
     }

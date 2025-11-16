@@ -32,7 +32,7 @@ export function BigStatLayoutEditable({
   const colors = brand.colors
   const fonts = brand.fonts
   
-  const bgColor = getFieldColorValue(brand, sku, 'bigStat', 'Background Color', 'bgAlt')
+  const bgColor = getFieldColorValue(brand, sku, 'bigStat', 'Background Color', 'transparent')
   const statColor = getFieldColorValue(brand, sku, 'bigStat', 'Stat Value', 'accent')
   const headlineColor = getFieldColorValue(brand, sku, 'bigStat', 'Headline', 'accent')
   const labelColor = getFieldColorValue(brand, sku, 'bigStat', 'Ingredient 1 (Top Left)', 'accent')

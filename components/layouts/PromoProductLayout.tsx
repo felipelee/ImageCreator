@@ -16,6 +16,14 @@ export function PromoProductLayout({ brand, sku }: PromoProductLayoutProps) {
   const colors = brand.colors || { bg: '#F9F7F2' }
   const fonts = brand.fonts || { family: 'Inter' }
   
+  // Determine background mode (image or color)
+  const backgroundImage = brand.images.backgroundStats
+  const backgroundMode = sku.backgroundMode?.promoProduct || 
+    (backgroundImage ? 'image' : 'color')
+  
+  // Get background color (will be used in color mode)
+  const backgroundColor = getFieldColorValue(brand, sku, 'promoProduct', 'Background Color', 'bg')
+  
   const headlineColor = getFieldColorValue(brand, sku, 'promo', 'Headline', 'accent')
   const statColor = getFieldColorValue(brand, sku, 'promo', 'Stat 1 Value', 'accent')
 
@@ -146,18 +154,34 @@ export function PromoProductLayout({ brand, sku }: PromoProductLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background */}
-      <div
-        style={{
-          position: 'absolute',
-          top: spec.elements.background.top,
-          left: spec.elements.background.left,
-          width: spec.elements.background.width,
-          height: spec.elements.background.height,
-          backgroundColor: colors.bg,
-          zIndex: spec.elements.background.zIndex
-        }}
-      />
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && backgroundImage ? (
+        <img
+          src={backgroundImage}
+          alt=""
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            objectFit: 'cover',
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor,
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      )}
 
       {/* Headline */}
       <p

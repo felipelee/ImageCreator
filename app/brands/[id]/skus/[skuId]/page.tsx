@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Save, Eye, Sparkles, Package, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, X, Download, Loader2, Edit3, Move, Upload, Layers, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, Sparkles, Package, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, X, Download, Loader2, Edit3, Move, Upload, Layers, ChevronDown, ChevronUp, FolderOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { brandService, skuService } from '@/lib/supabase'
 import { uploadImage, STORAGE_BUCKETS } from '@/lib/supabase-storage'
@@ -29,7 +29,6 @@ import { MultiStatsLayout} from '@/components/layouts/MultiStatsLayout'
 import { PromoProductLayout } from '@/components/layouts/PromoProductLayout'
 import { BottleListLayout } from '@/components/layouts/BottleListLayout'
 import { TimelineLayout } from '@/components/layouts/TimelineLayout'
-import { BeforeAfterLayout } from '@/components/layouts/BeforeAfterLayout'
 import { FeatureGridLayout } from '@/components/layouts/FeatureGridLayout'
 import { SocialProofLayout } from '@/components/layouts/SocialProofLayout'
 import { BadgeProductLayout } from '@/components/layouts/BadgeProductLayout'
@@ -41,6 +40,8 @@ import { IngredientBenefitsLayout } from '@/components/layouts/IngredientBenefit
 import { generateColorVariations, applyColorVariation, ColorVariation } from '@/lib/color-variations'
 import { renderLayout } from '@/lib/render-engine'
 import { FluidDAMBrowser } from '@/components/FluidDAMBrowser'
+import { BrandAssetBrowser } from '@/components/BrandAssetBrowser'
+import { BrandAsset } from '@/types/brand-asset'
 import { ComparisonLayoutEditable } from '@/components/layouts/ComparisonLayoutEditable'
 import { TestimonialLayoutEditable } from '@/components/layouts/TestimonialLayoutEditable'
 import { BigStatLayoutEditable } from '@/components/layouts/BigStatLayoutEditable'
@@ -48,7 +49,6 @@ import { MultiStatsLayoutEditable } from '@/components/layouts/MultiStatsLayoutE
 import { PromoProductLayoutEditable } from '@/components/layouts/PromoProductLayoutEditable'
 import { BottleListLayoutEditable } from '@/components/layouts/BottleListLayoutEditable'
 import { TimelineLayoutEditable } from '@/components/layouts/TimelineLayoutEditable'
-import { BeforeAfterLayoutEditable } from '@/components/layouts/BeforeAfterLayoutEditable'
 import { FeatureGridLayoutEditable } from '@/components/layouts/FeatureGridLayoutEditable'
 import { SocialProofLayoutEditable } from '@/components/layouts/SocialProofLayoutEditable'
 import { BadgeProductLayoutEditable } from '@/components/layouts/BadgeProductLayoutEditable'
@@ -76,7 +76,7 @@ export default function SKUEditorPage() {
   const [generating, setGenerating] = useState(false)
   const [showProductInfo, setShowProductInfo] = useState(false)
   const [activeTab, setActiveTab] = useState<'copy' | 'images'>('copy')
-  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof' | 'badgeProduct' | 'studyCitation' | 'ugcGrid' | 'testimonialDetail' | 'statsWithProduct' | 'ingredientBenefits' | null>(null)
+  const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'featureGrid' | 'socialProof' | 'badgeProduct' | 'studyCitation' | 'ugcGrid' | 'testimonialDetail' | 'statsWithProduct' | 'ingredientBenefits' | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [colorVariations, setColorVariations] = useState<ColorVariation[]>([])
   const [currentVariationIndex, setCurrentVariationIndex] = useState<number>(0)
@@ -86,6 +86,8 @@ export default function SKUEditorPage() {
   const [uploadFormat, setUploadFormat] = useState<'png' | 'jpg' | 'webp'>('webp')
   const [damBrowserOpen, setDamBrowserOpen] = useState(false)
   const [damImageField, setDamImageField] = useState<string | null>(null)
+  const [assetBrowserOpen, setAssetBrowserOpen] = useState(false)
+  const [assetImageField, setAssetImageField] = useState<keyof SKU['images'] | null>(null)
   const [uploadingToFluid, setUploadingToFluid] = useState(false)
   const [pushToFluidModalOpen, setPushToFluidModalOpen] = useState(false)
   const [layoutPreviews, setLayoutPreviews] = useState<Record<string, string>>({})
@@ -105,7 +107,6 @@ export default function SKUEditorPage() {
   const promoProductRef = useRef<HTMLDivElement>(null)
   const bottleListRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const beforeAfterRef = useRef<HTMLDivElement>(null)
   const featureGridRef = useRef<HTMLDivElement>(null)
   const socialProofRef = useRef<HTMLDivElement>(null)
   const badgeProductRef = useRef<HTMLDivElement>(null)
@@ -247,20 +248,29 @@ export default function SKUEditorPage() {
 
   function updateFieldImageMapping(layoutKey: string, fieldLabel: string, newImageKey: string) {
     if (!sku) return
+    
+    // Use special '_none_' value to explicitly indicate no image
+    // (empty string would just fall back to default)
+    const valueToSet = newImageKey === 'none' ? '_none_' : newImageKey
+    
     setSKU({
       ...sku,
       imageOverrides: {
         ...sku.imageOverrides,
         [layoutKey]: {
           ...(sku.imageOverrides?.[layoutKey] || {}),
-          [fieldLabel]: newImageKey
+          [fieldLabel]: valueToSet
         }
       }
     })
   }
 
   function getFieldImage(layoutKey: string, fieldLabel: string, defaultImageKey: string): string {
-    return sku?.imageOverrides?.[layoutKey]?.[fieldLabel] || defaultImageKey
+    const override = sku?.imageOverrides?.[layoutKey]?.[fieldLabel]
+    // If explicitly set to '_none_', return empty string to indicate no image
+    if (override === '_none_') return ''
+    // Otherwise return override or default
+    return override || defaultImageKey
   }
 
   function updateSKUField(field: keyof SKU, value: any) {
@@ -376,7 +386,7 @@ export default function SKUEditorPage() {
   }
 
   async function handleImageUpload(imageKey: keyof SKU['images'], file: File) {
-    if (!sku) return
+    if (!sku || !brand) return
     
     try {
       // Show loading state (use base64 preview while uploading)
@@ -393,24 +403,41 @@ export default function SKUEditorPage() {
     }
     reader.readAsDataURL(file)
 
-      // Upload to Supabase Storage
-      const path = `sku-${sku.id}/${imageKey}-${Date.now()}`
-      const publicUrl = await uploadImage(STORAGE_BUCKETS.SKU_IMAGES, file, path)
+      // Upload to brand asset library
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('brandId', brand.id!.toString())
+      formData.append('assetType', getAssetTypeFromImageKey(imageKey))
+      formData.append('name', file.name)
+      formData.append('folder', getFolderFromImageKey(imageKey))
       
-      // Update with final cloud URL
+      const response = await fetch('/api/brand-assets', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Upload error:', errorText)
+        throw new Error('Failed to save to library')
+      }
+      
+      const asset: BrandAsset = await response.json()
+      
+      // Update with asset URL
       setSKU({
         ...sku,
         images: {
           ...sku.images,
-          [imageKey]: publicUrl
+          [imageKey]: asset.fileUrl
         }
       })
       
-      console.log('Image uploaded to cloud:', publicUrl)
+      toast.success('Image uploaded to brand library!')
+      console.log('Image uploaded to brand library:', asset.fileUrl)
     } catch (error) {
       console.error('Failed to upload image:', error)
-      toast.error('Failed to upload image. Using local preview.')
-      // Fallback to base64 if upload fails
+      toast.error('Failed to upload image')
     }
   }
 
@@ -434,6 +461,86 @@ export default function SKUEditorPage() {
     setDamImageField(null)
   }
 
+  function openBrandAssetBrowser(imageKey: keyof SKU['images']) {
+    setAssetImageField(imageKey)
+    setAssetBrowserOpen(true)
+  }
+
+  function handleBrandAssetSelect(asset: BrandAsset) {
+    if (!sku || !assetImageField) return
+    
+    setSKU({
+      ...sku,
+      images: {
+        ...sku.images,
+        [assetImageField]: asset.fileUrl
+      }
+    })
+    
+    setAssetBrowserOpen(false)
+    setAssetImageField(null)
+    toast.success('Asset selected from library')
+  }
+
+  async function handleBrandAssetUpload(file: File) {
+    if (!sku || !assetImageField || !brand) return
+    
+    try {
+      setAssetBrowserOpen(false)
+      
+      // Automatically save to brand asset library
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('brandId', brand.id!.toString())
+      formData.append('assetType', getAssetTypeFromImageKey(assetImageField))
+      formData.append('name', file.name)
+      formData.append('folder', getFolderFromImageKey(assetImageField))
+      
+      toast.info('Uploading to brand library...')
+      
+      const response = await fetch('/api/brand-assets', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Upload error:', errorText)
+        throw new Error('Failed to save to library')
+      }
+      
+      const asset: BrandAsset = await response.json()
+      
+      // Use the asset URL in the SKU
+      setSKU({
+        ...sku,
+        images: {
+          ...sku.images,
+          [assetImageField]: asset.fileUrl
+        }
+      })
+      
+      toast.success('Image saved to brand library!')
+    } catch (error) {
+      console.error('Failed to upload:', error)
+      toast.error('Failed to upload image')
+    }
+  }
+
+  function getAssetTypeFromImageKey(imageKey: keyof SKU['images']): 'badge' | 'ingredient' | 'icon' | 'background' | 'other' {
+    if (imageKey.startsWith('badge')) return 'badge'
+    if (imageKey.startsWith('ingredient')) return 'ingredient'
+    if (imageKey.startsWith('background')) return 'background'
+    return 'other'
+  }
+
+  function getFolderFromImageKey(imageKey: keyof SKU['images']): string {
+    if (imageKey.startsWith('badge')) return 'certifications'
+    if (imageKey.startsWith('ingredient')) return 'ingredients'
+    if (imageKey.startsWith('background')) return 'backgrounds'
+    return 'other'
+  }
+
   // Visual editor handlers
   function handleVisualPositionChange(elementKey: string, position: { x: number; y: number }) {
     if (!expandedLayout || !sku) return
@@ -442,35 +549,41 @@ export default function SKUEditorPage() {
     
     // Check if it's a custom element
     if (elementKey.startsWith('custom-')) {
-      const customElements = sku.customElements || {}
-      const layoutElements = customElements[expandedLayout] || []
-      const updatedElements = layoutElements.map(el =>
-        el.id === elementKey ? { ...el, x: position.x, y: position.y } : el
-      )
-      
-      setSKU({
-        ...sku,
-        customElements: {
-          ...customElements,
-          [expandedLayout]: updatedElements
+      setSKU(prevSKU => {
+        if (!prevSKU) return prevSKU
+        const customElements = prevSKU.customElements || {}
+        const layoutElements = customElements[expandedLayout] || []
+        const updatedElements = layoutElements.map(el =>
+          el.id === elementKey ? { ...el, x: position.x, y: position.y } : el
+        )
+        
+        return {
+          ...prevSKU,
+          customElements: {
+            ...customElements,
+            [expandedLayout]: updatedElements
+          }
         }
       })
     } else {
-      // Regular element
-      const currentOverrides = sku.positionOverrides || {}
-      const layoutOverrides = currentOverrides[expandedLayout] || {}
-      const elementOverride = layoutOverrides[elementKey] || {}
-      
-      setSKU({
-        ...sku,
-        positionOverrides: {
-          ...currentOverrides,
-          [expandedLayout]: {
-            ...layoutOverrides,
-            [elementKey]: {
-              ...elementOverride,
-              x: position.x,
-              y: position.y
+      // Regular element - use functional update to avoid race conditions
+      setSKU(prevSKU => {
+        if (!prevSKU) return prevSKU
+        const currentOverrides = prevSKU.positionOverrides || {}
+        const layoutOverrides = currentOverrides[expandedLayout] || {}
+        const elementOverride = layoutOverrides[elementKey] || {}
+        
+        return {
+          ...prevSKU,
+          positionOverrides: {
+            ...currentOverrides,
+            [expandedLayout]: {
+              ...layoutOverrides,
+              [elementKey]: {
+                ...elementOverride,
+                x: position.x,
+                y: position.y
+              }
             }
           }
         }
@@ -480,7 +593,6 @@ export default function SKUEditorPage() {
 
   function handleVisualSizeChange(elementKey: string, size: { width: number; height: number }) {
     if (!expandedLayout || !sku || !size) {
-      console.log('[handleVisualSizeChange] Missing params:', { expandedLayout, sku: !!sku, size })
       return
     }
     
@@ -488,37 +600,41 @@ export default function SKUEditorPage() {
     
     // Check if it's a custom element
     if (elementKey.startsWith('custom-')) {
-      const customElements = sku.customElements || {}
-      const layoutElements = customElements[expandedLayout] || []
-      const updatedElements = layoutElements.map(el =>
-        el.id === elementKey ? { ...el, width: size.width, height: size.height } : el
-      )
-      
-      setSKU({
-        ...sku,
-        customElements: {
-          ...customElements,
-          [expandedLayout]: updatedElements
+      setSKU(prevSKU => {
+        if (!prevSKU) return prevSKU
+        const customElements = prevSKU.customElements || {}
+        const layoutElements = customElements[expandedLayout] || []
+        const updatedElements = layoutElements.map(el =>
+          el.id === elementKey ? { ...el, width: size.width, height: size.height } : el
+        )
+        
+        return {
+          ...prevSKU,
+          customElements: {
+            ...customElements,
+            [expandedLayout]: updatedElements
+          }
         }
       })
     } else {
-      // Regular element
-      const currentOverrides = sku.positionOverrides || {}
-      const layoutOverrides = currentOverrides[expandedLayout] || {}
-      const elementOverride = layoutOverrides[elementKey] || {}
-      
-      console.log('[handleVisualSizeChange] Updating:', { elementKey, size, elementOverride })
-      
-      setSKU({
-        ...sku,
-        positionOverrides: {
-          ...currentOverrides,
-          [expandedLayout]: {
-            ...layoutOverrides,
-            [elementKey]: {
-              ...elementOverride,
-              width: size.width,
-              height: size.height
+      // Regular element - use functional update to avoid race conditions
+      setSKU(prevSKU => {
+        if (!prevSKU) return prevSKU
+        const currentOverrides = prevSKU.positionOverrides || {}
+        const layoutOverrides = currentOverrides[expandedLayout] || {}
+        const elementOverride = layoutOverrides[elementKey] || {}
+        
+        return {
+          ...prevSKU,
+          positionOverrides: {
+            ...currentOverrides,
+            [expandedLayout]: {
+              ...layoutOverrides,
+              [elementKey]: {
+                ...elementOverride,
+                width: size.width,
+                height: size.height
+              }
             }
           }
         }
@@ -533,34 +649,40 @@ export default function SKUEditorPage() {
     
     // Check if it's a custom element
     if (elementKey.startsWith('custom-')) {
-      const customElements = sku.customElements || {}
-      const layoutElements = customElements[expandedLayout] || []
-      const updatedElements = layoutElements.map(el =>
-        el.id === elementKey ? { ...el, rotation } : el
-      )
-      
-      setSKU({
-        ...sku,
-        customElements: {
-          ...customElements,
-          [expandedLayout]: updatedElements
+      setSKU(prevSKU => {
+        if (!prevSKU) return prevSKU
+        const customElements = prevSKU.customElements || {}
+        const layoutElements = customElements[expandedLayout] || []
+        const updatedElements = layoutElements.map(el =>
+          el.id === elementKey ? { ...el, rotation } : el
+        )
+        
+        return {
+          ...prevSKU,
+          customElements: {
+            ...customElements,
+            [expandedLayout]: updatedElements
+          }
         }
       })
     } else {
-      // Regular element
-      const currentOverrides = sku.positionOverrides || {}
-      const layoutOverrides = currentOverrides[expandedLayout] || {}
-      const elementOverride = layoutOverrides[elementKey] || {}
-      
-      setSKU({
-        ...sku,
-        positionOverrides: {
-          ...currentOverrides,
-          [expandedLayout]: {
-            ...layoutOverrides,
-            [elementKey]: {
-              ...elementOverride,
-              rotation
+      // Regular element - use functional update to avoid race conditions
+      setSKU(prevSKU => {
+        if (!prevSKU) return prevSKU
+        const currentOverrides = prevSKU.positionOverrides || {}
+        const layoutOverrides = currentOverrides[expandedLayout] || {}
+        const elementOverride = layoutOverrides[elementKey] || {}
+        
+        return {
+          ...prevSKU,
+          positionOverrides: {
+            ...currentOverrides,
+            [expandedLayout]: {
+              ...layoutOverrides,
+              [elementKey]: {
+                ...elementOverride,
+                rotation
+              }
             }
           }
         }
@@ -597,6 +719,20 @@ export default function SKUEditorPage() {
     loadData()
     setVisualEditorChanges(false)
     setSelectedElement(null)
+  }
+  
+  function handleRestoreState(state: { positionOverrides: any; customElements: any[] }) {
+    if (!sku) return
+    
+    // Restore position overrides and custom elements from undo/redo
+    setSKU({
+      ...sku,
+      positionOverrides: state.positionOverrides,
+      customElements: state.customElements
+    })
+    
+    setVisualEditorChanges(true)
+    console.log('[Restore State]:', state)
   }
 
   function handleLayerReorder(newOrder: any[]) {
@@ -780,7 +916,6 @@ export default function SKUEditorPage() {
       { name: 'PromoProduct', type: 'promoProduct', ref: promoProductRef },
       { name: 'BottleList', type: 'bottleList', ref: bottleListRef },
       { name: 'Timeline', type: 'timeline', ref: timelineRef },
-      { name: 'BeforeAfter', type: 'beforeAfter', ref: beforeAfterRef },
       { name: 'FeatureGrid', type: 'featureGrid', ref: featureGridRef },
       { name: 'SocialProof', type: 'socialProof', ref: socialProofRef },
       { name: 'BadgeProduct', type: 'badgeProduct', ref: badgeProductRef },
@@ -870,7 +1005,6 @@ export default function SKUEditorPage() {
       { id: 'promoProduct', name: 'Promo_Product', displayName: 'Promo Product', ref: promoProductRef },
       { id: 'bottleList', name: 'Bottle_List', displayName: 'Bottle List', ref: bottleListRef },
       { id: 'timeline', name: 'Timeline', displayName: 'Timeline', ref: timelineRef },
-      { id: 'beforeAfter', name: 'Before_After', displayName: 'Before/After', ref: beforeAfterRef },
       { id: 'featureGrid', name: 'Feature_Grid', displayName: 'Feature Grid', ref: featureGridRef },
       { id: 'socialProof', name: 'Social_Proof', displayName: 'Social Proof', ref: socialProofRef },
       { id: 'badgeProduct', name: 'Badge_Product', displayName: 'Badge Product', ref: badgeProductRef },
@@ -893,7 +1027,6 @@ export default function SKUEditorPage() {
       promoProduct: promoProductRef,
       bottleList: bottleListRef,
       timeline: timelineRef,
-      beforeAfter: beforeAfterRef,
       featureGrid: featureGridRef,
       socialProof: socialProofRef,
       badgeProduct: badgeProductRef,
@@ -1406,7 +1539,34 @@ export default function SKUEditorPage() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">{layoutName}</p>
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-muted-foreground">{layoutName}</p>
+                {/* Background Mode Selector */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Background:</span>
+                  <Select
+                    value={sku?.backgroundMode?.[expandedLayout] || (getBackgroundImageForLayout(expandedLayout, sku) ? 'image' : 'color')}
+                    onValueChange={(value: 'image' | 'color') => {
+                      if (!sku) return
+                      setSKU({
+                        ...sku,
+                        backgroundMode: {
+                          ...sku.backgroundMode,
+                          [expandedLayout]: value
+                        }
+                      })
+                    }}
+                  >
+                    <SelectTrigger className="h-6 w-[90px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="image" className="text-xs">Image</SelectItem>
+                      <SelectItem value="color" className="text-xs">Color</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               {currentVariation && (
                 <p className="text-xs text-muted-foreground italic">{currentVariation.description}</p>
               )}
@@ -1431,7 +1591,6 @@ export default function SKUEditorPage() {
               {expandedLayout === 'promoProduct' && <PromoProductLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'bottleList' && <BottleListLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'timeline' && <TimelineLayout brand={displayBrand} sku={displaySKU} />}
-              {expandedLayout === 'beforeAfter' && <BeforeAfterLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'featureGrid' && <FeatureGridLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'socialProof' && <SocialProofLayout brand={displayBrand} sku={displaySKU} />}
               {expandedLayout === 'badgeProduct' && <BadgeProductLayout brand={displayBrand} sku={displaySKU} />}
@@ -1447,13 +1606,45 @@ export default function SKUEditorPage() {
     )
   }
 
-  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof' | 'badgeProduct' | 'studyCitation' | 'ugcGrid' | 'testimonialDetail' | 'statsWithProduct' | 'ingredientBenefits') {
+  // Helper function to get background image for a layout
+  function getBackgroundImageForLayout(layoutKey: string, currentSku: SKU | null): string | undefined {
+    if (!currentSku) return undefined
+    
+    const layoutImageMap: Record<string, keyof SKU['images'] | keyof Brand['images']> = {
+      multiStats: 'lifestyleMultiStats',
+      hero: 'backgroundHero',
+      timeline: 'lifestyleTimeline',
+      testimonial: 'testimonialPhoto',
+      badgeProduct: 'backgroundBadgeProduct',
+      compare: 'lifestyleA',
+      bottleList: 'backgroundBenefits',
+      socialProof: 'lifestyleC',
+      featureGrid: 'backgroundAlt',
+      promoProduct: 'backgroundStats',
+      ingredientBenefits: 'backgroundBenefits',
+      statsWithProduct: 'backgroundStats',
+      testimonialDetail: 'testimonialPhoto2',
+      ugcGrid: 'lifestyleA',
+      studyCitation: 'backgroundAlt',
+      packHero: 'backgroundHero',
+      priceComparison: 'backgroundAlt',
+      bigStat: 'backgroundAlt'
+    }
+    
+    const imageKey = layoutImageMap[layoutKey]
+    if (!imageKey) return undefined
+    
+    // Check SKU images first, then brand images
+    return (currentSku.images as any)[imageKey] || (brand?.images as any)[imageKey]
+  }
+
+  function openLayoutEditor(layoutKey: 'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'featureGrid' | 'socialProof' | 'badgeProduct' | 'studyCitation' | 'ugcGrid' | 'testimonialDetail' | 'statsWithProduct' | 'ingredientBenefits') {
     setExpandedLayout(layoutKey)
     initializeColorVariations(layoutKey)
     setDrawerOpen(true)
     
     // Initialize position overrides with defaults from spec - ALWAYS do this to enable layer reordering
-    if (sku && (layoutKey === 'compare' || layoutKey === 'testimonial' || layoutKey === 'bigStat' || layoutKey === 'multiStats' || layoutKey === 'promoProduct' || layoutKey === 'bottleList' || layoutKey === 'timeline' || layoutKey === 'beforeAfter' || layoutKey === 'featureGrid' || layoutKey === 'socialProof' || layoutKey === 'badgeProduct' || layoutKey === 'studyCitation' || layoutKey === 'ugcGrid' || layoutKey === 'testimonialDetail' || layoutKey === 'statsWithProduct' || layoutKey === 'ingredientBenefits')) {
+    if (sku && (layoutKey === 'compare' || layoutKey === 'testimonial' || layoutKey === 'bigStat' || layoutKey === 'multiStats' || layoutKey === 'promoProduct' || layoutKey === 'bottleList' || layoutKey === 'timeline' || layoutKey === 'featureGrid' || layoutKey === 'socialProof' || layoutKey === 'badgeProduct' || layoutKey === 'studyCitation' || layoutKey === 'ugcGrid' || layoutKey === 'testimonialDetail' || layoutKey === 'statsWithProduct' || layoutKey === 'ingredientBenefits')) {
       const existing = sku.positionOverrides?.[layoutKey] || {}
       
       // Define all elements with their spec defaults per layout
@@ -1489,9 +1680,9 @@ export default function SKUEditorPage() {
           ingredient2: { x: 496, y: -69, width: 627, height: 627, zIndex: 40 },
           ingredient3: { x: 26, y: 699, width: 395, height: 395, zIndex: 40 },
           ingredient4: { x: 564, y: 591, width: 611, height: 611, zIndex: 40 },
-          label1: { x: 210, y: 310, width: 120, height: 40, zIndex: 50 },
+          label1: { x: 210, y: 310, width: 160, height: 40, zIndex: 50 },
           label2: { x: 725, y: 236, width: 170, height: 40, zIndex: 50 },
-          label3: { x: 200, y: 980, width: 139, height: 40, zIndex: 50 },
+          label3: { x: 200, y: 980, width: 170, height: 40, zIndex: 50 },
           label4: { x: 782, y: 897, width: 195, height: 40, zIndex: 50 }
         },
         multiStats: {
@@ -1526,14 +1717,6 @@ export default function SKUEditorPage() {
           milestone2: { x: 487, y: 460, width: 518, height: 80, zIndex: 50 },
           milestone3: { x: 487, y: 620, width: 518, height: 80, zIndex: 60 },
           productImage: { x: -67, y: 280, width: 632, height: 772, zIndex: 70 }
-        },
-        beforeAfter: {
-          background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
-          headline: { x: 540, y: 80, width: 960, height: 120, zIndex: 20 },
-          beforePanel: { x: 60, y: 240, width: 460, height: 590, zIndex: 20 },
-          afterPanel: { x: 560, y: 240, width: 460, height: 590, zIndex: 20 },
-          divider: { x: 538, y: 240, width: 4, height: 590, zIndex: 15 },
-          productImage: { x: 340, y: 860, width: 400, height: 180, zIndex: 30 }
         },
         featureGrid: {
           background: { x: 0, y: 0, width: 1080, height: 1080, zIndex: 0 },
@@ -1730,14 +1913,14 @@ export default function SKUEditorPage() {
       layoutKey: 'multiStats' as const,
       fields: [
         { type: 'image', imageKey: 'lifestyleMultiStats', label: 'Background Image (Lifestyle)', imageType: 'sku' },
-        { section: 'stats', field: 'headline', label: 'Headline', placeholder: 'People who take Make Wellness peptides are:', type: 'textarea', colors: ['bg'] },
-        { section: 'stats', field: 'stat1_value', label: 'Stat 1 Value', placeholder: '78%', colors: ['bg'] },
-        { section: 'stats', field: 'stat1_label', label: 'Stat 1 Label', placeholder: 'MORE LIKELY TO WAKE UP ACTUALLY RESTED', colors: ['bg'] },
-        { section: 'stats', field: 'stat2_value', label: 'Stat 2 Value', placeholder: '71%', colors: ['bg'] },
-        { section: 'stats', field: 'stat2_label', label: 'Stat 2 Label', placeholder: 'MORE LIKELY TO FEEL IN CONTROL OF CRAVINGS', colors: ['bg'] },
-        { section: 'stats', field: 'stat3_value', label: 'Stat 3 Value', placeholder: '69%', colors: ['bg'] },
-        { section: 'stats', field: 'stat3_label', label: 'Stat 3 Label', placeholder: 'MORE LIKELY TO FEEL STEADY, ALL-DAY ENERGY', colors: ['bg'] },
-        { section: 'stats', field: 'disclaimer', label: 'Disclaimer', placeholder: '*Based on a 60-day study showing benefits from daily use.', colors: [] },
+        { section: 'stats', field: 'headline', label: 'Headline', placeholder: 'People who take Make Wellness peptides are:', type: 'textarea', colors: ['text'] },
+        { section: 'stats', field: 'stat1_value', label: 'Stat 1 Value', placeholder: '78%', colors: ['text'] },
+        { section: 'stats', field: 'stat1_label', label: 'Stat 1 Label', placeholder: 'MORE LIKELY TO WAKE UP ACTUALLY RESTED', colors: ['text'] },
+        { section: 'stats', field: 'stat2_value', label: 'Stat 2 Value', placeholder: '71%', colors: ['text'] },
+        { section: 'stats', field: 'stat2_label', label: 'Stat 2 Label', placeholder: 'MORE LIKELY TO FEEL IN CONTROL OF CRAVINGS', colors: ['text'] },
+        { section: 'stats', field: 'stat3_value', label: 'Stat 3 Value', placeholder: '69%', colors: ['text'] },
+        { section: 'stats', field: 'stat3_label', label: 'Stat 3 Label', placeholder: 'MORE LIKELY TO FEEL STEADY, ALL-DAY ENERGY', colors: ['text'] },
+        { section: 'stats', field: 'disclaimer', label: 'Disclaimer', placeholder: '*Based on a 60-day study showing benefits from daily use.', colors: ['textSecondary'] },
       ]
     },
     {
@@ -1792,21 +1975,6 @@ export default function SKUEditorPage() {
         { section: 'timeline', field: 'milestone3_time', label: 'Milestone 3 Time', placeholder: '7 Days', colors: [] },
         { section: 'timeline', field: 'milestone3_title', label: 'Milestone 3 Title', placeholder: 'Smoother, more stable energy during the day', colors: [] },
         { type: 'image', imageKey: 'productAngle', label: 'Product Image (Angle)', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
-      ]
-    },
-    {
-      layoutName: 'Before/After: Transformation',
-      layoutSize: '1080×1080',
-      layoutKey: 'beforeAfter' as const,
-      fields: [
-        { type: 'background', colorKey: 'bg', label: 'Background Color' },
-        { section: 'beforeAfter', field: 'headline', label: 'Headline', placeholder: 'The Transformation', colors: ['accent'] },
-        { section: 'beforeAfter', field: 'beforeLabel', label: 'Before Label', placeholder: 'BEFORE', colors: ['textSecondary'] },
-        { section: 'beforeAfter', field: 'beforeText', label: 'Before Description', placeholder: 'Feeling tired and sluggish throughout the day', type: 'textarea', colors: ['text'] },
-        { section: 'beforeAfter', field: 'afterLabel', label: 'After Label', placeholder: 'AFTER', colors: ['accent'] },
-        { section: 'beforeAfter', field: 'afterText', label: 'After Description', placeholder: 'Sustained energy and mental clarity all day long', type: 'textarea', colors: ['text'] },
-        { type: 'background', colorKey: 'primarySoft', label: 'Divider Color' },
-        { type: 'image', imageKey: 'productPrimary', label: 'Product Image', imageType: 'sku', variants: ['productPrimary', 'productAngle', 'productDetail'] },
       ]
     },
     {
@@ -1871,10 +2039,10 @@ export default function SKUEditorPage() {
       layoutKey: 'studyCitation' as const,
       fields: [
         { type: 'background', colorKey: 'bgAlt', label: 'Background Color' },
-        { section: 'studyCitation', field: 'context', label: 'Study Context (Top)', placeholder: 'In a double-blind, randomized trial,', colors: [] },
-        { section: 'studyCitation', field: 'finding', label: 'Main Finding', placeholder: 'Participants saw a 17% reduction in TSH and a significant increase in both T3 and T4 levels', type: 'textarea', colors: [] },
-        { section: 'studyCitation', field: 'supplementName', label: 'Supplement Name', placeholder: 'with Ashwagandha supplementation', colors: [] },
-        { section: 'studyCitation', field: 'source', label: 'Source Citation', placeholder: 'Source:\nPubMed PMID: 28829155', type: 'textarea', colors: [] },
+        { section: 'studyCitation', field: 'context', label: 'Study Context (Top)', placeholder: 'In a double-blind, randomized trial,', colors: ['text'] },
+        { section: 'studyCitation', field: 'finding', label: 'Main Finding', placeholder: 'Participants saw a 17% reduction in TSH and a significant increase in both T3 and T4 levels', type: 'textarea', colors: ['text'] },
+        { section: 'studyCitation', field: 'supplementName', label: 'Supplement Name', placeholder: 'with Ashwagandha supplementation', colors: ['text'] },
+        { section: 'studyCitation', field: 'source', label: 'Source Citation', placeholder: 'Source:\nPubMed PMID: 28829155', type: 'textarea', colors: ['textSecondary'] },
         { type: 'image', imageKey: 'ingredientA', label: 'Ingredient Image', imageType: 'sku', variants: ['ingredientA', 'ingredientB', 'ingredientC', 'ingredientD'] },
       ]
     },
@@ -1972,81 +2140,10 @@ export default function SKUEditorPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Select value={downloadFormat} onValueChange={(v) => setDownloadFormat(v as 'png' | 'jpg' | 'webp')}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="png">PNG</SelectItem>
-                  <SelectItem value="jpg">JPG</SelectItem>
-                  <SelectItem value="webp">WebP</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button 
-                onClick={downloadAll} 
-                disabled={rendering}
-                variant="outline"
-              >
-                {rendering ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Downloading...
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download All (8)
-                  </>
-                )}
-              </Button>
-              {sku?.fluidMetadata?.productId && brand?.fluidDam?.apiToken && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      disabled={uploadingToFluid || rendering}
-                      variant="outline"
-                      className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900"
-                    >
-                      {uploadingToFluid ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="mr-2 h-4 w-4" />
-                          Push to Fluid
-                        </>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handlePushToFluidClick('product_images')}>
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      Push to Product Images
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handlePushToFluidClick('company_media')}>
-                      <Layers className="mr-2 h-4 w-4" />
-                      Push to Media Library
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handlePushToFluidClick('both')}>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Push to Both
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
               <Button onClick={handleSave} disabled={saving}>
                 <Save className="mr-2 h-4 w-4" />
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
-              <Link href={`/brands/${brandId}/skus/${skuId}/preview`}>
-                <Button variant="outline">
-                  <Eye className="mr-2 h-4 w-4" />
-                  Full Preview
-                </Button>
-              </Link>
             </div>
           </div>
 
@@ -2141,9 +2238,78 @@ export default function SKUEditorPage() {
 
                 {/* Layout Cards Grid */}
                 <div>
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold">Layout Templates</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Click a layout to edit content and preview</p>
+                  <div className="mb-4 flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">Layout Templates</h3>
+                      <p className="text-sm text-muted-foreground mt-1">Click a layout to edit content and preview</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Select value={downloadFormat} onValueChange={(v) => setDownloadFormat(v as 'png' | 'jpg' | 'webp')}>
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="png">PNG</SelectItem>
+                          <SelectItem value="jpg">JPG</SelectItem>
+                          <SelectItem value="webp">WebP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        onClick={downloadAll} 
+                        disabled={rendering}
+                        variant="outline"
+                      >
+                        {rendering ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Downloading...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download All
+                          </>
+                        )}
+                      </Button>
+                      {sku?.fluidMetadata?.productId && brand?.fluidDam?.apiToken && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              disabled={uploadingToFluid || rendering}
+                              variant="outline"
+                              className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900"
+                            >
+                              {uploadingToFluid ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="mr-2 h-4 w-4" />
+                                  Push to Fluid
+                                </>
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handlePushToFluidClick('product_images')}>
+                              <ImageIcon className="mr-2 h-4 w-4" />
+                              Push to Product Images
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePushToFluidClick('company_media')}>
+                              <Layers className="mr-2 h-4 w-4" />
+                              Push to Media Library
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handlePushToFluidClick('both')}>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Push to Both
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                     {copyFieldsByLayout.map((layout) => {
@@ -2171,7 +2337,6 @@ export default function SKUEditorPage() {
                                   {layout.layoutKey === 'promoProduct' && <PromoProductLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'bottleList' && <BottleListLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'timeline' && <TimelineLayout brand={brand} sku={layoutSKU} />}
-                                  {layout.layoutKey === 'beforeAfter' && <BeforeAfterLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'featureGrid' && <FeatureGridLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'socialProof' && <SocialProofLayout brand={brand} sku={layoutSKU} />}
                                   {layout.layoutKey === 'badgeProduct' && <BadgeProductLayout brand={brand} sku={layoutSKU} />}
@@ -2182,7 +2347,7 @@ export default function SKUEditorPage() {
                                   {layout.layoutKey === 'ingredientBenefits' && <IngredientBenefitsLayout brand={brand} sku={layoutSKU} />}
                                 </div>
                               {/* Hover overlay */}
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center z-10">
                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                   <div className="bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg">
                                     Click to edit
@@ -2377,15 +2542,24 @@ export default function SKUEditorPage() {
                             }}
                           />
                         </label>
+                        <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full"
+                            onClick={() => openBrandAssetBrowser(key)}
+                          >
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Library
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                           onClick={() => openFluidDAM(key)}
                         >
                           <ImageIcon className="mr-2 h-4 w-4" />
-                          Browse DAM
+                            DAM
                         </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2439,15 +2613,24 @@ export default function SKUEditorPage() {
                             }}
                           />
                         </label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => openFluidDAM(key)}
-                        >
-                          <ImageIcon className="mr-2 h-4 w-4" />
-                          Browse DAM
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openBrandAssetBrowser(key)}
+                          >
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Library
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openFluidDAM(key)}
+                          >
+                            <ImageIcon className="mr-2 h-4 w-4" />
+                            DAM
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2502,15 +2685,26 @@ export default function SKUEditorPage() {
                             }}
                           />
                         </label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-xs"
-                          onClick={() => openFluidDAM(key)}
-                        >
-                          <ImageIcon className="mr-1 h-3 w-3" />
-                          Browse DAM
-                        </Button>
+                        <div className="grid grid-cols-2 gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => openBrandAssetBrowser(key)}
+                          >
+                            <FolderOpen className="mr-1 h-3 w-3" />
+                            Library
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => openFluidDAM(key)}
+                          >
+                            <ImageIcon className="mr-1 h-3 w-3" />
+                            DAM
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2568,15 +2762,26 @@ export default function SKUEditorPage() {
                             }}
                           />
                         </label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-xs"
-                          onClick={() => openFluidDAM(key)}
-                        >
-                          <ImageIcon className="mr-1 h-3 w-3" />
-                          Browse DAM
-                        </Button>
+                        <div className="grid grid-cols-2 gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => openBrandAssetBrowser(key)}
+                          >
+                            <FolderOpen className="mr-1 h-3 w-3" />
+                            Library
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => openFluidDAM(key)}
+                          >
+                            <ImageIcon className="mr-1 h-3 w-3" />
+                            DAM
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2634,15 +2839,24 @@ export default function SKUEditorPage() {
                             }}
                           />
                         </label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => openFluidDAM(key)}
-                        >
-                          <ImageIcon className="mr-2 h-4 w-4" />
-                          Browse DAM
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openBrandAssetBrowser(key)}
+                          >
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Library
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openFluidDAM(key)}
+                          >
+                            <ImageIcon className="mr-2 h-4 w-4" />
+                            DAM
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2697,15 +2911,26 @@ export default function SKUEditorPage() {
                             }}
                           />
                         </label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-xs"
-                          onClick={() => openFluidDAM(key)}
-                        >
-                          <ImageIcon className="mr-1 h-3 w-3" />
-                          Browse DAM
-                        </Button>
+                        <div className="grid grid-cols-2 gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => openBrandAssetBrowser(key)}
+                          >
+                            <FolderOpen className="mr-1 h-3 w-3" />
+                            Library
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => openFluidDAM(key)}
+                          >
+                            <ImageIcon className="mr-1 h-3 w-3" />
+                            DAM
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2750,7 +2975,6 @@ export default function SKUEditorPage() {
                             promoProduct: promoProductRef,
                             bottleList: bottleListRef,
                             timeline: timelineRef,
-                            beforeAfter: beforeAfterRef,
                             featureGrid: featureGridRef,
                             socialProof: socialProofRef,
                             badgeProduct: badgeProductRef,
@@ -2952,67 +3176,357 @@ export default function SKUEditorPage() {
                             {copyFieldsByLayout
                               .find((l) => l.layoutKey === expandedLayout)
                               ?.fields.map((field, fieldIndex) => {
-                                // Handle background color rows
+                                // Handle background color rows - Convert to background toggle if it's the background field
                                 if (field.type === 'background') {
-                                  const defaultColorKey = field.colorKey
-                                  const currentColorKey = getFieldColor(expandedLayout, field.label, defaultColorKey)
-                                  // Use previewBrand colors if available (shows current variation)
-                                  const displayBrand = previewBrand || brand
-                                  const colorValue = displayBrand.colors[currentColorKey as keyof typeof displayBrand.colors]
-                                  const isOverridden = currentColorKey !== defaultColorKey
-
-                                  return (
-                                    <tr key={fieldIndex} className="border-b hover:bg-muted/30 transition-colors">
-                                      <td className="px-4 py-3 align-middle">
-                                        <Label className="text-sm font-medium">{field.label}</Label>
-                                      </td>
-                                      <td className="px-4 py-3 align-middle">
-                                        <span className="text-xs text-muted-foreground">Select theme color →</span>
-                                      </td>
-                                      <td className="px-4 py-3 align-middle">
-                                        <Select
-                                          value={currentColorKey}
-                                          onValueChange={(newColor) => updateFieldColorMapping(expandedLayout, field.label, newColor)}
-                                        >
-                                          <SelectTrigger className="h-9">
-                                            <div className="flex items-center gap-2">
-                                              <div
-                                                className="w-4 h-4 rounded border flex-shrink-0"
-                                                style={{ backgroundColor: colorValue }}
-                                              />
-                                              <span className="text-xs">{currentColorKey}</span>
-                                              {isOverridden && (
-                                                <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-auto">
-                                                  Custom
-                                                </Badge>
-                                              )}
-                                            </div>
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Object.entries(displayBrand.colors).map(([key, value]) => (
-                                              <SelectItem key={key} value={key}>
+                                  const isBackgroundField = field.label.toLowerCase().includes('background')
+                                  
+                                  // Big Stat layout has unique design - no image/color toggle, just color
+                                  if (isBackgroundField && expandedLayout !== 'bigStat') {
+                                    const currentMode = sku.backgroundMode?.[expandedLayout] || (getBackgroundImageForLayout(expandedLayout, sku) ? 'image' : 'color')
+                                    const displayBrand = previewBrand || brand
+                                    
+                                    // Get the layout's background image field info
+                                    const layoutImageMap: Record<string, { imageKey: string; imageType: 'brand' | 'sku' }> = {
+                                      compare: { imageKey: 'lifestyleA', imageType: 'sku' },
+                                      bottleList: { imageKey: 'backgroundBenefits', imageType: 'brand' },
+                                      socialProof: { imageKey: 'lifestyleC', imageType: 'sku' },
+                                      featureGrid: { imageKey: 'backgroundAlt', imageType: 'brand' },
+                                      promoProduct: { imageKey: 'backgroundStats', imageType: 'brand' },
+                                      ingredientBenefits: { imageKey: 'backgroundBenefits', imageType: 'brand' },
+                                      statsWithProduct: { imageKey: 'backgroundStats', imageType: 'brand' },
+                                      testimonialDetail: { imageKey: 'testimonialPhoto2', imageType: 'sku' },
+                                      ugcGrid: { imageKey: 'lifestyleA', imageType: 'sku' },
+                                      studyCitation: { imageKey: 'backgroundAlt', imageType: 'brand' },
+                                      priceComparison: { imageKey: 'backgroundAlt', imageType: 'brand' },
+                                      bigStat: { imageKey: 'backgroundAlt', imageType: 'brand' },
+                                    }
+                                    
+                                    const bgImageInfo = layoutImageMap[expandedLayout]
+                                    const currentImageKey = bgImageInfo?.imageKey || 'backgroundAlt'
+                                    const imageSource = bgImageInfo?.imageType === 'brand'
+                                      ? brand.images[currentImageKey as keyof typeof brand.images]
+                                      : sku.images[currentImageKey as keyof typeof sku.images]
+                                    
+                                    const availableImages = bgImageInfo?.imageType === 'brand'
+                                      ? Object.entries(brand.images).filter(([_, value]) => value)
+                                      : Object.entries(sku.images).filter(([_, value]) => value)
+                                    
+                                    return (
+                                      <tr key={fieldIndex} className="border-b hover:bg-muted/30 transition-colors">
+                                        <td className="px-4 py-3 align-middle">
+                                          <Label className="text-sm font-medium">Background</Label>
+                                        </td>
+                                        <td className="px-4 py-3 align-middle">
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              variant={currentMode === 'image' ? 'default' : 'outline'}
+                                              size="sm"
+                                              className="h-9 px-3"
+                                              onClick={() => {
+                                                setSKU({
+                                                  ...sku,
+                                                  backgroundMode: {
+                                                    ...sku.backgroundMode,
+                                                    [expandedLayout]: 'image'
+                                                  }
+                                                })
+                                              }}
+                                            >
+                                              <ImageIcon className="h-4 w-4 mr-1.5" />
+                                              Image
+                                            </Button>
+                                            <Button
+                                              variant={currentMode === 'color' ? 'default' : 'outline'}
+                                              size="sm"
+                                              className="h-9 px-3"
+                                              onClick={() => {
+                                                setSKU({
+                                                  ...sku,
+                                                  backgroundMode: {
+                                                    ...sku.backgroundMode,
+                                                    [expandedLayout]: 'color'
+                                                  }
+                                                })
+                                              }}
+                                            >
+                                              <div className="h-4 w-4 rounded border-2 border-current mr-1.5" />
+                                              Color
+                                            </Button>
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3 align-middle">
+                                          {currentMode === 'color' ? (
+                                            <Select
+                                              value={getFieldColor(expandedLayout, field.label, field.colorKey)}
+                                              onValueChange={(newColor) => updateFieldColorMapping(expandedLayout, field.label, newColor)}
+                                            >
+                                              <SelectTrigger className="h-9">
                                                 <div className="flex items-center gap-2">
                                                   <div
-                                                    className="w-4 h-4 rounded border"
-                                                    style={{ backgroundColor: value }}
+                                                    className="w-4 h-4 rounded border flex-shrink-0"
+                                                    style={{ backgroundColor: displayBrand.colors[getFieldColor(expandedLayout, field.label, field.colorKey) as keyof typeof displayBrand.colors] }}
                                                   />
-                                                  <span className="text-xs">{key}</span>
+                                                  <span className="text-xs">{getFieldColor(expandedLayout, field.label, field.colorKey)}</span>
                                                 </div>
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </td>
-                                    </tr>
-                                  )
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.entries(displayBrand.colors).map(([key, value]) => (
+                                                  <SelectItem key={key} value={key}>
+                                                    <div className="flex items-center gap-2">
+                                                      <div
+                                                        className="w-4 h-4 rounded border"
+                                                        style={{ backgroundColor: value }}
+                                                      />
+                                                      <span className="text-xs">{key}</span>
+                                                    </div>
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          ) : (
+                                            availableImages.length > 0 ? (
+                                              <Select
+                                                value={currentImageKey}
+                                                onValueChange={(newImageKey) => updateFieldImageMapping(expandedLayout, 'Background Image', newImageKey)}
+                                              >
+                                                <SelectTrigger className="h-9">
+                                                  <div className="flex items-center gap-2">
+                                                    {imageSource ? (
+                                                      <img
+                                                        src={imageSource}
+                                                        alt={currentImageKey}
+                                                        className="w-6 h-6 object-cover rounded border flex-shrink-0"
+                                                      />
+                                                    ) : (
+                                                      <div className="w-6 h-6 bg-muted rounded border flex items-center justify-center flex-shrink-0">
+                                                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                                                      </div>
+                                                    )}
+                                                    <span className="text-xs">{currentImageKey}</span>
+                                                  </div>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {availableImages.map(([key, value]) => (
+                                                    <SelectItem key={key} value={key}>
+                                                      <div className="flex items-center gap-2">
+                                                        <img
+                                                          src={value}
+                                                          alt={key}
+                                                          className="w-8 h-8 object-cover rounded border"
+                                                        />
+                                                        <span className="text-xs">{key}</span>
+                                                      </div>
+                                                    </SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                            ) : (
+                                              <span className="text-xs text-muted-foreground">No images uploaded - upload in Images tab →</span>
+                                            )
+                                          )}
+                                        </td>
+                                      </tr>
+                                    )
+                                  }
+                                  
+                                  // Big Stat and other non-toggle background fields - just show color selector
+                                  if (isBackgroundField) {
+                                    const defaultColorKey = field.colorKey
+                                    const currentColorKey = getFieldColor(expandedLayout, field.label, defaultColorKey)
+                                    const displayBrand = previewBrand || brand
+                                    const colorValue = displayBrand.colors[currentColorKey as keyof typeof displayBrand.colors]
+                                    const isOverridden = currentColorKey !== defaultColorKey
+
+                                    return (
+                                      <tr key={fieldIndex} className="border-b hover:bg-muted/30 transition-colors">
+                                        <td className="px-4 py-3 align-middle">
+                                          <Label className="text-sm font-medium">{field.label}</Label>
+                                        </td>
+                                        <td className="px-4 py-3 align-middle">
+                                          <span className="text-xs text-muted-foreground">Select theme color →</span>
+                                        </td>
+                                        <td className="px-4 py-3 align-middle">
+                                          <Select
+                                            value={currentColorKey}
+                                            onValueChange={(newColor) => updateFieldColorMapping(expandedLayout, field.label, newColor)}
+                                          >
+                                            <SelectTrigger className="h-9">
+                                              <div className="flex items-center gap-2">
+                                                <div
+                                                  className="w-4 h-4 rounded border flex-shrink-0"
+                                                  style={{ backgroundColor: colorValue }}
+                                                />
+                                                <span className="text-xs">{currentColorKey}</span>
+                                                {isOverridden && (
+                                                  <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-auto">
+                                                    Custom
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {Object.entries(displayBrand.colors).map(([key, value]) => (
+                                                <SelectItem key={key} value={key}>
+                                                  <div className="flex items-center gap-2">
+                                                    <div
+                                                      className="w-4 h-4 rounded border"
+                                                      style={{ backgroundColor: value }}
+                                                    />
+                                                    <span className="text-xs">{key}</span>
+                                                  </div>
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </td>
+                                      </tr>
+                                    )
+                                  }
                                 }
 
                                 // Handle image rows
                                 if (field.type === 'image') {
+                                  // Special handling for Background fields - make it dynamic with mode toggle
+                                  // Exception: Big Stat has a unique overlay design, so skip it
+                                  const isBackgroundField = field.label.toLowerCase().includes('background')
+                                  
+                                  if (isBackgroundField && expandedLayout !== 'bigStat') {
+                                    const currentMode = sku.backgroundMode?.[expandedLayout] || (getBackgroundImageForLayout(expandedLayout, sku) ? 'image' : 'color')
+                                    const displayBrand = previewBrand || brand
+                                    
+                                    // Get available images for background
+                                    const currentImageKey = getFieldImage(expandedLayout, field.label, field.imageKey)
+                                    const imageSource = field.imageType === 'brand'
+                                      ? brand.images[currentImageKey as keyof typeof brand.images]
+                                      : sku.images[currentImageKey as keyof typeof sku.images]
+                                    
+                                    const availableImages = field.imageType === 'brand'
+                                      ? Object.entries(brand.images).filter(([_, value]) => value)
+                                      : Object.entries(sku.images).filter(([_, value]) => value)
+                                    
+                                    return (
+                                      <tr key={fieldIndex} className="border-b hover:bg-muted/30 transition-colors">
+                                        <td className="px-4 py-3 align-middle">
+                                          <Label className="text-sm font-medium">Background</Label>
+                                        </td>
+                                        <td className="px-4 py-3 align-middle">
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              variant={currentMode === 'image' ? 'default' : 'outline'}
+                                              size="sm"
+                                              className="h-9 px-3"
+                                              onClick={() => {
+                                                setSKU({
+                                                  ...sku,
+                                                  backgroundMode: {
+                                                    ...sku.backgroundMode,
+                                                    [expandedLayout]: 'image'
+                                                  }
+                                                })
+                                              }}
+                                            >
+                                              <ImageIcon className="h-4 w-4 mr-1.5" />
+                                              Image
+                                            </Button>
+                                            <Button
+                                              variant={currentMode === 'color' ? 'default' : 'outline'}
+                                              size="sm"
+                                              className="h-9 px-3"
+                                              onClick={() => {
+                                                setSKU({
+                                                  ...sku,
+                                                  backgroundMode: {
+                                                    ...sku.backgroundMode,
+                                                    [expandedLayout]: 'color'
+                                                  }
+                                                })
+                                              }}
+                                            >
+                                              <div className="h-4 w-4 rounded border-2 border-current mr-1.5" />
+                                              Color
+                                            </Button>
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3 align-middle">
+                                          {currentMode === 'color' ? (
+                                            <Select
+                                              value={getFieldColor(expandedLayout, 'Background Color', 'bg')}
+                                              onValueChange={(newColor) => updateFieldColorMapping(expandedLayout, 'Background Color', newColor)}
+                                            >
+                                              <SelectTrigger className="h-9">
+                                                <div className="flex items-center gap-2">
+                                                  <div
+                                                    className="w-4 h-4 rounded border flex-shrink-0"
+                                                    style={{ backgroundColor: displayBrand.colors[getFieldColor(expandedLayout, 'Background Color', 'bg') as keyof typeof displayBrand.colors] }}
+                                                  />
+                                                  <span className="text-xs">{getFieldColor(expandedLayout, 'Background Color', 'bg')}</span>
+                                                </div>
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.entries(displayBrand.colors).map(([key, value]) => (
+                                                  <SelectItem key={key} value={key}>
+                                                    <div className="flex items-center gap-2">
+                                                      <div
+                                                        className="w-4 h-4 rounded border"
+                                                        style={{ backgroundColor: value }}
+                                                      />
+                                                      <span className="text-xs">{key}</span>
+                                                    </div>
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          ) : (
+                                            availableImages.length > 0 ? (
+                                              <Select
+                                                value={currentImageKey}
+                                                onValueChange={(newImageKey) => updateFieldImageMapping(expandedLayout, field.label, newImageKey)}
+                                              >
+                                                <SelectTrigger className="h-9">
+                                                  <div className="flex items-center gap-2">
+                                                    {imageSource ? (
+                                                      <img
+                                                        src={imageSource}
+                                                        alt={currentImageKey}
+                                                        className="w-6 h-6 object-cover rounded border flex-shrink-0"
+                                                      />
+                                                    ) : (
+                                                      <div className="w-6 h-6 bg-muted rounded border flex items-center justify-center flex-shrink-0">
+                                                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                                                      </div>
+                                                    )}
+                                                    <span className="text-xs">{currentImageKey}</span>
+                                                  </div>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {availableImages.map(([key, value]) => (
+                                                    <SelectItem key={key} value={key}>
+                                                      <div className="flex items-center gap-2">
+                                                        <img
+                                                          src={value}
+                                                          alt={key}
+                                                          className="w-8 h-8 object-cover rounded border"
+                                                        />
+                                                        <span className="text-xs">{key}</span>
+                                                      </div>
+                                                    </SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                            ) : (
+                                              <span className="text-xs text-muted-foreground">No images uploaded - upload in Images tab →</span>
+                                            )
+                                          )}
+                                        </td>
+                                      </tr>
+                                    )
+                                  }
+                                  
+                                  // Regular image fields (non-background)
                                   const currentImageKey = getFieldImage(expandedLayout, field.label, field.imageKey)
-                                  const imageSource = field.imageType === 'brand'
+                                  const imageSource = currentImageKey ? (field.imageType === 'brand'
                                     ? brand.images[currentImageKey as keyof typeof brand.images]
-                                    : sku.images[currentImageKey as keyof typeof sku.images]
+                                    : sku.images[currentImageKey as keyof typeof sku.images]) : undefined
                                   
                                   // Get all available images based on type
                                   const availableImages = field.imageType === 'brand'
@@ -3020,6 +3534,8 @@ export default function SKUEditorPage() {
                                     : Object.entries(sku.images).filter(([_, value]) => value)
                                   
                                   const isOverridden = currentImageKey !== field.imageKey
+                                  // Check if "None" is explicitly selected
+                                  const isNoneSelected = !currentImageKey
 
                                   return (
                                     <tr key={fieldIndex} className="border-b hover:bg-muted/30 transition-colors">
@@ -3027,10 +3543,12 @@ export default function SKUEditorPage() {
                                         <Label className="text-sm font-medium">{field.label}</Label>
                                       </td>
                                       <td className="px-4 py-3 align-middle">
-                                        {availableImages.length > 0 ? (
+                                        {availableImages.length > 0 || field.label.includes('Optional') ? (
                                           <Select
-                                            value={currentImageKey}
-                                            onValueChange={(newImageKey) => updateFieldImageMapping(expandedLayout, field.label, newImageKey)}
+                                            value={isNoneSelected ? 'none' : currentImageKey}
+                                            onValueChange={(newImageKey) => {
+                                              updateFieldImageMapping(expandedLayout, field.label, newImageKey)
+                                            }}
                                           >
                                             <SelectTrigger className="h-auto py-2">
                                               <div className="flex items-center gap-2">
@@ -3046,16 +3564,32 @@ export default function SKUEditorPage() {
                                                   </div>
                                                 )}
                                                 <div className="flex-1 text-left">
-                                                  <div className="text-xs font-medium">{currentImageKey}</div>
+                                                  <div className="text-xs font-medium">{currentImageKey || 'None'}</div>
                                                   <div className="text-[10px] text-muted-foreground">
-                                                    {field.imageType === 'brand' ? 'Brand' : 'SKU'} • 
-                                                    {isOverridden && ' Custom'}
-                                                    {!isOverridden && ' Default'}
+                                                    {currentImageKey ? (
+                                                      <>
+                                                        {field.imageType === 'brand' ? 'Brand' : 'SKU'} • 
+                                                        {isOverridden && ' Custom'}
+                                                        {!isOverridden && ' Default'}
+                                                      </>
+                                                    ) : (
+                                                      'No image selected'
+                                                    )}
                                                   </div>
                                                 </div>
                                               </div>
                                             </SelectTrigger>
                                             <SelectContent>
+                                              {field.label.includes('Optional') && (
+                                                <SelectItem value="none">
+                                                  <div className="flex items-center gap-2">
+                                                    <div className="w-10 h-10 bg-muted rounded border flex items-center justify-center">
+                                                      <X className="w-5 h-5 text-muted-foreground" />
+                                                    </div>
+                                                    <div className="text-xs font-medium text-muted-foreground">None</div>
+                                                  </div>
+                                                </SelectItem>
+                                              )}
                                               {availableImages.map(([key, value]) => (
                                                 <SelectItem key={key} value={key}>
                                                   <div className="flex items-center gap-2">
@@ -3236,9 +3770,6 @@ export default function SKUEditorPage() {
             <div ref={timelineRef}>
               <TimelineLayout brand={brand} sku={sku} />
             </div>
-            <div ref={beforeAfterRef}>
-              <BeforeAfterLayout brand={brand} sku={sku} />
-            </div>
             <div ref={featureGridRef}>
               <FeatureGridLayout brand={brand} sku={sku} />
             </div>
@@ -3331,6 +3862,7 @@ export default function SKUEditorPage() {
             onLayerReorder={handleLayerReorder}
             onAddElement={handleAddElement}
             onBenefitIconChange={handleBenefitIconChange}
+            onRestoreState={handleRestoreState}
             onSave={handleVisualEditorSave}
             onCancel={handleVisualEditorCancel}
             hasChanges={visualEditorChanges}
@@ -3428,18 +3960,6 @@ export default function SKUEditorPage() {
                   onRotationChange={handleVisualRotationChange}
                 />
               )}
-              {expandedLayout === 'beforeAfter' && (
-                <BeforeAfterLayoutEditable
-                  brand={displayBrand}
-                  sku={displaySKU}
-                  isEditMode={true}
-                  selectedElement={selectedElement}
-                  onSelectElement={setSelectedElement}
-                  onElementDrag={handleVisualPositionChange}
-                  onElementResize={handleVisualSizeChange}
-                  onElementRotate={handleVisualRotationChange}
-                />
-              )}
               {expandedLayout === 'featureGrid' && (
                 <FeatureGridLayoutEditable
                   brand={displayBrand}
@@ -3519,6 +4039,23 @@ export default function SKUEditorPage() {
           </VisualEditorModal>
         )
       })()}
+
+      {/* Brand Asset Browser */}
+      {brand && (
+        <BrandAssetBrowser
+          open={assetBrowserOpen}
+          onClose={() => {
+            setAssetBrowserOpen(false)
+            setAssetImageField(null)
+          }}
+          brandId={brand.id!}
+          assetType={assetImageField ? getAssetTypeFromImageKey(assetImageField) : undefined}
+          onSelect={handleBrandAssetSelect}
+          onUploadNew={handleBrandAssetUpload}
+          allowUpload={true}
+        />
+      )}
+
     </AdminLayout>
   )
 }

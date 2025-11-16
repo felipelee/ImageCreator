@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Settings, Moon, Sun, Layout } from 'lucide-react'
+import { Home, Settings, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -13,8 +13,6 @@ export function IconSidebar() {
 
   const navItems = [
     { icon: Home, label: 'All Brands', href: '/', active: pathname === '/' },
-    { icon: Layout, label: 'Layouts', href: '/admin/layouts', active: pathname?.startsWith('/admin/layouts') },
-    { icon: Settings, label: 'Settings', href: '/settings', active: pathname === '/settings' },
   ]
 
   return (
@@ -63,6 +61,25 @@ export function IconSidebar() {
             </Tooltip>
           ))}
         </nav>
+
+        {/* Settings at Bottom */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/settings">
+              <Button
+                variant={pathname === '/settings' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-10 w-10"
+              >
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">Settings</span>
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Settings</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Theme Toggle at Bottom */}
         <Tooltip>

@@ -144,13 +144,6 @@ function buildPrompt(
     "benefit3": "feature (2-4 words)",
     "cta": "CTA (uppercase, 4-8 words)"
   },
-  "beforeAfter": {
-    "headline": "headline (2-4 words)",
-    "beforeLabel": "BEFORE",
-    "beforeText": "problem (6-10 words)",
-    "afterLabel": "AFTER",
-    "afterText": "solution (6-10 words)"
-  },
   "problemSolution": {
     "problemLabel": "THE PROBLEM",
     "problemText": "pain point (6-10 words)",

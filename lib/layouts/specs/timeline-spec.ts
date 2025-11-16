@@ -14,7 +14,8 @@ export const TIMELINE_SPEC = {
       height: 1080,
       objectFit: 'cover' as const,
       zIndex: 0,
-      imageKey: 'lifestyleTimeline'
+      imageKey: 'lifestyleTimeline',
+      backgroundColorFallback: 'bg' // Color to use when in color mode
     },
     
     overlay: {

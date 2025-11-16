@@ -110,15 +110,6 @@ export const LAYOUT_ELEMENT_DEFINITIONS: Record<string, LayoutElementDefinition[
     { key: 'productImage', label: 'Product Image', type: 'image', defaultZIndex: 30 }
   ],
   
-  beforeAfter: [
-    { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
-    { key: 'headline', label: 'Headline', type: 'text', defaultZIndex: 20 },
-    { key: 'beforePanel', label: 'Before Panel', type: 'container', defaultZIndex: 20 },
-    { key: 'afterPanel', label: 'After Panel', type: 'container', defaultZIndex: 20 },
-    { key: 'divider', label: 'Divider Line', type: 'background', locked: true, defaultZIndex: 15 },
-    { key: 'productImage', label: 'Product Image', type: 'image', defaultZIndex: 30 }
-  ],
-  
   problemSolution: [
     { key: 'background', label: 'Background', type: 'background', locked: true, defaultZIndex: 0 },
     { key: 'problemContainer', label: 'Problem Panel', type: 'container', defaultZIndex: 20 },

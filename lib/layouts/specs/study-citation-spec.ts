@@ -13,6 +13,8 @@ export const STUDY_CITATION_SPEC = {
       width: 1080,
       height: 1080,
       backgroundColor: 'bgAlt',
+      imageKey: 'backgroundAlt', // Image to use when in image mode
+      objectFit: 'cover' as const,
       zIndex: 0
     },
     
@@ -27,7 +29,7 @@ export const STUDY_CITATION_SPEC = {
       fontWeight: 400,
       lineHeight: 1.3,
       letterSpacing: 0,
-      color: '#FFFFFF',
+      color: 'text',
       textAlign: 'left' as const,
       zIndex: 20,
       copyKey: 'studyCitation.context'
@@ -44,7 +46,7 @@ export const STUDY_CITATION_SPEC = {
       fontWeight: 700,
       lineHeight: 1.1,
       letterSpacing: -2,
-      color: '#FFFFFF',
+      color: 'text',
       textAlign: 'left' as const,
       zIndex: 20,
       copyKey: 'studyCitation.finding'
@@ -61,7 +63,7 @@ export const STUDY_CITATION_SPEC = {
       fontWeight: 400,
       lineHeight: 1.3,
       letterSpacing: 0,
-      color: '#FFFFFF',
+      color: 'text',
       textAlign: 'left' as const,
       zIndex: 20,
       copyKey: 'studyCitation.supplementName'
@@ -78,7 +80,7 @@ export const STUDY_CITATION_SPEC = {
       fontWeight: 700,
       lineHeight: 1.2,
       letterSpacing: 0,
-      color: '#FFFFFF',
+      color: 'textSecondary',
       textAlign: 'left' as const,
       zIndex: 20,
       copyKey: 'studyCitation.source'

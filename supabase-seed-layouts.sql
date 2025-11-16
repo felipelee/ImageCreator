@@ -129,25 +129,7 @@ VALUES (
   copy_template = EXCLUDED.copy_template,
   updated_at = NOW();
 
--- 8. Before/After
-INSERT INTO layout_templates (key, name, description, category, enabled, spec, copy_template)
-VALUES (
-  'beforeAfter',
-  'Before/After',
-  'Split-screen showing before and after comparison',
-  'comparison',
-  true,
-  '{"canvas":{"width":1080,"height":1080},"elements":{"background":{"type":"rectangle","position":"absolute","top":0,"left":0,"width":1080,"height":1080,"backgroundColor":"bg","zIndex":0},"headline":{"type":"text","position":"absolute","top":113,"left":56,"width":968,"fontSize":72,"fontWeight":700,"lineHeight":1.0,"letterSpacing":-2,"color":"accent","textAlign":"center","zIndex":2,"copyKey":"beforeAfter.headline"}}}',
-  '{"beforeAfter":{"headline":{"label":"Headline","type":"text","required":true},"beforeLabel":{"label":"Before Label","type":"text","required":true},"beforeText":{"label":"Before Text","type":"textarea","required":true},"afterLabel":{"label":"After Label","type":"text","required":true},"afterText":{"label":"After Text","type":"textarea","required":true}}}'
-) ON CONFLICT (key) DO UPDATE SET
-  name = EXCLUDED.name,
-  description = EXCLUDED.description,
-  category = EXCLUDED.category,
-  spec = EXCLUDED.spec,
-  copy_template = EXCLUDED.copy_template,
-  updated_at = NOW();
-
--- 9. Feature Grid
+-- 8. Feature Grid
 INSERT INTO layout_templates (key, name, description, category, enabled, spec, copy_template)
 VALUES (
   'featureGrid',

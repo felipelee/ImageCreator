@@ -14,7 +14,8 @@ export const TESTIMONIAL_SPEC = {
       height: 1080,
       objectFit: 'cover' as const,
       zIndex: 0,
-      imageKey: 'testimonialPhoto'
+      imageKey: 'testimonialPhoto',
+      backgroundColorFallback: 'bg' // Color to use when in color mode
     },
     
     quoteContainer: {

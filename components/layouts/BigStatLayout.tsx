@@ -15,10 +15,16 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
   const colors = brand.colors
   const fonts = brand.fonts
   
-  const bgColor = getFieldColorValue(brand, sku, 'bigStat', 'Background Color', 'bgAlt')
+  const bgColor = getFieldColorValue(brand, sku, 'bigStat', 'Background Color', 'transparent')
   const statColor = getFieldColorValue(brand, sku, 'bigStat', 'Stat Value', 'accent')
   const headlineColor = getFieldColorValue(brand, sku, 'bigStat', 'Headline', 'accent')
   const labelColor = getFieldColorValue(brand, sku, 'bigStat', 'Ingredient 1 (Top Left)', 'accent')
+  
+  // Get background image with override support (can be set to "none")
+  // Check the raw override first to detect '_none_' sentinel value
+  const rawOverride = sku.imageOverrides?.bigStat?.['Background Image (Optional)']
+  const backgroundImageKey = rawOverride === '_none_' ? '' : (rawOverride || 'backgroundAlt')
+  const backgroundImageSrc = backgroundImageKey ? brand.images[backgroundImageKey as keyof typeof brand.images] : undefined
 
   const ingredientImages = [
     sku.images.ingredientA,
@@ -81,10 +87,10 @@ export function BigStatLayout({ brand, sku }: BigStatLayoutProps) {
         }}
       />
 
-      {/* Background Image (with opacity) */}
-      {brand.images.backgroundAlt && (
+      {/* Background Image (with opacity) - Optional overlay effect */}
+      {backgroundImageSrc && (
         <img
-          src={brand.images.backgroundAlt}
+          src={backgroundImageSrc}
           alt=""
           style={{
             position: 'absolute',

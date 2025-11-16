@@ -16,7 +16,6 @@ import { BIG_STAT_SPEC } from './layouts/specs/big-stat-spec'
 import { MULTI_STATS_SPEC } from './layouts/specs/multi-stats-spec'
 import { PROMO_PRODUCT_SPEC } from './layouts/specs/promo-product-spec'
 import { TIMELINE_SPEC } from './layouts/specs/timeline-spec'
-import { BEFORE_AFTER_SPEC } from './layouts/specs/before-after-spec'
 import { FEATURE_GRID_SPEC } from './layouts/specs/feature-grid-spec'
 import { SOCIAL_PROOF_SPEC } from './layouts/specs/social-proof-spec'
 import { PRICE_COMPARISON_SPEC } from './layouts/specs/price-comparison-spec'
@@ -50,7 +49,6 @@ const FALLBACK_SPECS: Record<string, LayoutSpec> = {
   multiStats: MULTI_STATS_SPEC,
   promoProduct: PROMO_PRODUCT_SPEC,
   timeline: TIMELINE_SPEC,
-  beforeAfter: BEFORE_AFTER_SPEC,
   featureGrid: FEATURE_GRID_SPEC,
   socialProof: SOCIAL_PROOF_SPEC,
   priceComparison: PRICE_COMPARISON_SPEC

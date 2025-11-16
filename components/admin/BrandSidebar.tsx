@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Package, Plus, Palette, ChevronDown, Check, Download, Sparkles, Trash2, MoreVertical } from 'lucide-react'
+import { Package, Plus, Palette, ChevronDown, Check, Download, Sparkles, Trash2, MoreVertical, FolderOpen } from 'lucide-react'
 import { brandService, skuService } from '@/lib/supabase'
 import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
@@ -252,15 +252,24 @@ export function BrandSidebar({ currentBrandId }: BrandSidebarProps) {
         </DropdownMenu>
       </div>
 
-      {/* Brand DNA Link */}
-      <div className="p-4 border-b">
+      {/* Brand DNA & Assets Links */}
+      <div className="p-4 border-b space-y-1">
         <Link href={`/brands/${currentBrandId}/edit`}>
           <Button
-            variant={pathname.includes('/edit') ? 'secondary' : 'ghost'}
+            variant={pathname.includes('/edit') && !pathname.includes('/assets') ? 'secondary' : 'ghost'}
             className="w-full justify-start"
           >
             <Palette className="mr-2 h-4 w-4" />
             <span>Brand DNA</span>
+          </Button>
+        </Link>
+        <Link href={`/brands/${currentBrandId}/assets`}>
+          <Button
+            variant={pathname.includes('/assets') ? 'secondary' : 'ghost'}
+            className="w-full justify-start"
+          >
+            <FolderOpen className="mr-2 h-4 w-4" />
+            <span>Assets</span>
           </Button>
         </Link>
       </div>

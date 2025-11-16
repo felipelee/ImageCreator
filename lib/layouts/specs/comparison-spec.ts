@@ -13,6 +13,8 @@ export const COMPARISON_SPEC = {
       width: 1080,
       height: 1350,
       backgroundColor: 'bg',
+      imageKey: 'lifestyleA', // Image to use when in image mode
+      objectFit: 'cover' as const,
       zIndex: 0
     },
     

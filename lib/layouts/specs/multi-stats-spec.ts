@@ -14,22 +14,22 @@ export const MULTI_STATS_SPEC = {
       height: 1080,
       objectFit: 'cover' as const,
       zIndex: 0,
-      imageKey: 'lifestyleMultiStats'
+      imageKey: 'lifestyleMultiStats',
+      backgroundColorFallback: 'bg' // Color to use when in color mode
     },
     
     headline: {
       type: 'text' as const,
       position: 'absolute' as const,
       top: 48,
-      left: 555,
+      left: 75,
       width: 930,
       fontSize: 72,
       fontWeight: 700,
       lineHeight: 1.0,
       letterSpacing: -2,
-      color: 'bg',
+      color: 'text',
       textAlign: 'center' as const,
-      transform: 'translateX(-50%)',
       zIndex: 2,
       copyKey: 'stats.headline'
     },
@@ -49,7 +49,7 @@ export const MULTI_STATS_SPEC = {
         fontWeight: 700,
         lineHeight: 1.0,
         letterSpacing: -2,
-        color: 'bg'
+        color: 'text'
       },
       label: {
         fontSize: 24,
@@ -57,7 +57,7 @@ export const MULTI_STATS_SPEC = {
         lineHeight: 1.0,
         letterSpacing: 1,
         textTransform: 'uppercase' as const,
-        color: 'bg',
+        color: 'text',
         width: 420,
         marginTop: 8
       }

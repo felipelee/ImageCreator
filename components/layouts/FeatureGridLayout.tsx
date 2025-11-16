@@ -16,6 +16,14 @@ export function FeatureGridLayout({ brand, sku }: FeatureGridLayoutProps) {
   const colors = brand.colors
   const fonts = brand.fonts
   
+  // Determine background mode (image or color)
+  const backgroundImage = brand.images.backgroundAlt
+  const backgroundMode = sku.backgroundMode?.featureGrid || 
+    (backgroundImage ? 'image' : 'color')
+  
+  // Get background color (will be used in color mode)
+  const backgroundColor = getFieldColorValue(brand, sku, 'featureGrid', 'Background Color', 'bg')
+  
   const headlineColor = getFieldColorValue(brand, sku, 'featureGrid', 'Headline', 'accent')
   const cardBgColor = getFieldColorValue(brand, sku, 'featureGrid', 'Card Background', 'bgAlt')
   const titleColor = getFieldColorValue(brand, sku, 'featureGrid', 'Feature Title', 'accent')
@@ -59,18 +67,34 @@ export function FeatureGridLayout({ brand, sku }: FeatureGridLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background */}
-      <div
-        style={{
-          position: 'absolute',
-          top: spec.elements.background.top,
-          left: spec.elements.background.left,
-          width: spec.elements.background.width,
-          height: spec.elements.background.height,
-          backgroundColor: colors.bg,
-          zIndex: spec.elements.background.zIndex
-        }}
-      />
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && backgroundImage ? (
+        <img
+          src={backgroundImage}
+          alt=""
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            objectFit: 'cover',
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor,
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      )}
 
       {/* Headline */}
       <h1

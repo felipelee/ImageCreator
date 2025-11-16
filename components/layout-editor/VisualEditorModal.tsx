@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -14,6 +14,7 @@ import { AddElementMenu } from './AddElementMenu'
 import { ElementConfigPanel } from './ElementConfigPanel'
 import { BackgroundConfigPanel } from './BackgroundConfigPanel'
 import { BenefitIconPicker } from './BenefitIconPicker'
+import { AlignmentToolbar } from './AlignmentToolbar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CustomElementType, CustomElement as CustomElementDef } from '@/types/custom-element'
 import { Brand } from '@/types/brand'
@@ -53,6 +54,7 @@ interface VisualEditorModalProps {
   onLayerReorder?: (newOrder: LayerItem[]) => void
   onAddElement?: (type: CustomElementType) => void
   onBenefitIconChange?: (benefitKey: string, icon: string) => void
+  onRestoreState?: (state: { positionOverrides: any; customElements: any[] }) => void
   onSave: () => void
   onCancel: () => void
   hasChanges: boolean
@@ -83,6 +85,7 @@ export function VisualEditorModal({
   onLayerReorder,
   onAddElement,
   onBenefitIconChange,
+  onRestoreState,
   onSave,
   onCancel,
   hasChanges
@@ -91,69 +94,58 @@ export function VisualEditorModal({
   const [gridSize] = useState(5)
   const [activeTab, setActiveTab] = useState<'layers' | 'properties'>('layers')
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0, elemX: 0, elemY: 0 })
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, elemX: 0, elemY: 0, elements: [] as string[] })
   const [layerOrder, setLayerOrder] = useState<LayerItem[]>(layers)
+  const [selectedElements, setSelectedElements] = useState<string[]>(selectedElement ? [selectedElement] : [])
   const scale = 0.72
+  const isUndoRedoOperation = React.useRef(false)
   
-  // Track state changes for undo/redo
-  const [undoStack, setUndoStack] = useState<any[]>([])
-  const [redoStack, setRedoStack] = useState<any[]>([])
-  const [lastSavedState, setLastSavedState] = useState<any>(null)
+  // Undo/Redo using the hook
+  const {
+    state: editorState,
+    pushState,
+    undo: undoHook,
+    redo: redoHook,
+    canUndo,
+    canRedo
+  } = useUndoRedo(
+    {
+      positionOverrides: positionOverrides?.[layoutKey] || {},
+      customElements: customElements || []
+    },
+    {
+      maxHistory: 50,
+      onStateChange: (state) => {
+        // Only restore state if we're in an undo/redo operation
+        if (isUndoRedoOperation.current && onRestoreState) {
+          console.log('[Undo/Redo] Restoring state:', state)
+          onRestoreState({
+            positionOverrides: { [layoutKey]: state.positionOverrides },
+            customElements: state.customElements
+          })
+          isUndoRedoOperation.current = false
+        }
+      }
+    }
+  )
   
-  const canUndo = undoStack.length > 0
-  const canRedo = redoStack.length > 0
+  // Wrap undo/redo to mark as undo/redo operations
+  const undo = () => {
+    isUndoRedoOperation.current = true
+    undoHook()
+  }
   
-  // Save current state to undo stack
+  const redo = () => {
+    isUndoRedoOperation.current = true
+    redoHook()
+  }
+  
+  // Save to history helper
   const saveToHistory = () => {
-    const currentState = {
+    pushState({
       positionOverrides: positionOverrides?.[layoutKey] || {},
       customElements: customElements || []
-    }
-    
-    setUndoStack(prev => [...prev.slice(-49), currentState]) // Keep last 50
-    setRedoStack([]) // Clear redo stack on new action
-    setLastSavedState(currentState)
-  }
-  
-  // Undo function
-  const performUndo = () => {
-    if (!canUndo) return
-    
-    const currentState = {
-      positionOverrides: positionOverrides?.[layoutKey] || {},
-      customElements: customElements || []
-    }
-    
-    const previousState = undoStack[undoStack.length - 1]
-    
-    // Move current to redo stack
-    setRedoStack(prev => [...prev, currentState])
-    setUndoStack(prev => prev.slice(0, -1))
-    
-    // Apply previous state
-    console.log('[Undo] Restoring state:', previousState)
-    // Note: This needs parent component to restore the state
-    // For now, we'll just log - full implementation needs state restoration callback
-  }
-  
-  // Redo function
-  const performRedo = () => {
-    if (!canRedo) return
-    
-    const currentState = {
-      positionOverrides: positionOverrides?.[layoutKey] || {},
-      customElements: customElements || []
-    }
-    
-    const nextState = redoStack[redoStack.length - 1]
-    
-    // Move current to undo stack
-    setUndoStack(prev => [...prev, currentState])
-    setRedoStack(prev => prev.slice(0, -1))
-    
-    // Apply next state
-    console.log('[Redo] Restoring state:', nextState)
-    // Note: This needs parent component to restore the state
+    })
   }
   
   // Update layer order when layers prop changes
@@ -161,7 +153,71 @@ export function VisualEditorModal({
     setLayerOrder(layers)
   }, [layers])
   
-  // Keyboard shortcuts for undo/redo
+  // Sync selectedElements with selectedElement prop ONLY when not in multi-select mode
+  // Use a ref to track if we initiated the change to avoid circular updates
+  const isInternalUpdate = React.useRef(false)
+  
+  useEffect(() => {
+    // Don't override if we already have multiple selections or if we initiated the change
+    if (selectedElements.length > 1 || isInternalUpdate.current) {
+      isInternalUpdate.current = false
+      return
+    }
+    
+    if (selectedElement) {
+      setSelectedElements([selectedElement])
+    } else {
+      setSelectedElements([])
+    }
+  }, [selectedElement, selectedElements.length])
+  
+  // Multi-select handler
+  const handleElementSelect = (elementKey: string | null, shiftKey: boolean = false) => {
+    // Mark this as an internal update
+    isInternalUpdate.current = true
+    
+    if (!elementKey) {
+      // Clear selection
+      setSelectedElements([])
+      onSelectElement(null)
+      return
+    }
+    
+    if (shiftKey) {
+      // Toggle element in selection
+      setSelectedElements(prev => {
+        if (prev.includes(elementKey)) {
+          // Remove from selection
+          const newSelection = prev.filter(k => k !== elementKey)
+          // Only notify parent of the first element (for backward compatibility)
+          onSelectElement(newSelection.length > 0 ? newSelection[0] : null)
+          return newSelection
+        } else {
+          // Add to selection
+          const newSelection = [...prev, elementKey]
+          // Keep parent in sync with first element
+          onSelectElement(prev.length > 0 ? prev[0] : elementKey)
+          return newSelection
+        }
+      })
+    } else {
+      // Replace selection
+      setSelectedElements([elementKey])
+      onSelectElement(elementKey)
+    }
+  }
+  
+  // Select all elements
+  const handleSelectAll = () => {
+    isInternalUpdate.current = true
+    const allElementKeys = layers.map(l => l.key)
+    setSelectedElements(allElementKeys)
+    if (allElementKeys.length > 0) {
+      onSelectElement(allElementKeys[0])
+    }
+  }
+  
+  // Keyboard shortcuts for undo/redo and select all
   useEffect(() => {
     if (!open) return
 
@@ -169,65 +225,90 @@ export function VisualEditorModal({
       // Cmd+Z or Ctrl+Z = Undo
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
-        performUndo()
+        undo()
+        return
       }
       
       // Cmd+Shift+Z or Ctrl+Y = Redo
       if (((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) || ((e.ctrlKey) && e.key === 'y')) {
         e.preventDefault()
-        performRedo()
+        redo()
+        return
+      }
+      
+      // Cmd+A or Ctrl+A = Select All
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault()
+        handleSelectAll()
+        return
+      }
+      
+      // Escape = Clear selection
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handleElementSelect(null)
+        return
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, canUndo, canRedo, performUndo, performRedo])
+  }, [open, canUndo, canRedo, undo, redo])
 
-  // Keyboard shortcuts for nudging
+  // Keyboard shortcuts for nudging (works with multiple elements)
   useEffect(() => {
-    if (!open || !selectedElement) return
+    if (!open || selectedElements.length === 0) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedElement) return
-      
-      const currentPos = positionOverrides?.[layoutKey]?.[selectedElement]
-      if (!currentPos) return
+      if (selectedElements.length === 0) return
       
       const step = e.shiftKey ? 10 : 1
-      let newX = currentPos.x || 0
-      let newY = currentPos.y || 0
+      let deltaX = 0
+      let deltaY = 0
       
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault()
-          newX -= step
+          deltaX = -step
           break
         case 'ArrowRight':
           e.preventDefault()
-          newX += step
+          deltaX = step
           break
         case 'ArrowUp':
           e.preventDefault()
-          newY -= step
+          deltaY = -step
           break
         case 'ArrowDown':
           e.preventDefault()
-          newY += step
+          deltaY = step
           break
         default:
           return
       }
       
-      // Constrain to canvas
-      newX = Math.max(0, Math.min(1080, newX))
-      newY = Math.max(0, Math.min(1080, newY))
+      // Move all selected elements
+      selectedElements.forEach(elementKey => {
+        const currentPos = positionOverrides?.[layoutKey]?.[elementKey]
+        if (currentPos) {
+          let newX = (currentPos.x || 0) + deltaX
+          let newY = (currentPos.y || 0) + deltaY
+          
+          // Constrain to canvas
+          newX = Math.max(0, Math.min(1080, newX))
+          newY = Math.max(0, Math.min(1080, newY))
+          
+          onPositionChange(elementKey, { x: newX, y: newY })
+        }
+      })
       
-      onPositionChange(selectedElement, { x: newX, y: newY })
+      // Save to history after nudging
+      setTimeout(saveToHistory, 100)
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, selectedElement, positionOverrides, layoutKey, onPositionChange])
+  }, [open, selectedElements, positionOverrides, layoutKey, onPositionChange])
 
   // Handle drag start
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
@@ -247,23 +328,98 @@ export function VisualEditorModal({
       }
     }
     
-    if (elementKey && selectedElement === elementKey) {
-      e.preventDefault()
-      console.log('[Drag] Starting drag for:', elementKey)
-      setIsDragging(true)
-      const currentPos = positionOverrides?.[layoutKey]?.[elementKey]
-      setDragStart({
-        x: e.clientX,
-        y: e.clientY,
-        elemX: currentPos?.x || 0,
-        elemY: currentPos?.y || 0
-      })
+    if (elementKey) {
+      // Handle selection with shift key
+      if (e.shiftKey) {
+        handleElementSelect(elementKey, true)
+        return
+      }
+      
+      // If clicking on a selected element, start dragging all selected
+      if (selectedElements.includes(elementKey)) {
+        e.preventDefault()
+        console.log('[Drag] Starting drag for selected elements:', selectedElements)
+        setIsDragging(true)
+        
+        // Store initial positions for all selected elements
+        const elementsData = selectedElements.map(key => {
+          // Check if it's a custom element first
+          if (key.startsWith('custom-')) {
+            const customEl = customElements.find((el: any) => el.id === key)
+            if (customEl) {
+              return {
+                key,
+                x: customEl.x || 0,
+                y: customEl.y || 0
+              }
+            }
+          }
+          
+          // Check position overrides
+          const pos = positionOverrides?.[layoutKey]?.[key]
+          if (pos) {
+            return {
+              key,
+              x: pos.x || 0,
+              y: pos.y || 0
+            }
+          }
+          
+          // Fallback: Get from DOM
+          const el = document.querySelector(`[data-element-key="${key}"]`)
+          if (el) {
+            const rect = el.getBoundingClientRect()
+            const canvas = document.getElementById('visual-editor-canvas')
+            const scaledDiv = canvas?.querySelector('div[style*="1080px"]') as HTMLElement
+            const containerRect = scaledDiv?.getBoundingClientRect() || canvas?.getBoundingClientRect()
+            
+            if (containerRect) {
+              return {
+                key,
+                x: (rect.left - containerRect.left) / scale,
+                y: (rect.top - containerRect.top) / scale
+              }
+            }
+          }
+          
+          return {
+            key,
+            x: 0,
+            y: 0
+          }
+        })
+        
+        console.log('[Drag] Elements data:', elementsData)
+        
+        setDragStart({
+          x: e.clientX,
+          y: e.clientY,
+          elemX: 0,
+          elemY: 0,
+          elements: elementsData
+        })
+      } else {
+        // Clicking on unselected element - select it
+        handleElementSelect(elementKey, false)
+      }
     }
   }
 
-  // Handle drag move
+  // Handle drag move (supports multiple elements)
   const handleCanvasMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !selectedElement) return
+    if (!isDragging) {
+      return
+    }
+    
+    if (selectedElements.length === 0) {
+      console.warn('[Drag Move] No elements selected')
+      return
+    }
+    
+    if (!dragStart.elements || dragStart.elements.length === 0) {
+      console.warn('[Drag Move] No elements in dragStart:', dragStart)
+      return
+    }
     
     const deltaX = e.clientX - dragStart.x
     const deltaY = e.clientY - dragStart.y
@@ -271,20 +427,17 @@ export function VisualEditorModal({
     const scaledDeltaX = deltaX / scale
     const scaledDeltaY = e.shiftKey ? 0 : deltaY / scale // Shift locks Y axis
     
-    let newX = dragStart.elemX + scaledDeltaX
-    let newY = dragStart.elemY + scaledDeltaY
+    // Move all selected elements by the same delta
+    console.log('[Drag Move] Moving', dragStart.elements.length, 'elements by delta:', { deltaX: scaledDeltaX, deltaY: scaledDeltaY })
     
-    // Snap to grid
-    if (snapEnabled && !e.altKey) {
-      newX = Math.round(newX / gridSize) * gridSize
-      newY = Math.round(newY / gridSize) * gridSize
-    }
-    
-    // Constrain to canvas
-    newX = Math.max(0, Math.min(1080, newX))
-    newY = Math.max(0, Math.min(1080, newY))
-    
-    onPositionChange(selectedElement, { x: Math.round(newX), y: Math.round(newY) })
+    dragStart.elements.forEach((elemData: any) => {
+      const newX = Math.max(0, Math.min(1080, elemData.x + scaledDeltaX))
+      const newY = Math.max(0, Math.min(1080, elemData.y + scaledDeltaY))
+      
+      console.log(`[Drag Move] ${elemData.key}: from (${elemData.x}, ${elemData.y}) to (${newX}, ${newY})`)
+      
+      onPositionChange(elemData.key, { x: Math.round(newX), y: Math.round(newY) })
+    })
   }
 
   // Handle drag end - save to history
@@ -330,7 +483,7 @@ export function VisualEditorModal({
             <Button
               variant="outline"
               size="sm"
-              onClick={performUndo}
+              onClick={undo}
               disabled={!canUndo}
               className="h-8"
               title="Undo (Cmd+Z)"
@@ -340,7 +493,7 @@ export function VisualEditorModal({
             <Button
               variant="outline"
               size="sm"
-              onClick={performRedo}
+              onClick={redo}
               disabled={!canRedo}
               className="h-8"
               title="Redo (Cmd+Shift+Z)"
@@ -357,6 +510,19 @@ export function VisualEditorModal({
               <Grid3x3 className="h-4 w-4 mr-2" />
               Snap ({gridSize}px)
             </Button>
+            {selectedElements.length >= 2 && (
+              <>
+                <div className="h-4 w-px bg-border" />
+                <AlignmentToolbar
+                  selectedElements={selectedElements}
+                  positionOverrides={positionOverrides}
+                  layoutKey={layoutKey}
+                  customElements={customElements}
+                  onPositionChange={onPositionChange}
+                  onSaveToHistory={saveToHistory}
+                />
+              </>
+            )}
             {onAddElement && (
               <>
                 <div className="h-4 w-px bg-border" />
@@ -453,7 +619,8 @@ export function VisualEditorModal({
                 <LayersPanel
                   layers={layerOrder}
                   selectedElement={selectedElement}
-                  onSelectElement={onSelectElement}
+                  selectedElements={selectedElements}
+                  onSelectElement={handleElementSelect}
                   onReorder={(newOrder) => {
                     setLayerOrder(newOrder)
                     if (onLayerReorder) {
@@ -465,8 +632,8 @@ export function VisualEditorModal({
                       // Remove from layer order
                       setLayerOrder(prev => prev.filter(l => l.key !== elementKey))
                       // Deselect if this was selected
-                      if (selectedElement === elementKey) {
-                        onSelectElement(null)
+                      if (selectedElements.includes(elementKey)) {
+                        handleElementSelect(null)
                       }
                       // Delete from parent SKU state
                       onDeleteCustomElement(elementKey)
@@ -476,7 +643,29 @@ export function VisualEditorModal({
               </TabsContent>
 
               <TabsContent value="properties" className="p-4 m-0">
-                {selectedElement ? (
+                {selectedElements.length > 1 ? (
+                  <div className="space-y-3">
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-sm">Multi-Selection</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedElements.length} elements selected
+                      </p>
+                    </div>
+                    <AlignmentToolbar
+                      selectedElements={selectedElements}
+                      positionOverrides={positionOverrides}
+                      layoutKey={layoutKey}
+                      customElements={customElements}
+                      onPositionChange={onPositionChange}
+                      onSaveToHistory={saveToHistory}
+                    />
+                    <div className="text-xs text-muted-foreground space-y-1 p-2 bg-muted/20 rounded">
+                      <p><strong>Tip:</strong> Use alignment tools to arrange elements</p>
+                      <p>• Drag to move all selected elements together</p>
+                      <p>• Arrow keys to nudge selection</p>
+                    </div>
+                  </div>
+                ) : selectedElement ? (
                   <div className="space-y-3">
                     <ElementToolbar
                       elementKey={selectedElement}
@@ -528,6 +717,7 @@ export function VisualEditorModal({
               }}
             >
               <div
+                id="visual-editor-canvas"
                 onClick={() => onSelectElement(null)}
                 onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleCanvasMouseMove}
@@ -538,99 +728,110 @@ export function VisualEditorModal({
                 }}
               >
                 {children}
-              </div>
-              
-              {/* Selection Overlay with Handles - Inside scaled container */}
-              {selectedElement && (() => {
-                // Check if it's a custom element
-                const isCustom = selectedElement.startsWith('custom-')
-                let elementData: any = null
                 
-                if (isCustom) {
-                  // Get from custom elements array passed as prop
-                  elementData = customElements.find((el: any) => el.id === selectedElement)
-                  console.log('[SelectionOverlay] Custom element data:', elementData)
-                } else {
-                  // Get from position overrides
-                  elementData = positionOverrides?.[layoutKey]?.[selectedElement]
-                }
-                
-                // Always try to get actual DOM element for accurate positioning
-                const element = document.querySelector(`[data-element-key="${selectedElement}"]`)
-                
-                if (!elementData && !element) {
+                {/* Selection Overlays - Render INSIDE scaled container for correct positioning */}
+                {selectedElements.map(elementKey => {
+                  // Check if it's a custom element
+                  const isCustom = elementKey.startsWith('custom-')
+                  let elementData: any = null
+                  
+                  if (isCustom) {
+                    // Get from custom elements array passed as prop
+                    elementData = customElements.find((el: any) => el.id === elementKey)
+                  } else {
+                    // Get from position overrides
+                    elementData = positionOverrides?.[layoutKey]?.[elementKey]
+                  }
+                  
+                  // Always try to get actual DOM element for accurate positioning
+                  const element = document.querySelector(`[data-element-key="${elementKey}"]`)
+                  
+                  if (!elementData && !element) {
+                    return null
+                  }
+                  
+                  // If we have the element in the DOM, use it to get position/size
+                  if (element) {
+                    const rect = element.getBoundingClientRect()
+                    // Find the scaled container (the first child of canvas with 1080x1080 size)
+                    const canvas = document.getElementById('visual-editor-canvas')
+                    const scaledDiv = canvas?.querySelector('div[style*="1080px"]') as HTMLElement
+                    const containerRect = scaledDiv?.getBoundingClientRect() || canvas?.getBoundingClientRect()
+                    
+                    // getBoundingClientRect returns screen pixels (after scaling AND transforms)
+                    // Element position - scaled container position = position within scaled space (in screen pixels)
+                    // Then divide by scale to get unscaled coordinates
+                    const computedX = containerRect ? (rect.left - containerRect.left) / scale : 0
+                    const computedY = containerRect ? (rect.top - containerRect.top) / scale : 0
+                    const computedWidth = rect.width / scale
+                    const computedHeight = rect.height / scale
+                    
+                    // Only show handles for single selection
+                    const showHandles = selectedElements.length === 1
+                    
+                    return (
+                      <SelectionOverlay
+                        key={elementKey}
+                        elementKey={elementKey}
+                        position={{
+                          x: computedX,  // Always use DOM position (accounts for transforms)
+                          y: computedY
+                        }}
+                        size={{
+                          width: computedWidth,   // Always use DOM size
+                          height: computedHeight
+                        }}
+                        rotation={elementData?.rotation || 0}
+                        scale={scale}
+                        onPositionChange={showHandles ? (pos) => onPositionChange(elementKey, pos) : undefined}
+                        onSizeChange={showHandles ? (size) => onSizeChange(elementKey, size) : undefined}
+                        onRotationChange={showHandles ? (rot) => onRotationChange(elementKey, rot) : undefined}
+                      />
+                    )
+                  }
+                  
+                  // Fallback: Only if we have elementData but no DOM element
+                  if (elementData) {
+                    const showHandles = selectedElements.length === 1
+                    
+                    return (
+                      <SelectionOverlay
+                        key={elementKey}
+                        elementKey={elementKey}
+                        position={{
+                          x: elementData.x || 0,
+                          y: elementData.y || 0
+                        }}
+                        size={{
+                          width: elementData.width || 100,
+                          height: elementData.height || 100
+                        }}
+                        rotation={elementData.rotation || 0}
+                        scale={1}
+                        onPositionChange={showHandles ? (pos) => onPositionChange(elementKey, pos) : undefined}
+                        onSizeChange={showHandles ? (size) => onSizeChange(elementKey, size) : undefined}
+                        onRotationChange={showHandles ? (rot) => onRotationChange(elementKey, rot) : undefined}
+                      />
+                    )
+                  }
+                  
                   return null
-                }
+                })}
                 
-                // If we have the element in the DOM, use it to get position/size
-                if (element) {
-                  const rect = element.getBoundingClientRect()
-                  const containerRect = element.parentElement?.getBoundingClientRect()
-                  
-                  // Calculate position relative to container
-                  const computedX = containerRect ? (rect.left - containerRect.left) / scale : 0
-                  const computedY = containerRect ? (rect.top - containerRect.top) / scale : 0
-                  const computedWidth = rect.width / scale
-                  const computedHeight = rect.height / scale
-                  
-                  return (
-                    <SelectionOverlay
-                      elementKey={selectedElement}
-                      position={{
-                        x: elementData?.x ?? computedX,
-                        y: elementData?.y ?? computedY
-                      }}
-                      size={{
-                        width: elementData?.width ?? computedWidth,
-                        height: elementData?.height ?? computedHeight
-                      }}
-                      rotation={elementData?.rotation || 0}
-                      scale={scale}
-                      onPositionChange={(pos) => onPositionChange(selectedElement, pos)}
-                      onSizeChange={(size) => onSizeChange(selectedElement, size)}
-                      onRotationChange={(rot) => onRotationChange(selectedElement, rot)}
-                    />
-                  )
-                }
-                
-                // Fallback: Only if we have elementData but no DOM element
-                if (elementData) {
-                  return (
-                    <SelectionOverlay
-                      elementKey={selectedElement}
-                      position={{
-                        x: elementData.x || 0,
-                        y: elementData.y || 0
-                      }}
-                      size={{
-                        width: elementData.width || 100,
-                        height: elementData.height || 100
-                      }}
-                      rotation={elementData.rotation || 0}
-                      scale={scale}
-                      onPositionChange={(pos) => onPositionChange(selectedElement, pos)}
-                      onSizeChange={(size) => onSizeChange(selectedElement, size)}
-                      onRotationChange={(rot) => onRotationChange(selectedElement, rot)}
-                    />
-                  )
-                }
-                
-                return null
-              })()}
-              
-              {/* Grid Overlay */}
-              {snapEnabled && (
-                <div
-                  className="pointer-events-none absolute inset-0 editor-grid"
-                  style={{
-                    backgroundImage: `
-                      linear-gradient(to right, rgba(59, 130, 246, 0.08) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(59, 130, 246, 0.08) 1px, transparent 1px)
-                    `,
-                    backgroundSize: `${gridSize * scale}px ${gridSize * scale}px`
-                  }}
-                />
-              )}
+                {/* Grid Overlay - sibling to scaled div, needs scaled size */}
+                {snapEnabled && (
+                  <div
+                    className="pointer-events-none absolute inset-0 editor-grid"
+                    style={{
+                      backgroundImage: `
+                        linear-gradient(to right, rgba(59, 130, 246, 0.08) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(59, 130, 246, 0.08) 1px, transparent 1px)
+                      `,
+                      backgroundSize: `${gridSize * scale}px ${gridSize * scale}px`
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
 

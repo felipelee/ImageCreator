@@ -14,7 +14,8 @@ export const BADGE_PRODUCT_SPEC = {
       height: 1080,
       objectFit: 'cover' as const,
       zIndex: 0,
-      imageKey: 'backgroundBadgeProduct'
+      imageKey: 'backgroundBadgeProduct',
+      backgroundColorFallback: 'bg' // Color to use when in color mode
     },
     
     productImage: {

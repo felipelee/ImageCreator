@@ -24,7 +24,6 @@ import { getLayoutElements } from '@/lib/layout-element-definitions'
 
 // Import layout specs (source of truth)
 import { COMPARISON_SPEC } from '@/lib/layouts/specs/comparison-spec'
-import { BEFORE_AFTER_SPEC } from '@/lib/layouts/specs/before-after-spec'
 import { BIG_STAT_SPEC } from '@/lib/layouts/specs/big-stat-spec'
 import { MULTI_STATS_SPEC } from '@/lib/layouts/specs/multi-stats-spec'
 import { TESTIMONIAL_SPEC } from '@/lib/layouts/specs/testimonial-spec'
@@ -38,7 +37,6 @@ import { HERO_SPEC } from '@/lib/layouts/specs/hero-spec'
 import { PACK_HERO_SPEC } from '@/lib/layouts/specs/pack-hero-spec'
 
 // Import editable layout components
-import { BeforeAfterLayoutEditable } from '@/components/layouts/BeforeAfterLayoutEditable'
 import { ComparisonLayoutEditable } from '@/components/layouts/ComparisonLayoutEditable'
 import { TestimonialLayoutEditable } from '@/components/layouts/TestimonialLayoutEditable'
 import { BigStatLayoutEditable } from '@/components/layouts/BigStatLayoutEditable'
@@ -145,13 +143,6 @@ const getSampleCopyForLayout = (layoutKey: string) => {
       milestone3_title: 'Results',
       milestone3_detail: 'Full effect'
     },
-    beforeAfter: {
-      headline: 'Real Results',
-      beforeLabel: 'Before',
-      beforeText: 'Tired and weak',
-      afterLabel: 'After',
-      afterText: 'Strong and energized'
-    },
     featureGrid: {
       headline: 'Key Features',
       feature1_icon: 'Zap',
@@ -191,7 +182,6 @@ const getSampleCopyForLayout = (layoutKey: string) => {
 const SPEC_MAP: Record<string, any> = {
   comparison: COMPARISON_SPEC,
   compare: COMPARISON_SPEC,
-  beforeAfter: BEFORE_AFTER_SPEC,
   stat97: BIG_STAT_SPEC,
   bigStat: BIG_STAT_SPEC,
   stats: MULTI_STATS_SPEC,
@@ -462,7 +452,6 @@ export default function LayoutEditorPage() {
     }
 
     const layoutComponents: Record<string, JSX.Element> = {
-      beforeAfter: <BeforeAfterLayoutEditable {...commonProps} />,
       comparison: <ComparisonLayoutEditable {...commonProps} />,
       testimonial: <TestimonialLayoutEditable {...commonProps} />,
       bigStat: <BigStatLayoutEditable {...commonProps} />,
@@ -494,7 +483,6 @@ export default function LayoutEditorPage() {
     }
 
     const layoutComponents: Record<string, JSX.Element> = {
-      beforeAfter: <BeforeAfterLayoutEditable {...commonProps} />,
       comparison: <ComparisonLayoutEditable {...commonProps} />,
       testimonial: <TestimonialLayoutEditable {...commonProps} />,
       bigStat: <BigStatLayoutEditable {...commonProps} />,

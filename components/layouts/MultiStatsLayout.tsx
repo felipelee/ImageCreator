@@ -14,8 +14,15 @@ export function MultiStatsLayout({ brand, sku }: MultiStatsLayoutProps) {
   const colors = brand.colors
   const fonts = brand.fonts
   
-  const headlineColor = getFieldColorValue(brand, sku, 'multiStats', 'Headline', 'bg')
-  const statColor = getFieldColorValue(brand, sku, 'multiStats', 'Stat 1 Value', 'bg')
+  // Determine background mode (image or color)
+  const backgroundMode = sku.backgroundMode?.multiStats || 
+    (sku.images.lifestyleMultiStats ? 'image' : 'color')
+  
+  // Get background color (will be used in color mode)
+  const backgroundColor = getFieldColorValue(brand, sku, 'multiStats', 'Background Color', 'bg')
+  
+  const headlineColor = getFieldColorValue(brand, sku, 'multiStats', 'Headline', 'text')
+  const statColor = getFieldColorValue(brand, sku, 'multiStats', 'Stat 1 Value', 'text')
 
   const stats = [
     {
@@ -136,8 +143,8 @@ export function MultiStatsLayout({ brand, sku }: MultiStatsLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background Image */}
-      {sku.images.lifestyleMultiStats && (
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && sku.images.lifestyleMultiStats ? (
         <img
           src={sku.images.lifestyleMultiStats}
           alt=""
@@ -150,6 +157,18 @@ export function MultiStatsLayout({ brand, sku }: MultiStatsLayoutProps) {
             objectFit: spec.elements.background.objectFit,
             zIndex: spec.elements.background.zIndex,
             display: 'block'
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor,
+            zIndex: spec.elements.background.zIndex
           }}
         />
       )}

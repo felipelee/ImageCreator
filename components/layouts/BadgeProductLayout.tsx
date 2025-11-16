@@ -1,6 +1,7 @@
 import { Brand } from '@/types/brand'
 import { SKU } from '@/types/sku'
 import { BADGE_PRODUCT_SPEC } from '@/lib/layouts/specs/badge-product-spec'
+import { getFieldColorValue } from '@/lib/color-utils'
 import { resolveElementPosition, combineTransforms } from '@/lib/layout-utils'
 import { CustomElementRenderer } from '@/components/layout-editor/CustomElementRenderer'
 
@@ -15,6 +16,14 @@ export function BadgeProductLayout({ brand, sku }: BadgeProductLayoutProps) {
   const spec = BADGE_PRODUCT_SPEC
   const colors = brand.colors || { bg: '#4A90E2' }
   const fonts = brand.fonts || { family: 'Inter' }
+  
+  // Determine background mode (image or color)
+  const backgroundImage = sku.images.backgroundBadgeProduct || brand.images.backgroundBadgeProduct
+  const backgroundMode = sku.backgroundMode?.badgeProduct || 
+    (backgroundImage ? 'image' : 'color')
+  
+  // Get background color (will be used in color mode)
+  const backgroundColor = getFieldColorValue(brand, sku, 'badgeProduct', 'Background Color', 'bg')
 
   // Resolve positions with overrides
   const productImagePos = resolveElementPosition('badgeProduct', 'productImage', {
@@ -77,10 +86,10 @@ export function BadgeProductLayout({ brand, sku }: BadgeProductLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background Image */}
-      {(sku.images.backgroundBadgeProduct || brand.images.backgroundBadgeProduct || true) && (
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && backgroundImage ? (
         <img
-          src={sku.images.backgroundBadgeProduct || brand.images.backgroundBadgeProduct || '/placeholder-image.svg'}
+          src={backgroundImage}
           alt=""
           style={{
             position: 'absolute',
@@ -89,8 +98,19 @@ export function BadgeProductLayout({ brand, sku }: BadgeProductLayoutProps) {
             width: spec.elements.background.width,
             height: spec.elements.background.height,
             objectFit: spec.elements.background.objectFit,
-            zIndex: spec.elements.background.zIndex,
-            opacity: (sku.images.backgroundBadgeProduct || brand.images.backgroundBadgeProduct) ? 1 : 0.3
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor,
+            zIndex: spec.elements.background.zIndex
           }}
         />
       )}

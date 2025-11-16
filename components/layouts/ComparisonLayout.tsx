@@ -15,6 +15,10 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
   const colors = brand.colors
   const fonts = brand.fonts
   
+  // Determine background mode (image or color)
+  const backgroundMode = sku.backgroundMode?.compare || 
+    (sku.images.lifestyleA ? 'image' : 'color')
+  
   const bgColor = getFieldColorValue(brand, sku, 'compare', 'Background Color', 'bg')
   const headlineColor = getFieldColorValue(brand, sku, 'compare', 'Headline', 'text')
   const leftLabelColor = getFieldColorValue(brand, sku, 'compare', 'Left Label (Your Product)', 'bg')
@@ -55,18 +59,34 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background */}
-      <div
-        style={{
-          position: 'absolute',
-          top: spec.elements.background.top,
-          left: spec.elements.background.left,
-          width: spec.elements.background.width,
-          height: spec.elements.background.height,
-          backgroundColor: bgColor,
-          zIndex: spec.elements.background.zIndex
-        }}
-      />
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && sku.images.lifestyleA ? (
+        <img
+          src={sku.images.lifestyleA}
+          alt=""
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            objectFit: 'cover',
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: bgColor, // bgColor already uses getFieldColorValue
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      )}
 
       {/* Headline */}
       <h1

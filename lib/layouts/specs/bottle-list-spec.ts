@@ -13,6 +13,8 @@ export const BOTTLE_LIST_SPEC = {
       width: 1080,
       height: 1080,
       backgroundColor: 'bg',
+      imageKey: 'backgroundBenefits', // Image to use when in image mode
+      objectFit: 'cover' as const,
       zIndex: 0
     },
     

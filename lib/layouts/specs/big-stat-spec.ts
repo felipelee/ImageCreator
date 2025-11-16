@@ -12,7 +12,7 @@ export const BIG_STAT_SPEC = {
       left: 0,
       width: 1080,
       height: 1080,
-      backgroundColor: 'bgAlt',
+      backgroundColor: 'transparent',
       zIndex: 0
     },
 
@@ -65,7 +65,7 @@ export const BIG_STAT_SPEC = {
       {
         // Top Left: Citric Acid
         image: { top: 113, left: 26, size: 409, zIndex: 4 },
-        label: { top: 310, left: 210, width: 120 },
+        label: { top: 310, left: 210, width: 160 }, // Increased from 120
         copyKey: 'stat97.ingredient1'
       },
       {
@@ -77,7 +77,7 @@ export const BIG_STAT_SPEC = {
       {
         // Bottom Left: L-Theanine
         image: { top: 699, left: 26, size: 395, zIndex: 4 },
-        label: { top: 980, left: 200, width: 139 },
+        label: { top: 980, left: 200, width: 170 }, // Increased from 139
         copyKey: 'stat97.ingredient3'
       },
       {

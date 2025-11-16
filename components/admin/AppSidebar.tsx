@@ -11,8 +11,7 @@ import {
   Plus,
   Settings,
   Moon,
-  Sun,
-  Layout
+  Sun
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { brandService, skuService } from '@/lib/supabase'
@@ -143,14 +142,6 @@ export function AppSidebar() {
                   <Link href="/">
                     <Home />
                     <span>All Brands</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname?.startsWith('/admin/layouts')}>
-                  <Link href="/admin/layouts">
-                    <Layout />
-                    <span>Layouts</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

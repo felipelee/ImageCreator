@@ -30,9 +30,7 @@ export function SelectionOverlay({
   const [rotationStart, setRotationStart] = useState({ angle: 0, centerX: 0, centerY: 0 })
 
   const handleResizeStart = (e: React.MouseEvent, handle: string) => {
-    console.log('[SelectionOverlay] Resize start:', handle)
     if (!onSizeChange || !size) {
-      console.log('[SelectionOverlay] Cannot resize - no handler or size')
       return
     }
     e.stopPropagation()
@@ -138,7 +136,6 @@ export function SelectionOverlay({
         angle = Math.round(angle / 15) * 15
       }
       
-      console.log('[SelectionOverlay] Rotation:', Math.round(angle))
       onRotationChange(Math.round(angle))
     }
 
@@ -156,11 +153,8 @@ export function SelectionOverlay({
   }, [isRotating, rotationStart, onRotationChange, size])
 
   if (!size || size.width === 0 || size.height === 0) {
-    console.log('[SelectionOverlay] No size or zero size:', { elementKey, size })
     return null
   }
-
-  console.log('[SelectionOverlay] Rendering for:', elementKey, { position, size, scale })
 
   const handles = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
   
@@ -194,10 +188,7 @@ export function SelectionOverlay({
       {onSizeChange && handles.map(handle => (
         <div
           key={handle}
-          onMouseDown={(e) => {
-            console.log('[SelectionOverlay] Handle clicked:', handle)
-            handleResizeStart(e, handle)
-          }}
+          onMouseDown={(e) => handleResizeStart(e, handle)}
           className="pointer-events-auto hover:scale-125 transition-transform resize-handle"
           style={{
             position: 'absolute',
@@ -219,7 +210,6 @@ export function SelectionOverlay({
       {onRotationChange && size && (
         <div
           onMouseDown={(e) => {
-            console.log('[SelectionOverlay] Rotation handle clicked')
             e.stopPropagation()
             e.preventDefault()
             setIsRotating(true)
@@ -228,11 +218,20 @@ export function SelectionOverlay({
             const centerX = position.x + size.width / 2
             const centerY = position.y + size.height / 2
             
-            setRotationStart({
-              angle: rotation,
-              centerX: centerX * scale,
-              centerY: centerY * scale
-            })
+            // Get the actual screen position of the center
+            const element = e.currentTarget.parentElement
+            if (element) {
+              const rect = element.getBoundingClientRect()
+              const screenCenterX = rect.left + rect.width / 2
+              const screenCenterY = rect.top + rect.height / 2
+              
+              setRotationStart({
+                angle: rotation,
+                centerX: screenCenterX,
+                centerY: screenCenterY
+              })
+            }
+          
           }}
           className="pointer-events-auto hover:scale-110 transition-transform cursor-grab rotation-handle"
           style={{

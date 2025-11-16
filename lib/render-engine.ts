@@ -21,7 +21,6 @@ const SATORI_LAYOUTS = new Set([
   'bottleList',
   'timeline',
   'priceComparison',
-  'beforeAfter',
   'problemSolution',
   'featureGrid',
   'socialProof',

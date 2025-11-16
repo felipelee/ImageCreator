@@ -15,6 +15,13 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
   const colors = brand.colors
   const fonts = brand.fonts
   
+  // Determine background mode (image or color)
+  const backgroundMode = sku.backgroundMode?.testimonial || 
+    (sku.images.testimonialPhoto ? 'image' : 'color')
+  
+  // Get background color (will be used in color mode)
+  const backgroundColor = getFieldColorValue(brand, sku, 'testimonial', 'Background Color', 'bg')
+  
   const quotePanelColor = getFieldColorValue(brand, sku, 'testimonial', 'Quote Panel Color', 'bg')
   const quoteColor = getFieldColorValue(brand, sku, 'testimonial', 'Quote', 'text')
   const ratingColor = getFieldColorValue(brand, sku, 'testimonial', 'Rating', 'accent')
@@ -54,8 +61,8 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
         fontFamily: fonts.family
       }}
     >
-      {/* Background Photo - Client Testimonial */}
-      {sku.images.testimonialPhoto && (
+      {/* Background - Image or Color */}
+      {backgroundMode === 'image' && sku.images.testimonialPhoto ? (
         <img
           src={sku.images.testimonialPhoto}
           alt=""
@@ -66,6 +73,18 @@ export function TestimonialLayout({ brand, sku }: TestimonialLayoutProps) {
             width: spec.elements.background.width,
             height: spec.elements.background.height,
             objectFit: spec.elements.background.objectFit,
+            zIndex: spec.elements.background.zIndex
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            top: spec.elements.background.top,
+            left: spec.elements.background.left,
+            width: spec.elements.background.width,
+            height: spec.elements.background.height,
+            backgroundColor: backgroundColor,
             zIndex: spec.elements.background.zIndex
           }}
         />

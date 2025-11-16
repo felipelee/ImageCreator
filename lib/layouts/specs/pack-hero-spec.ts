@@ -13,6 +13,8 @@ export const PACK_HERO_SPEC = {
       width: 1080,
       height: 600,
       backgroundColor: 'bg',
+      imageKey: 'backgroundHero', // Image to use when in image mode
+      objectFit: 'cover' as const,
       zIndex: 0
     },
     

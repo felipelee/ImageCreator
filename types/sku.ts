@@ -34,6 +34,9 @@ export interface SKU {
       colorKey?: string
     }
   }
+  backgroundMode?: {
+    [layoutKey: string]: 'image' | 'color' // e.g., { "multiStats": "color", "hero": "image" }
+  }
   copy: {
     hero1?: {
       headline: string
@@ -211,13 +214,6 @@ export interface SKU {
       benefit2: string
       benefit3: string
       cta: string
-    }
-    beforeAfter?: {
-      headline: string
-      beforeLabel: string
-      beforeText: string
-      afterLabel: string
-      afterText: string
     }
     problemSolution?: {
       problemLabel: string

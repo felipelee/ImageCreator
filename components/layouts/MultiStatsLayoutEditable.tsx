@@ -32,8 +32,8 @@ export function MultiStatsLayoutEditable({
   const colors = brand.colors
   const fonts = brand.fonts
   
-  const headlineColor = getFieldColorValue(brand, sku, 'multiStats', 'Headline', 'bg')
-  const statColor = getFieldColorValue(brand, sku, 'multiStats', 'Stat 1 Value', 'bg')
+  const headlineColor = getFieldColorValue(brand, sku, 'multiStats', 'Headline', 'text')
+  const statColor = getFieldColorValue(brand, sku, 'multiStats', 'Stat 1 Value', 'text')
 
   const stats = [
     {
