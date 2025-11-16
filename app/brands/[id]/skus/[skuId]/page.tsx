@@ -281,42 +281,81 @@ export default function SKUEditorPage() {
     }
 
     setGenerating(true)
+    let allGeneratedContent = {}
+    
     try {
-      const response = await fetch('/api/generate-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          brandKnowledge: brand.knowledge,
-          productInformation: sku.productInformation,
-          skuName: sku.name
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate content')
+      const requestBody = {
+        brandKnowledge: brand.knowledge,
+        productInformation: sku.productInformation,
+        skuName: sku.name
       }
 
-      const data = await response.json()
-      const generatedContent = data.content
+      // Generate batch 1 (7 core layouts)
+      toast.info('Generating batch 1/3 (core layouts)...')
+      const batch1Response = await fetch('/api/generate-content/batch-1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
 
-      // Update SKU with generated content
+      if (!batch1Response.ok) {
+        const errorData = await batch1Response.json()
+        throw new Error(errorData.error || 'Failed to generate batch 1')
+      }
+
+      const batch1Data = await batch1Response.json()
+      allGeneratedContent = { ...allGeneratedContent, ...batch1Data.content }
+      toast.success('Batch 1/3 complete!')
+
+      // Generate batch 2 (7 extended layouts)
+      toast.info('Generating batch 2/3 (extended layouts)...')
+      const batch2Response = await fetch('/api/generate-content/batch-2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+
+      if (!batch2Response.ok) {
+        const errorData = await batch2Response.json()
+        throw new Error(errorData.error || 'Failed to generate batch 2')
+      }
+
+      const batch2Data = await batch2Response.json()
+      allGeneratedContent = { ...allGeneratedContent, ...batch2Data.content }
+      toast.success('Batch 2/3 complete!')
+
+      // Generate batch 3 (7 new layouts)
+      toast.info('Generating batch 3/3 (new layouts)...')
+      const batch3Response = await fetch('/api/generate-content/batch-3', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+
+      if (!batch3Response.ok) {
+        const errorData = await batch3Response.json()
+        throw new Error(errorData.error || 'Failed to generate batch 3')
+      }
+
+      const batch3Data = await batch3Response.json()
+      allGeneratedContent = { ...allGeneratedContent, ...batch3Data.content }
+      toast.success('Batch 3/3 complete!')
+
+      // Update SKU with all generated content
       if (!sku) return
 
       setSKU({
         ...sku,
         copy: {
           ...sku.copy,
-          ...generatedContent
+          ...allGeneratedContent
         }
       })
 
-      toast.success('Content generated successfully! Review and adjust as needed.')
+      toast.success('All content generated successfully! Review and adjust as needed.')
     } catch (error: any) {
       console.error('Error generating content:', error)
-      toast.error(`Failed to generate content. Make sure OPENAI_API_KEY is set in your environment variables.`)
+      toast.error(`Failed to generate content: ${error.message}`)
     } finally {
       setGenerating(false)
     }

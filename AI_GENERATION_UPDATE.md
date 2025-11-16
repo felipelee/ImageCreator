@@ -5,14 +5,28 @@ Updated AI content generation routes to support **ALL 21 layout templates** (pre
 
 ## Changes Made
 
-### Files Updated
-1. `/app/api/generate-content/route.ts`
-2. `/app/api/generate-content/route-v2.ts`
+### Files Updated - CHUNKED GENERATION
+1. **NEW**: `/app/api/generate-content/batch-1/route.ts` - Batch 1 endpoint (7 core layouts)
+2. **NEW**: `/app/api/generate-content/batch-2/route.ts` - Batch 2 endpoint (7 extended layouts)
+3. **NEW**: `/app/api/generate-content/batch-3/route.ts` - Batch 3 endpoint (7 new layouts)
+4. `/app/brands/[id]/skus/[skuId]/page.tsx` - Updated frontend to call batches separately
+5. `/app/api/generate-content/route.ts` - Kept for backward compatibility
+6. `/app/api/generate-content/route-v2.ts` - Kept for backward compatibility
 
 ### What Changed
-- **Added Batch 3** to handle 7 new layout templates
-- Split generation into **3 batches** (previously 2) to avoid timeout
+- **Split into 3 separate API endpoints** to avoid timeout issues
+- Each batch generates independently (~45 seconds each)
+- **Frontend shows progress** with toast notifications for each batch
+- Total generation time: **~2-3 minutes** (instead of timing out)
 - Total templates now supported: **21 layouts**
+
+### How It Works Now
+1. User clicks "AI Generate Content"
+2. Frontend calls `/api/generate-content/batch-1` → Shows "Generating batch 1/3..."
+3. Frontend calls `/api/generate-content/batch-2` → Shows "Generating batch 2/3..."
+4. Frontend calls `/api/generate-content/batch-3` → Shows "Generating batch 3/3..."
+5. All results are merged and applied to the SKU copy
+6. User sees progress updates for each batch completion
 
 ## Template Coverage
 
