@@ -140,11 +140,11 @@ export const COMPARISON_SPEC = {
       zIndex: 20
     },
     
-    // Row 2
+    // Row 2 (120px row height + 16px gap = 136px spacing)
     row2: {
       type: 'container' as const,
       position: 'absolute' as const,
-      top: 544,
+      top: 572,
       left: 75,
       width: 880,
       zIndex: 20
@@ -154,7 +154,7 @@ export const COMPARISON_SPEC = {
     row3: {
       type: 'container' as const,
       position: 'absolute' as const,
-      top: 652,
+      top: 708,
       left: 75,
       width: 880,
       zIndex: 20
@@ -164,7 +164,7 @@ export const COMPARISON_SPEC = {
     row4: {
       type: 'container' as const,
       position: 'absolute' as const,
-      top: 760,
+      top: 844,
       left: 75,
       width: 880,
       zIndex: 20
@@ -172,7 +172,7 @@ export const COMPARISON_SPEC = {
     
     // Individual row specs (4 rows total)
     row: {
-      gap: 48, // Gap between rows
+      gap: 16, // Gap between rows (margin between divider and next row)
       label: {
         width: 400,
         fontSize: 32,

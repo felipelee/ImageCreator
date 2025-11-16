@@ -287,9 +287,11 @@ export function ComparisonLayoutEditable({
       ].map(({ row, pos, key }, index) => {
         if (!row) return null
         
-        const labelText = row.label || ''
-        const estimatedLines = Math.ceil(labelText.length / 40)
-        const minRowHeight = Math.max(60, estimatedLines * 44)
+        // Fixed row height with generous spacing for 2 lines of text
+        // fontSize: 32px, lineHeight: 1.4 = 44.8px per line
+        // 2 lines = 89.6px + top/bottom padding for better spacing
+        const rowHeight = 120 // Increased for better spacing
+        const verticalPadding = 24 // Padding above and below content
         
         return (
           <div
@@ -300,41 +302,48 @@ export function ComparisonLayoutEditable({
               top: pos.top,
               left: pos.left,
               width: 949, // Pixel-perfect to right edge
-              minHeight: `${minRowHeight}px`,
+              height: `${rowHeight}px`,
+              paddingTop: `${verticalPadding}px`,
+              paddingBottom: `${verticalPadding}px`,
               display: 'flex',
               alignItems: 'center',
-              borderBottom: index < 3 ? '1px solid #6c6c6c' : 'none', // Solid gray instead of rgba
-              paddingBottom: index < 3 ? '24px' : 0,
+              borderBottom: index < 3 ? '1px solid #6c6c6c' : 'none',
               zIndex: pos.zIndex ?? 20,
               transform: pos.rotation ? `rotate(${pos.rotation}deg)` : undefined,
               ...((getEditableProps(key) as any).style || {})
             }}
           >
-            <p
+            {/* Feature Label */}
+            <div
               style={{
-                position: 'relative',
                 width: spec.elements.row.label.width,
-                fontSize: spec.elements.row.label.fontSize,
-                fontWeight: spec.elements.row.label.fontWeight,
-                lineHeight: spec.elements.row.label.lineHeight,
-                color: rowTextColor,
-                margin: 0,
-                padding: 0,
                 paddingRight: '20px',
-                fontFamily: fonts.family,
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                hyphens: 'auto',
-                maxHeight: '120px',
-                overflow: 'hidden',
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                pointerEvents: 'none'
+                display: 'flex',
+                alignItems: 'center'
               }}
             >
-              {row.label}
-            </p>
+              <p
+                style={{
+                  fontSize: spec.elements.row.label.fontSize,
+                  fontWeight: spec.elements.row.label.fontWeight,
+                  lineHeight: spec.elements.row.label.lineHeight,
+                  color: rowTextColor,
+                  margin: 0,
+                  padding: 0,
+                  fontFamily: fonts.family,
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  hyphens: 'auto',
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  pointerEvents: 'none'
+                }}
+              >
+                {row.label}
+              </p>
+            </div>
 
             {/* Checkmark */}
             <div

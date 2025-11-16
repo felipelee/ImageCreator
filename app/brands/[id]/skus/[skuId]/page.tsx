@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Save, Eye, Sparkles, Package, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, X, Download, Loader2, Edit3, Move, Upload, Layers } from 'lucide-react'
+import { Save, Eye, Sparkles, Package, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, X, Download, Loader2, Edit3, Move, Upload, Layers, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { brandService, skuService } from '@/lib/supabase'
 import { uploadImage, STORAGE_BUCKETS } from '@/lib/supabase-storage'
@@ -62,6 +62,7 @@ export default function SKUEditorPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [showProductInfo, setShowProductInfo] = useState(false)
   const [activeTab, setActiveTab] = useState<'copy' | 'images'>('copy')
   const [expandedLayout, setExpandedLayout] = useState<'compare' | 'testimonial' | 'bigStat' | 'multiStats' | 'promoProduct' | 'bottleList' | 'timeline' | 'beforeAfter' | 'featureGrid' | 'socialProof' | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -1847,16 +1848,45 @@ export default function SKUEditorPage() {
                 {/* Product Information */}
                 <Card>
                   <CardHeader>
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <CardTitle>Product Information</CardTitle>
-                        <CardDescription>Product-specific details, features, benefits, and context. This will be used by AI to generate content for this SKU's ads.</CardDescription>
+                        <div className="flex items-center gap-2">
+                          <CardTitle>Product Information</CardTitle>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowProductInfo(!showProductInfo)}
+                            className="h-6 w-6 p-0"
+                          >
+                            {showProductInfo ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        {!showProductInfo && (
+                          <CardDescription className="mt-1.5">
+                            {sku.productInformation ? (
+                              <span className="text-sm">
+                                {sku.productInformation.length > 100 
+                                  ? `${sku.productInformation.substring(0, 100)}...` 
+                                  : sku.productInformation}
+                              </span>
+                            ) : (
+                              "Click to add product details for AI generation"
+                            )}
+                          </CardDescription>
+                        )}
+                        {showProductInfo && (
+                          <CardDescription>Product-specific details, features, benefits, and context. This will be used by AI to generate content for this SKU's ads.</CardDescription>
+                        )}
                       </div>
                       <Button
                         onClick={generateWithAI}
                         disabled={generating || (!brand?.knowledge?.brandVoice && !brand?.knowledge?.information && !sku.productInformation)}
                         size="lg"
-                        className="ml-4"
+                        className="shrink-0"
                       >
                         {generating ? (
                           <>
@@ -1866,25 +1896,27 @@ export default function SKUEditorPage() {
                         ) : (
                           <>
                             <Sparkles className="mr-2 h-5 w-5" />
-                            Generate with AI
+                            AI Generate All
                           </>
                         )}
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <Textarea
-                      value={sku.productInformation || ''}
-                      onChange={(e) => updateSKUField('productInformation', e.target.value)}
-                      placeholder="Example: This is our Collagen Peptide supplement. Key benefits: supports skin elasticity, joint health, and hair strength. Contains 20g of hydrolyzed collagen per serving. Third-party tested for purity. Suitable for daily use. Target audience: adults 25-65 looking for anti-aging and wellness support..."
-                      className="min-h-[200px] font-mono text-sm"
-                    />
-                    {(!brand?.knowledge?.brandVoice && !brand?.knowledge?.information && !sku.productInformation) && (
-                      <p className="text-xs text-amber-600 mt-2">
-                        ⚠️ Fill in Brand Knowledge (in Brand DNA) or Product Information above to enable AI generation
-                      </p>
-                    )}
-                  </CardContent>
+                  {showProductInfo && (
+                    <CardContent>
+                      <Textarea
+                        value={sku.productInformation || ''}
+                        onChange={(e) => updateSKUField('productInformation', e.target.value)}
+                        placeholder="Example: This is our Collagen Peptide supplement. Key benefits: supports skin elasticity, joint health, and hair strength. Contains 20g of hydrolyzed collagen per serving. Third-party tested for purity. Suitable for daily use. Target audience: adults 25-65 looking for anti-aging and wellness support..."
+                        className="min-h-[200px] font-mono text-sm"
+                      />
+                      {(!brand?.knowledge?.brandVoice && !brand?.knowledge?.information && !sku.productInformation) && (
+                        <p className="text-xs text-amber-600 mt-2">
+                          ⚠️ Fill in Brand Knowledge (in Brand DNA) or Product Information above to enable AI generation
+                        </p>
+                      )}
+                    </CardContent>
+                  )}
                 </Card>
 
                 {/* Layout Cards Grid */}
@@ -2941,178 +2973,184 @@ export default function SKUEditorPage() {
       />
 
       {/* Visual Layout Editor Modal - Works for ALL layouts */}
-      {expandedLayout && brand && sku && (
-        <VisualEditorModal
-          open={visualEditorOpen}
-          onClose={() => {
-            setVisualEditorOpen(false)
-            setSelectedElement(null)
-          }}
-          layoutKey={expandedLayout}
-          layoutName={copyFieldsByLayout.find(l => l.layoutKey === expandedLayout)?.layoutName || 'Layout'}
-          layers={getLayoutElements(
-            expandedLayout,
-            sku.customElements?.[expandedLayout] || [],
-            sku.positionOverrides?.[expandedLayout] || {}
-          ).map(def => ({
-            ...def,
-            hasOverride: !!sku.positionOverrides?.[expandedLayout]?.[def.key] || def.key.startsWith('custom-'),
-            zIndex: sku.positionOverrides?.[expandedLayout]?.[def.key]?.zIndex ?? def.defaultZIndex ?? 0
-          }))}
-          selectedElement={selectedElement}
-          onSelectElement={setSelectedElement}
-          positionOverrides={sku.positionOverrides}
-          customElements={sku.customElements?.[expandedLayout] || []}
-          brand={brand}
-          sku={sku}
-          backgroundColorKey="bg"
-          backgroundImageKey={getFieldImage(expandedLayout, 'Background Image', 'backgroundBenefits')}
-          onPositionChange={handleVisualPositionChange}
-          onSizeChange={handleVisualSizeChange}
-          onRotationChange={handleVisualRotationChange}
-          onUpdateCustomElement={handleUpdateCustomElement}
-          onDeleteCustomElement={handleDeleteCustomElement}
-          onChangeBackgroundColor={handleChangeBackgroundColor}
-          onChangeBackgroundImage={handleChangeBackgroundImage}
-          onLayerReorder={handleLayerReorder}
-          onAddElement={handleAddElement}
-          onBenefitIconChange={handleBenefitIconChange}
-          onSave={handleVisualEditorSave}
-          onCancel={handleVisualEditorCancel}
-          hasChanges={visualEditorChanges}
-        >
-          <div
-            style={{
-              transform: 'scale(0.72)',
-              transformOrigin: 'top left',
-              width: '1080px',
-              height: '1080px'
+      {expandedLayout && brand && sku && (() => {
+        // Use same display values as the preview to ensure consistency
+        const displayBrand = previewBrand || brand
+        const displaySKU = getDisplaySKU(expandedLayout)
+        
+        return (
+          <VisualEditorModal
+            open={visualEditorOpen}
+            onClose={() => {
+              setVisualEditorOpen(false)
+              setSelectedElement(null)
             }}
+            layoutKey={expandedLayout}
+            layoutName={copyFieldsByLayout.find(l => l.layoutKey === expandedLayout)?.layoutName || 'Layout'}
+            layers={getLayoutElements(
+              expandedLayout,
+              displaySKU.customElements?.[expandedLayout] || [],
+              displaySKU.positionOverrides?.[expandedLayout] || {}
+            ).map(def => ({
+              ...def,
+              hasOverride: !!displaySKU.positionOverrides?.[expandedLayout]?.[def.key] || def.key.startsWith('custom-'),
+              zIndex: displaySKU.positionOverrides?.[expandedLayout]?.[def.key]?.zIndex ?? def.defaultZIndex ?? 0
+            }))}
+            selectedElement={selectedElement}
+            onSelectElement={setSelectedElement}
+            positionOverrides={displaySKU.positionOverrides}
+            customElements={displaySKU.customElements?.[expandedLayout] || []}
+            brand={brand}
+            sku={sku}
+            backgroundColorKey="bg"
+            backgroundImageKey={getFieldImage(expandedLayout, 'Background Image', 'backgroundBenefits')}
+            onPositionChange={handleVisualPositionChange}
+            onSizeChange={handleVisualSizeChange}
+            onRotationChange={handleVisualRotationChange}
+            onUpdateCustomElement={handleUpdateCustomElement}
+            onDeleteCustomElement={handleDeleteCustomElement}
+            onChangeBackgroundColor={handleChangeBackgroundColor}
+            onChangeBackgroundImage={handleChangeBackgroundImage}
+            onLayerReorder={handleLayerReorder}
+            onAddElement={handleAddElement}
+            onBenefitIconChange={handleBenefitIconChange}
+            onSave={handleVisualEditorSave}
+            onCancel={handleVisualEditorCancel}
+            hasChanges={visualEditorChanges}
           >
-            {/* Render appropriate layout based on expandedLayout */}
-            {expandedLayout === 'compare' && (
-              <ComparisonLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onPositionChange={handleVisualPositionChange}
-                onSizeChange={handleVisualSizeChange}
-                onRotationChange={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'testimonial' && (
-              <TestimonialLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onPositionChange={handleVisualPositionChange}
-                onSizeChange={handleVisualSizeChange}
-                onRotationChange={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'bigStat' && (
-              <BigStatLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onPositionChange={handleVisualPositionChange}
-                onSizeChange={handleVisualSizeChange}
-                onRotationChange={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'multiStats' && (
-              <MultiStatsLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onPositionChange={handleVisualPositionChange}
-                onSizeChange={handleVisualSizeChange}
-                onRotationChange={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'promoProduct' && (
-              <PromoProductLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onPositionChange={handleVisualPositionChange}
-                onSizeChange={handleVisualSizeChange}
-                onRotationChange={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'bottleList' && (
-              <BottleListLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onPositionChange={handleVisualPositionChange}
-                onSizeChange={handleVisualSizeChange}
-                onRotationChange={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'timeline' && (
-              <TimelineLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onPositionChange={handleVisualPositionChange}
-                onSizeChange={handleVisualSizeChange}
-                onRotationChange={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'beforeAfter' && (
-              <BeforeAfterLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onElementDrag={handleVisualPositionChange}
-                onElementResize={handleVisualSizeChange}
-                onElementRotate={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'featureGrid' && (
-              <FeatureGridLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onElementDrag={handleVisualPositionChange}
-                onElementResize={handleVisualSizeChange}
-                onElementRotate={handleVisualRotationChange}
-              />
-            )}
-            {expandedLayout === 'socialProof' && (
-              <SocialProofLayoutEditable
-                brand={brand}
-                sku={sku}
-                isEditMode={true}
-                selectedElement={selectedElement}
-                onSelectElement={setSelectedElement}
-                onElementDrag={handleVisualPositionChange}
-                onElementResize={handleVisualSizeChange}
-                onElementRotate={handleVisualRotationChange}
-              />
-            )}
-          </div>
-        </VisualEditorModal>
-      )}
+            <div
+              style={{
+                transform: 'scale(0.72)',
+                transformOrigin: 'top left',
+                width: '1080px',
+                height: '1080px'
+              }}
+            >
+              {/* Render appropriate layout based on expandedLayout */}
+              {expandedLayout === 'compare' && (
+                <ComparisonLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onPositionChange={handleVisualPositionChange}
+                  onSizeChange={handleVisualSizeChange}
+                  onRotationChange={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'testimonial' && (
+                <TestimonialLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onPositionChange={handleVisualPositionChange}
+                  onSizeChange={handleVisualSizeChange}
+                  onRotationChange={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'bigStat' && (
+                <BigStatLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onPositionChange={handleVisualPositionChange}
+                  onSizeChange={handleVisualSizeChange}
+                  onRotationChange={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'multiStats' && (
+                <MultiStatsLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onPositionChange={handleVisualPositionChange}
+                  onSizeChange={handleVisualSizeChange}
+                  onRotationChange={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'promoProduct' && (
+                <PromoProductLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onPositionChange={handleVisualPositionChange}
+                  onSizeChange={handleVisualSizeChange}
+                  onRotationChange={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'bottleList' && (
+                <BottleListLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onPositionChange={handleVisualPositionChange}
+                  onSizeChange={handleVisualSizeChange}
+                  onRotationChange={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'timeline' && (
+                <TimelineLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onPositionChange={handleVisualPositionChange}
+                  onSizeChange={handleVisualSizeChange}
+                  onRotationChange={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'beforeAfter' && (
+                <BeforeAfterLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onElementDrag={handleVisualPositionChange}
+                  onElementResize={handleVisualSizeChange}
+                  onElementRotate={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'featureGrid' && (
+                <FeatureGridLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onElementDrag={handleVisualPositionChange}
+                  onElementResize={handleVisualSizeChange}
+                  onElementRotate={handleVisualRotationChange}
+                />
+              )}
+              {expandedLayout === 'socialProof' && (
+                <SocialProofLayoutEditable
+                  brand={displayBrand}
+                  sku={displaySKU}
+                  isEditMode={true}
+                  selectedElement={selectedElement}
+                  onSelectElement={setSelectedElement}
+                  onElementDrag={handleVisualPositionChange}
+                  onElementResize={handleVisualSizeChange}
+                  onElementRotate={handleVisualRotationChange}
+                />
+              )}
+            </div>
+          </VisualEditorModal>
+        )
+      })()}
     </AdminLayout>
   )
 }

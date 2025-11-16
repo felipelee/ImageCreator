@@ -236,49 +236,56 @@ export function ComparisonLayout({ brand, sku }: ComparisonLayoutProps) {
         }}
       >
         {rows.map((row, index) => {
-          // Calculate row height based on text content
-          const labelText = row.label || ''
-          const estimatedLines = Math.ceil(labelText.length / 40) // Rough estimate: ~40 chars per line
-          const minRowHeight = Math.max(60, estimatedLines * 44) // Minimum 60px, or based on text lines
+          // Fixed row height with generous spacing for 2 lines of text
+          // fontSize: 32px, lineHeight: 1.4 = 44.8px per line
+          // 2 lines = 89.6px + top/bottom padding for better spacing
+          const rowHeight = 120 // Increased for better spacing
+          const verticalPadding = 24 // Padding above and below content
           
           return (
             <div
               key={index}
               style={{
                 position: 'relative',
-                marginTop: index > 0 ? `${spec.elements.row.gap}px` : 0,
-                paddingBottom: index < rows.length - 1 ? `${spec.elements.row.gap}px` : 0,
-                borderBottom: index < rows.length - 1 ? '1px solid #6c6c6c' : 'none', // Solid gray
-                minHeight: `${minRowHeight}px`,
+                marginTop: index > 0 ? '16px' : 0, // Gap between divider and next row
+                height: `${rowHeight}px`,
+                paddingTop: `${verticalPadding}px`,
+                paddingBottom: `${verticalPadding}px`,
+                borderBottom: index < rows.length - 1 ? '1px solid #6c6c6c' : 'none',
                 display: 'flex',
                 alignItems: 'center'
               }}
             >
               {/* Feature Label */}
-              <p
+              <div
                 style={{
-                  position: 'relative',
                   width: spec.elements.row.label.width,
-                  fontSize: spec.elements.row.label.fontSize,
-                  fontWeight: spec.elements.row.label.fontWeight,
-                  lineHeight: spec.elements.row.label.lineHeight,
-                  color: rowTextColor,
-                  margin: 0,
-                  padding: 0,
                   paddingRight: '20px',
-                  fontFamily: fonts.family,
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  hyphens: 'auto',
-                  maxHeight: '120px',
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical'
+                  display: 'flex',
+                  alignItems: 'center'
                 }}
               >
-                {row.label}
-              </p>
+                <p
+                  style={{
+                    fontSize: spec.elements.row.label.fontSize,
+                    fontWeight: spec.elements.row.label.fontWeight,
+                    lineHeight: spec.elements.row.label.lineHeight,
+                    color: rowTextColor,
+                    margin: 0,
+                    padding: 0,
+                    fontFamily: fonts.family,
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    hyphens: 'auto',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}
+                >
+                  {row.label}
+                </p>
+              </div>
 
               {/* Checkmark Container (Yours) - Centered in left highlight column */}
               <div
